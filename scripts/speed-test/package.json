@@ -1,0 +1,16 @@
+{
+  "name": "speed-test",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Speed & latency benchmark for the Intel Arc B60 OpenVINO Model Server (OpenAI-compatible API).",
+  "type": "module",
+  "scripts": {
+    "bench": "bun --env-file=../../.env speed-test.ts",
+    "list": "bun --env-file=../../.env speed-test.ts --list",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/bun": "latest",
+    "typescript": "^5"
+  }
+}
