@@ -3,7 +3,7 @@
 ## Overview
 This guide covers running LLMs on one or two Intel Arc Pro B60 cards under **Windows**
 with **LM Studio** (Vulkan llama.cpp runtime). It is the desktop alternative to the
-Ubuntu + OVMS server in the [Server Setup Guide](./Intel-Arc-B60-Server-Setup.md).
+Ubuntu server options in the [Server Setup Guide](./Intel-Arc-B60-Server-Setup.md).
 
 > **Source:** community report from u/AmericanRiskCouncil,
 > [Dual Intel Arc B60 & LM Studio - Best Drivers & Settings](https://www.reddit.com/r/IntelArc/comments/1veyi1z/dual_intel_arc_b60_lm_studio_best_drivers_settings/)
@@ -79,17 +79,11 @@ The same values map onto llama.cpp server flags (`--ctx-size 111000`, `--batch-s
 > post and aren't reproduced here.
 
 ## Expected Performance
-Qwen 3.6 35B-A3B, settings above:
 
-| Workload | Single B60 | Dual B60 |
-|---|---|---|
-| Simple prompt ("what can you do?") | 82–91 t/s | 72–78 t/s |
-| Long prompt, extensive thinking | 50–62 t/s | 33–44 t/s |
-| Claude Code (local) | 24–42 t/s | 16–28 t/s |
-
-**A second card makes a model that fits on one card slower, not faster.** Splitting
-layers across two GPUs over Vulkan adds transfer overhead. Use dual B60 when you need
-the **48 GB** of combined VRAM (bigger models or longer context), not for speed.
+The community report's single- and dual-B60 throughput measurements are in the
+[Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#community-windows-lm-studio-results).
+For the tested model, use dual B60 when you need the combined VRAM for a larger
+model or context; the report found lower speed when splitting a one-card model.
 
 ## Troubleshooting
 - **Random errors / crashes in LM Studio:** check that the runtime matches the driver
@@ -103,7 +97,7 @@ the **48 GB** of combined VRAM (bigger models or longer context), not for speed.
 - **Less VRAM than expected:** see [Full VRAM in LM Studio](#full-vram-in-lm-studio).
 
 ## Related Guides
-- [Intel Arc B60 Server Setup Guide](./Intel-Arc-B60-Server-Setup.md): Ubuntu + OVMS server
+- [Intel Arc B60 Server Setup Guide](./Intel-Arc-B60-Server-Setup.md): Ubuntu backend choices
 - [Intel Arc B60 llama.cpp Setup Guide](./Intel-Arc-B60-llama.cpp-Setup.md)
 - [Intel Arc B60 Models Guide](./Intel-Arc-B60-Models.md)
 - [Intel Arc B60 Clients Guide](./Intel-Arc-B60-Clients.md)

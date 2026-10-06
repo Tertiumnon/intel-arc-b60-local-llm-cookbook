@@ -4,6 +4,8 @@ A small, dependency-free **quick check** for the Intel Arc B60 OpenVINO Model
 Server (OVMS), which exposes an OpenAI-compatible API at `AI_API_URL`. Use it after
 restarts, model switches or driver updates. For load tests, percentiles and concurrency,
 use [AIPerf](#full-benchmarks-aiperf).
+Recorded measurements are in the
+[Speed Test Results](../../Intel-Arc-B60-Speed-Test-Results.md).
 
 It measures, per run:
 
@@ -89,24 +91,8 @@ measure only the final-answer speed. If every run shows exactly
 SPEED_TEST_ITERATIONS=2 bun run bench --no-warmup
 ```
 
-Real output (Oct 2026, Qwen3.8-27B int4 on one B60):
-
-```
-=== AI Speed Test ===
-Endpoint   : <AI_API_URL>
-Model      : OpenVINO/Qwen3.8-27B-int4-ov
-Iterations : 2
-Max tokens : 256   Temperature: 0.7
-Reasoning  : on (counted in throughput)
-----------------------------
-  [measured] run 1: TTFT 287ms | 25.02 tok/s (gen) | 24.33 tok/s (total) | 256 tok | 10,521ms
-  [measured] run 2: TTFT 279ms | 25.03 tok/s (gen) | 24.36 tok/s (total) | 256 tok | 10,509ms
-----------------------------
-Summary (measured runs):
-  TTFT            : min 279ms | avg 283ms | max 287ms
-  Gen throughput  : min 25.02 | avg 25.02 | max 25.03 tok/s
-  Overall tok/s   : min 24.33 | avg 24.35 | max 24.36 tok/s
-```
+See the [recorded Bun runs](../../Intel-Arc-B60-Speed-Test-Results.md#bun-speed-test-quick-check)
+for real output and timings.
 
 ## Full Benchmarks: AIPerf
 
@@ -146,22 +132,19 @@ Notes:
   Bash rewrites `/v3/...` into a file path, and the result table crashes the console
   encoding.
 
-### Measured on our B60 (Oct 2026, Qwen3.8-27B int4, 512 in / 256 out)
-
-| Concurrency | TTFT avg | ITL avg | Tok/s per request | **Tok/s total** |
-|---|---|---|---|---|
-| 1 | 616 ms | 40.4 ms | 24.7 | 23.4 |
-| 4 | 1,260 ms | 45.9 ms | 21.8 | **78.2** |
-
-OVMS batches parallel requests well: **4 parallel requests give 3.3× the total
-throughput**, and each one only slows by ~12%. Agent clients that run sub-tasks in
-parallel benefit directly. Prefill runs at ~830 tok/s, so a 50K-token prompt takes about
-1 minute before the first output token.
+Recorded single-request and concurrency measurements are in the
+[OpenVINO results](../../Intel-Arc-B60-Speed-Test-Results.md#local-openvino-model-server-qwen38-27b-int4).
 
 ### Alternative: GuideLLM
 [GuideLLM](https://github.com/vllm-project/guidellm) (vLLM project) is the other
 well-maintained option. It offers rate sweeps (`--profile kind=sweep`) and HTML reports. Use
 `--backend kind=openai_http,target=...,request_format=/v3/chat/completions,api_key=...`.
+
+## llama.cpp Swift 1.5 results
+
+Direct API measurements of the current Swift model, including the Vulkan and
+SYCL 40K-input trials, are in the
+[Speed Test Results](../../Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b).
 
 ## Troubleshooting
 

@@ -1,10 +1,16 @@
 # Intel Arc B60 Clients Guide
 
 ## Overview
-This guide covers connecting AI clients to your Intel Arc B60 OpenVINO Model Server. The server is assumed to be running per the [Intel Arc B60 Server Setup Guide](./Intel-Arc-B60-Server-Setup.md), listening on `AI_API_URL`. For a Windows desktop running LM Studio instead, see the [Windows + LM Studio Guide](./Intel-Arc-B60-Windows-LM-Studio.md). LM Studio's local server is also OpenAI-compatible, so the SDK examples below work against it too.
+This guide covers connecting AI clients to the Intel Arc B60 inference server. The
+currently running server is llama.cpp on port `8001`; OpenVINO Model Server (OVMS)
+can be started separately on port `8000` using the [OpenVINO guide](./Intel-Arc-B60-OpenVINO.md).
+The live llama.cpp service is documented in the [Intel SYCL setup guide](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md).
+For a Windows desktop running LM Studio, see the [Windows + LM Studio Guide](./Intel-Arc-B60-Windows-LM-Studio.md).
 
 ## Connection Details
-All connection values live in [.env](./.env) (template: [.env.example](./.env.example)):
+The [.env](./.env) file (template: [.env.example](./.env.example)) contains the
+OVMS connection values; the template defaults to port `8000` and `/v3`. For the
+currently running llama.cpp service, use `http://192.168.0.29:8001/v1`:
 - **Endpoint**: `AI_API_URL` (built from `AI_SERVER_HOST` + `AI_API_PORT`)
 - **API key**: `AI_API_KEY`
 
@@ -13,8 +19,8 @@ Load them into your shell with:
 set -a; source .env; set +a
 ```
 
-GUI clients can't read `.env`; paste the values from it where the steps below say
-`<AI_API_URL>` / `<AI_API_KEY>`.
+GUI clients can't read `.env`; paste its values when configuring OVMS. Use the
+explicit llama.cpp URL and placeholder key in the Swift examples below.
 
 ## Supported Clients
 This setup works with:
@@ -25,93 +31,83 @@ This setup works with:
 
 ## VS Code AI Configuration
 
-VS Code Chat (including agent mode) connects to OVMS as a **Custom Endpoint** ("bring
-your own key"). It works without a Copilot plan and fully offline. Inline code
-completions and semantic search still require a GitHub account.
+VS Code Chat (including agent mode) connects to either server as a **Custom Endpoint**.
 
 ### Configure Custom Endpoint
 1. In the Chat view open the model picker → **Manage Language Models** (gear icon), or
    run **Chat: Manage Language Models** from the Command Palette.
 2. Select **Add Models** → **Custom Endpoint**. VS Code opens `chatLanguageModels.json`.
-3. Add the provider below. Replace `<AI_API_URL>` with the value from `.env`.
-4. On first use VS Code prompts for the API key (`AI_API_KEY`) and stores it in the
-   OS credential store, so the key never appears in the file.
+3. Add the provider below for the **currently running llama.cpp model**. Its model ID
+   matches the live `/v1/models` response on October 6, 2026.
 
 ```json
 [
   {
-    "name": "Arc B60 (OVMS)",
+    "name": "Arc B60 (llama.cpp)",
     "vendor": "customendpoint",
-    "apiKey": "${input:arcB60ApiKey}",
+    "apiKey": "local",
     "apiType": "chat-completions",
     "models": [
       {
-        "id": "OpenVINO/Qwen3.8-27B-int4-ov",
-        "name": "Qwen3.8-27B (B60)",
-        "url": "<AI_API_URL>/chat/completions",
+        "id": "/models/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",
+        "name": "Swift 1.5 Qwen3.8-27B (B60 coding)",
+        "url": "http://192.168.0.29:8001/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
         "thinking": true,
         "streaming": true,
-        "maxInputTokens": 81920,
-        "maxOutputTokens": 16384
+        "maxInputTokens": 40000,
+        "maxOutputTokens": 8192
       }
     ]
   }
 ]
 ```
 
+For OVMS, use a separate Custom Endpoint provider with the model ID returned by its
+`/v3/models` API and the full `<AI_API_URL>/chat/completions` URL. Put its API key in
+VS Code's credential prompt. OVMS is currently stopped; see the
+[OpenVINO guide](./Intel-Arc-B60-OpenVINO.md) before selecting an OVMS model.
+
 Notes:
+- The current llama.cpp server does not require authentication; `local` is a
+  placeholder value for VS Code's API-key field. Use an actual stored key for OVMS.
 - `vendor` must be **`customendpoint`**. With `vendor: openai`, VS Code ignores
   `maxInputTokens`/`maxOutputTokens` ([vscode#322216](https://github.com/microsoft/vscode/issues/322216)).
-- The model `url` is the **full path** including `/chat/completions`. OVMS serves `/v3`, not `/v1`.
-- `id` must match the OVMS model name exactly (`bun run list` in `scripts/speed-test`).
+- The model `url` is the **full path** including `/chat/completions`. llama.cpp serves
+  `/v1`; OVMS serves `/v3`.
+- The `id` must match the active server's `/models` response exactly.
 - Don't commit `chatLanguageModels.json` to a repository.
 
 ### Choosing `maxInputTokens` / `maxOutputTokens`
 
-> **Recommended for Qwen3.8-27B on one B60**
->
-> | Profile | `maxInputTokens` | `maxOutputTokens` | Use when |
-> |---|---|---|---|
-> | **Default (large refactors)** | **81920** | **16384** | Multi-file refactors and implementing features across a big JS/Node project. The first full prompt takes ~100 s; later turns are fast thanks to prefix caching. |
-> | Fast start | 49152 | 16384 | Smaller tasks, or when the first response feels too slow (~60 s for a full prompt). |
->
-> Keep `maxOutputTokens` at **16384** in both. Don't go below it: the model thinks
-> before answering. Don't raise `maxInputTokens` above 81920 on a single B60, or you risk
-> running out of VRAM. 128K+ needs a second B60.
+VS Code defines `contextWindow` as the total input plus output budget
+([Custom Endpoint configuration](https://code.visualstudio.com/docs/agent-customization/language-models#custom-endpoint-configuration-reference)).
+The input cap must include VS Code instructions, tool schemas, history, and repository
+content. Thinking tokens count toward the output cap. Leave some space between the
+sum of both caps and the server's context for chat-template tokens and counting
+differences.
 
-VS Code packs the conversation up to `maxInputTokens`, and the model may generate up to
-`maxOutputTokens` on top of that. **Input + output must fit in the KV cache**, which only
-gets the VRAM left after the weights (24GB B60, minus ~1GB runtime overhead).
+For the running Swift 1.5 service, use **49,152** for `contextWindow`, **40,000**
+for `maxInputTokens`, and **8,192** for `maxOutputTokens`. The 960-token margin
+allows for formatting overhead. A long input has succeeded locally; a full
+40K-input plus 8K-output exchange is still unmeasured. Large uncached prompts
+can take several minutes, so allow enough client request time. See the
+[Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b).
 
-| Model (OVMS int4) | Weights | KV cache per token (fp16) | VRAM left for KV | **maxInputTokens** | **maxOutputTokens** | KV at max |
-|---|---|---|---|---|---|---|
-| **Qwen3.8-27B** (primary) | 16.0GB | 64 KiB (16 of 64 layers use full attention) | ~7GB | **81920** | **16384** | ~6.0GB |
-| Qwen3.6-35B-A3B | 19.4GB | 20 KiB (10 of 40 layers use full attention) | ~3.6GB | **114688** | **16384** | ~2.5GB |
-| Qwen3-Coder-30B-A3B (legacy) | 16.3GB | 96 KiB (all 48 layers use full attention) | ~6.7GB | **49152** | **8192** | ~5.3GB |
-
-- **`49152` / `8192` is the right setting for Qwen3-Coder-30B**, a non-thinking model.
-  For **Qwen3.8-27B it is too small on output**: the model thinks before answering, and
-  8K output tokens can cut a refactor off mid-thought. Use 16K output.
-- Qwen3.8's hybrid attention keeps only 1 in 4 layers in the KV cache. That's why it
-  fits ~80K context despite being the larger dense model.
-- **Prefill speed matters more than the limit.** OVMS reads prompts at ~830 tok/s on the
-  B60, so filling 80K tokens takes ~100 s before the first output token. Later turns are
-  fast because OVMS prefix caching (on by default) reuses the shared history. Lower
-  `maxInputTokens` (e.g. 49152) if first responses feel too slow.
-- These are single-session numbers. With parallel agent requests the KV cache is shared,
-  so lower the limits or set a fixed `--cache_size` in OVMS. Check VRAM with `qmassa`
-  while a long session runs (see the Server Setup Guide, §8).
-- KV sizes assume fp16 KV cache, so they are conservative. If OVMS uses a compressed
-  (int8) KV cache, you have about twice the headroom.
+When switching models, take the server context and client limits from the
+[Models Guide](./Intel-Arc-B60-Models.md#recommended-b60-input-and-output-limits).
+Check the live server context and memory before advertising an untested profile.
+If a reasoning answer is cut off, increase server context or lower input before
+raising `maxOutputTokens`. With parallel requests, KV cache capacity is shared.
 
 ## OpenAI SDK
-Point any OpenAI-compatible client at the server's `/v3` endpoint:
+For the running llama.cpp server, use `http://192.168.0.29:8001/v1` and a
+placeholder API key. For OVMS, use its `/v3` endpoint and configured API key.
 
 ```bash
-export OPENAI_API_BASE="$AI_API_URL"
-export OPENAI_API_KEY="$AI_API_KEY"
+export AI_API_URL='http://192.168.0.29:8001/v1'
+export AI_API_KEY='local'
 ```
 
 ```python
@@ -124,37 +120,37 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="OpenVINO/Qwen3.8-27B-int4-ov",
+    model="/models/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",
     messages=[{"role": "user", "content": "Hello!"}],
-    temperature=1.0,
+    temperature=0.6,
     top_p=0.95,
-    max_tokens=16384,
+    max_tokens=8192,
     extra_body={"top_k": 20},
 )
 print(response.choices[0].message.content)
 ```
 
 ## Open WebUI
-In Open WebUI settings, add a connection to the OpenVINO Model Server:
-- **API URL**: `<AI_API_URL>`
-- **API Key**: `<AI_API_KEY>`
-- **Model**: `OpenVINO/Qwen3.8-27B-int4-ov`
+In Open WebUI settings, add a connection to the running llama.cpp server:
+- **API URL**: `http://192.168.0.29:8001/v1`
+- **API Key**: `local`
+- **Model**: `/models/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf`
 
 ## Recommended Client Settings
-For the primary model (`OpenVINO/Qwen3.8-27B-int4-ov`) on large JS/Node refactors:
-- **Temperature** 1.0, **top_p** 0.95, **top_k** 20 (official thinking-mode values)
-- **Max output tokens** 16384. The model reasons before answering, and smaller limits cut
-  refactors off mid-thought.
-- **Context window** ~96K total on one B60 (80K input + 16K output) in agent clients
-  (VS Code, Roo Code, Claude Code). The VRAM math is in
+For the currently running Swift 1.5 GGUF on large JS/Node refactors:
+- **Temperature** 0.6, **top_p** 0.95, **top_k** 20 as a starting point; tune for your tasks.
+- **Max output tokens** 8192 with the current 49,152-token server context. Reasoning
+  and final text share this allowance.
+- **VS Code input allowance** 40,000 tokens, including agent and repository context.
+  The server must be restarted and retested before using a larger client profile. See
   [Choosing maxInputTokens / maxOutputTokens](#choosing-maxinputtokens--maxoutputtokens).
 
-Background and model comparison: [Models Guide](./Intel-Arc-B60-Models.md#primary-model-qwen38-27b-int4).
+Background and model comparison: [Models Guide](./Intel-Arc-B60-Models.md#better-for-coding).
 
 ## Testing the Configuration
 1. Open a new file in VS Code
-2. Pick "Qwen3.8-27B (B60)" in the Chat model picker and send a prompt (agent mode works; inline completions do not use custom endpoints)
-3. Verify that responses come from your local OpenVINO Model Server
+2. Pick "Swift 1.5 Qwen3.8-27B (B60 coding)" in the Chat model picker and send a prompt
+3. Verify that the response comes from the llama.cpp server on port `8001`
 
 ## Troubleshooting
 ### Common Issues
