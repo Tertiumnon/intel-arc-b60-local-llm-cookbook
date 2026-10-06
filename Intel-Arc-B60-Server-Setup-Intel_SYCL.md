@@ -57,24 +57,23 @@ For Ubuntu 26.04, check Intel's supported distro/package instructions before
 installing host oneAPI packages. OpenVINO Model Server uses the Intel compute
 runtime through Level Zero/OpenCL and does not need `setvars.sh`.
 
-## Current model: Unsloth Qwen3.8-27B UD-Q4_K_M
+## Current model: Qwen3.8-27B imatrix IQ3_M
 
 The active model is
-[`unsloth/Qwen3.8-27B-GGUF`](https://huggingface.co/unsloth/Qwen3.8-27B-GGUF),
-served from `/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf`. Unsloth's `UD-`
-prefix identifies a Dynamic quantization of the Qwen3.8 base model; this is
-not a separately trained fine-tune. The model's published native context is
-262,144 tokens, but this B60 service is deliberately configured for 49,152.
-Unsloth documents thinking-mode defaults of temperature 1.0, `top_p` 0.95,
-`top_k` 20, and `min_p` 0.0; reasoning effort defaults to `xhigh`. Publisher
-quality claims are not a local B60 comparison against other quantizations.
+[`pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF`](https://huggingface.co/pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF),
+served from `/models/Qwen3.8-27B-IQ3_M.gguf`. The GGUF includes its MTP draft
+head; the separate `/models/mmproj-Qwen3.8-27B-Q8_0.gguf` projector enables
+image and video input. The model was calibrated at 32,768 tokens and the B60
+service uses that context. The publisher's IQ3_M entry is 12.14 GiB; the
+reported quantization and coding evaluations are publisher measurements, not
+a matched B60 comparison.
 
-The live API model ID is exactly
-`/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf`. One uncached 39,931-token
-synthetic prompt completed at this server context. This establishes that
-single text request, not a full 40K-input plus 8K-output exchange or the VS
-Code agent streaming path. See the [Models Guide](./Intel-Arc-B60-Models.md)
-and [measured results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-unsloth-qwen38-27b-ud-q4_k_m).
+The live API model ID is exactly `/models/Qwen3.8-27B-IQ3_M.gguf`. The API
+reported the model at a 32,768 context with text, image, and video input
+capabilities. A short request confirmed generation and MTP draft acceptance;
+long-context capacity and image request quality have not been measured on this
+B60. See the [Models Guide](./Intel-Arc-B60-Models.md) and
+[Clients Guide](./Intel-Arc-B60-Clients.md) for the active profile.
 
 ## Systemd service
 
@@ -91,18 +90,20 @@ Requires=docker.service
 
 [Service]
 Restart=on-failure
-RestartSec=5
+RestartSec=10
 TimeoutStartSec=0
 ExecStartPre=-/usr/bin/docker rm -f llama-cpp
 ExecStart=/usr/bin/docker run --rm --name llama-cpp \
   --device /dev/dri --group-add=109 \
   -p 8001:8000 -v /models/gguf:/models:ro \
   ghcr.io/ggml-org/llama.cpp:server-intel \
-  -m /models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf --host 0.0.0.0 --port 8000 \
-  --n-gpu-layers 999 --ctx-size 49152 \
+  -m /models/Qwen3.8-27B-IQ3_M.gguf --host 0.0.0.0 --port 8000 \
+  --n-gpu-layers 999 --ctx-size 32768 \
   --cache-type-k q8_0 --cache-type-v q8_0 \
   --parallel 1 --batch-size 512 --ubatch-size 128 \
-  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 \
+  --spec-type draft-mtp --spec-draft-n-max 1 --jinja \
+  --mmproj /models/mmproj-Qwen3.8-27B-Q8_0.gguf
 ExecStop=/usr/bin/docker stop llama-cpp
 
 [Install]
@@ -113,10 +114,8 @@ sudo systemctl enable llama-cpp.service
 sudo systemctl restart llama-cpp.service
 ```
 
-The previous Vulkan unit was backed up on this host as
-`/etc/systemd/system/llama-cpp.service.bak-20261006` before the switch.
-Pulling a newer image does not replace a running container; restart the
-service after an image update.
+Pulling a newer image does not replace a running container; restart the service
+after an image update.
 
 ## Select another GGUF
 
@@ -128,7 +127,7 @@ For an image-capable model, add its matching `--mmproj` path and include image
 tokens in the input budget. The [Vulkan guide's model recipes](./Intel-Arc-B60-Server-Setup-Vulkan.md#per-model-gguf-download-and-start-recipes)
 list download URLs and projector filenames; use the SYCL image in this unit
 when evaluating those files on SYCL. Other GGUFs are not automatically
-verified on this B60 merely because this Unsloth quant loaded successfully.
+verified on this B60 merely because this IQ3_M quant loaded successfully.
 
 ```bash
 sudo systemctl daemon-reload
@@ -144,7 +143,7 @@ curl -s http://localhost:8001/v1/models
 curl -s http://localhost:8001/slots
 curl http://localhost:8001/v1/chat/completions \
   -H 'Content-Type: application/json' \
-  -d '{"model":"/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf","messages":[{"role":"user","content":"Reply with READY"}],"max_tokens":512}'
+  -d '{"model":"/models/Qwen3.8-27B-IQ3_M.gguf","messages":[{"role":"user","content":"Reply with READY"}],"max_tokens":512}'
 
 sudo docker logs -f llama-cpp
 sudo docker stats llama-cpp

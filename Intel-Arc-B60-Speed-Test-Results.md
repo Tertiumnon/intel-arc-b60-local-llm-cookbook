@@ -6,10 +6,34 @@ Intel Arc Pro B60 with 24 GB VRAM. Published model scores use different
 harnesses and runtimes; they are not measurements of the GGUF files on this B60.
 For commands and tools, see the [speed-test README](./scripts/speed-test/README.md).
 
+## Local llama.cpp: Qwen3.8-27B imatrix IQ3_M
+
+Measured October 6, 2026 against the active Intel SYCL service at
+`192.168.0.29:8001`. The model was
+`/models/Qwen3.8-27B-IQ3_M.gguf` (13,032,195,616 bytes), with the bundled MTP
+head enabled, the Q8_0 vision projector loaded, one slot, and a 32,768 context.
+The container used `ghcr.io/ggml-org/llama.cpp:server-intel`, build
+`b11434-5e03bdd87`, all model layers on the B60, Q8 key/value cache, batch 512,
+microbatch 128, and `draft-mtp` with one draft token. Requests used temperature
+0.2. Times include the Windows client and LAN unless the server timing is named.
+
+| Request | Prompt / completion tokens | Result | Time and throughput |
+|---|---:|---|---|
+| Streaming short generation; “Explain what a GPU does in four concise bullet points”; 3 measured runs after one warm-up, `max_tokens=256` | 117–156 completion tokens per run | All completed. Reasoning and answer tokens are both counted. The repeated prompt and warm-up make TTFT a warm-cache result. | TTFT **890 ms average** (888–892 ms); generation **7.39 tok/s average** (7.14–7.55); overall **7.04 tok/s average** (6.86–7.17); 16.51–22.75 s per request. |
+| **Long-context synthetic code prompt; `max_tokens=512`** | **23,860 / 38** | **Returned `READY`, `finish_reason=stop`; 42 prompt tokens cached.** | **195.02 s end to end; server measured 189.39 s prefill at 125.76 tok/s and generation at 7.01 tok/s.** MTP proposed 20 tokens and 17 were accepted. |
+
+The long request repeated `function add(a, b) { return a + b; }` 1,700 times,
+then asked for `READY`. Its 23,860-token prompt plus 38 completion tokens fit
+within the configured 32,768 context. This is a synthetic near-client-limit
+capacity and speed check, not a coding-quality or multimodal-image test. The
+short streaming runs reused the same prompt after a warm-up, so their TTFT is
+not a cold-start measurement. The long request had only 42 cached prompt tokens
+and is the better measure of prefill at this input length.
+
 ## Local llama.cpp: Swift 1.5 Qwen3.8-27B
 
-The [Intel SYCL setup](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md) is the
-current service; the [Vulkan setup](./Intel-Arc-B60-Server-Setup-Vulkan.md)
+These are earlier runs with the Swift 1.5 GGUF. The current Intel SYCL model
+is covered above; the [Vulkan setup](./Intel-Arc-B60-Server-Setup-Vulkan.md)
 documents the alternative backend. The file was
 `Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf` (17,442,399,936 bytes) on
 Ubuntu 26.04 with Docker. Both backends used one slot, 49,152 server context,
@@ -71,7 +95,7 @@ not establish the context capacity of any other model.
 
 These are prior measurements of `OpenVINO/Qwen3.8-27B-int4-ov` on the same B60,
 using OVMS on port 8000. They are a different model/runtime configuration from
-the current Swift GGUF service. Reasoning tokens were counted in generation.
+the current Qwen3.8 IQ3_M GGUF service. Reasoning tokens were counted in generation.
 
 ### Bun speed-test quick check
 
@@ -146,7 +170,7 @@ found for the other models in the guide at that snapshot.
 ## Interpreting the numbers
 
 - A model's published context length is a model limit, not a measured B60
-  capacity. The live Swift service completed a 40K-input request, but a full
+  capacity. The earlier Swift service completed a 40K-input request, but a full
   40K-input plus 8K-output exchange remains unmeasured.
 - The Bun quick check, AIPerf check, and direct Swift API requests used
   different prompt sizes and runtime settings. Compare within each test first.

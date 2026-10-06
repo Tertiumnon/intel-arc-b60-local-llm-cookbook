@@ -37,7 +37,7 @@ VS Code Chat (including agent mode) connects to either server as a **Custom Endp
 1. In the Chat view open the model picker → **Manage Language Models** (gear icon), or
    run **Chat: Manage Language Models** from the Command Palette.
 2. Select **Add Models** → **Custom Endpoint**. VS Code opens `chatLanguageModels.json`.
-3. Add the provider below for the **currently running Unsloth llama.cpp model**. Its
+3. Add the provider below for the **currently running Qwen3.8 IQ3_M llama.cpp model**. Its
    model ID matches the live `/v1/models` response on October 6, 2026.
 
 ```json
@@ -49,15 +49,15 @@ VS Code Chat (including agent mode) connects to either server as a **Custom Endp
     "apiType": "chat-completions",
     "models": [
       {
-        "id": "/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf",
-        "name": "Unsloth Qwen3.8-27B UD-Q4_K_M (B60)",
+        "id": "/models/Qwen3.8-27B-IQ3_M.gguf",
+        "name": "Qwen3.8-27B IQ3_M imatrix (B60)",
         "url": "http://192.168.0.29:8001/v1/chat/completions",
         "toolCalling": true,
-        "vision": false,
+        "vision": true,
         "thinking": true,
         "streaming": true,
-        "maxInputTokens": 40000,
-        "maxOutputTokens": 8192,
+        "maxInputTokens": 24576,
+        "maxOutputTokens": 4096,
         "modelOptions": {
           "temperature": 1.0,
           "top_p": 0.95,
@@ -94,25 +94,13 @@ content. Thinking tokens count toward the output cap. Leave some space between t
 sum of both caps and the server's context for chat-template tokens and counting
 differences.
 
-For the running Unsloth service, use **40,000** for `maxInputTokens` and
-**8,192** for `maxOutputTokens` (48,192 tokens combined). This leaves 960 tokens
-below the server's 49,152 context for formatting overhead. The server reports a
-49,152 context. An uncached 39,931-token synthetic prompt completed with the
-8,192 output allowance configured, but generated only 288 completion tokens;
-a full 40K-input plus 8K-output exchange has not been tested. VS Code streams
-agent prompts with instructions and tool schemas, so the exact 40K serialized
-request and streaming path still need a real agent-session check. See the
-[Unsloth test results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-unsloth-qwen38-27b-ud-q4_k_m).
-
-Unsloth describes this GGUF as a **Dynamic quantization of Qwen3.8-27B**, not a
-separate fine-tune. In thinking mode its documented settings are temperature
-1.0, `top_p` 0.95, `top_k` 20, and `min_p` 0.0; the model defaults to extra-high
-reasoning effort (`xhigh`). Thinking tokens count against `maxOutputTokens`,
-which explains why a request with a small output cap can finish without visible
-answer text. To reduce reasoning length, llama.cpp supports setting
-`reasoning_effort` to `medium` through its `--chat-template-kwargs` server
-option. See Unsloth's
-[Qwen3.8 settings and reasoning guide](https://unsloth.ai/docs/models/qwen3.8#recommended-settings).
+For the running IQ3_M service, use **24,576** for `maxInputTokens` and
+**4,096** for `maxOutputTokens` (28,672 tokens combined), leaving 4,096 tokens
+within the server's 32,768 context for formatting overhead. Treat this as a
+starting profile: a full long-context VS Code agent session has not been measured
+on this model. The GGUF was calibrated at 32,768 tokens; image tokens count
+against the same context. Thinking tokens count against `maxOutputTokens`, so
+very small output caps can be consumed before visible answer text appears.
 
 When switching models, take the server context and client limits from the
 [Models Guide](./Intel-Arc-B60-Models.md#recommended-b60-input-and-output-limits).
@@ -139,11 +127,11 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf",
+    model="/models/Qwen3.8-27B-IQ3_M.gguf",
     messages=[{"role": "user", "content": "Hello!"}],
     temperature=1.0,
     top_p=0.95,
-    max_tokens=8192,
+    max_tokens=4096,
     extra_body={"top_k": 20},
 )
 print(response.choices[0].message.content)
@@ -153,14 +141,14 @@ print(response.choices[0].message.content)
 In Open WebUI settings, add a connection to the running llama.cpp server:
 - **API URL**: `http://192.168.0.29:8001/v1`
 - **API Key**: `local`
-- **Model**: `/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf`
+- **Model**: `/models/Qwen3.8-27B-IQ3_M.gguf`
 
 ## Recommended Client Settings
-For the currently running Unsloth Qwen3.8-27B GGUF on large JS/Node refactors:
-- **Thinking-mode defaults:** temperature 1.0, **top_p** 0.95, **top_k** 20, **min_p** 0.0.
-- **Max output tokens** 8192 with the current 49,152-token server context. Reasoning
+For the currently running Qwen3.8-27B IQ3_M GGUF on coding and multimodal requests:
+- **Server sampling defaults:** temperature 1.0, **top_p** 0.95, **top_k** 20, **min_p** 0.0.
+- **Max output tokens** 4096 with the current 32,768-token server context. Reasoning
   and final text share this allowance.
-- **VS Code input allowance** 40,000 tokens, including agent and repository context.
+- **VS Code input allowance** 24,576 tokens, including agent and repository context.
   The server must be restarted and retested before using a larger client profile. See
   [Choosing maxInputTokens / maxOutputTokens](#choosing-maxinputtokens--maxoutputtokens).
 
@@ -168,7 +156,7 @@ Background and model comparison: [Models Guide](./Intel-Arc-B60-Models.md#better
 
 ## Testing the Configuration
 1. Open a new file in VS Code
-2. Pick "Unsloth Qwen3.8-27B UD-Q4_K_M (B60)" in the Chat model picker and send a prompt
+2. Pick "Qwen3.8-27B IQ3_M imatrix (B60)" in the Chat model picker and send a prompt
 3. Verify that the response comes from the llama.cpp server on port `8001`
 
 ## Troubleshooting
