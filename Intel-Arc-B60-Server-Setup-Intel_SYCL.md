@@ -63,16 +63,20 @@ The active model is
 [`pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF`](https://huggingface.co/pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF),
 served from `/models/Qwen3.8-27B-IQ3_M.gguf`. The GGUF includes its MTP draft
 head; the separate `/models/mmproj-Qwen3.8-27B-Q8_0.gguf` projector enables
-image and video input. The model was calibrated at 32,768 tokens and the B60
-service uses that context. The publisher's IQ3_M entry is 12.14 GiB; the
+image and video input. The model was calibrated at 32,768 tokens, while the
+base model supports a 262,144-token context. The B60 service is configured for
+**65,536 total tokens** to provide a practical developer profile above the
+quantization calibration length. The publisher's IQ3_M entry is 12.14 GiB; the
 reported quantization and coding evaluations are publisher measurements, not
 a matched B60 comparison.
 
 The live API model ID is exactly `/models/Qwen3.8-27B-IQ3_M.gguf`. The API
-reported the model at a 32,768 context with text, image, and video input
-capabilities. A short request confirmed generation and MTP draft acceptance;
-long-context capacity and image request quality have not been measured on this
-B60. See the [Models Guide](./Intel-Arc-B60-Models.md) and
+reports a 65,536 context with text, image, and video input capabilities. A
+42,063-token synthetic prompt fit, and a cached retry returned a short answer
+with an 8,192-token output cap. Uncached prefill took 385.93 seconds; real
+VS Code agent latency and quality beyond the 32,768 calibration length remain
+unmeasured. See the
+[Models Guide](./Intel-Arc-B60-Models.md) and
 [Clients Guide](./Intel-Arc-B60-Clients.md) for the active profile.
 
 ## Systemd service
@@ -98,7 +102,7 @@ ExecStart=/usr/bin/docker run --rm --name llama-cpp \
   -p 8001:8000 -v /models/gguf:/models:ro \
   ghcr.io/ggml-org/llama.cpp:server-intel \
   -m /models/Qwen3.8-27B-IQ3_M.gguf --host 0.0.0.0 --port 8000 \
-  --n-gpu-layers 999 --ctx-size 32768 \
+  --n-gpu-layers 999 --ctx-size 65536 \
   --cache-type-k q8_0 --cache-type-v q8_0 \
   --parallel 1 --batch-size 512 --ubatch-size 128 \
   --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 \
@@ -162,11 +166,17 @@ installed at the time of the switch.
 ## Memory and context tuning
 
 When model loading or inference fails because of memory pressure, stop other
-GPU workloads and keep `--parallel 1`. Lower `--ctx-size`, then reduce
-`--batch-size` if prompt-processing buffers are the issue. Keep Q8 KV cache
-unless testing a smaller supported cache type. Reduce `--n-gpu-layers` only
-when the model cannot otherwise load; CPU offload can slow generation sharply.
-Test a prompt close to the intended VS Code input size after each change.
+GPU workloads and keep `--parallel 1`. Lower `--ctx-size` only as a temporary
+diagnostic or recovery step, then restore the 65,536 developer profile after
+resolving the cause. Reduce `--batch-size` if prompt-processing buffers are the
+issue. Keep Q8 KV cache unless testing a smaller supported cache type. Reduce
+`--n-gpu-layers` only when the model cannot otherwise load; CPU offload can
+slow generation sharply.
+The developer profile is **40,000 input + 8,192 output** on a 65,536-token
+server context. This leaves more than 17K tokens for templates, counting
+differences, and longer agent turns. A smaller prompt is useful for smoke and
+speed tests, but is not the development client limit. Test the full intended
+input and response after changing the service.
 
 For an uncached 40K-token prompt, allow several minutes of client timeout.
 Actual timings and prompt-cache conditions are in the

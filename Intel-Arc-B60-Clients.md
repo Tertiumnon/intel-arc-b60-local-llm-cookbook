@@ -56,8 +56,8 @@ VS Code Chat (including agent mode) connects to either server as a **Custom Endp
         "vision": true,
         "thinking": true,
         "streaming": true,
-        "maxInputTokens": 24576,
-        "maxOutputTokens": 4096,
+        "maxInputTokens": 32768,
+        "maxOutputTokens": 8192,
         "modelOptions": {
           "temperature": 1.0,
           "top_p": 0.95,
@@ -94,13 +94,14 @@ content. Thinking tokens count toward the output cap. Leave some space between t
 sum of both caps and the server's context for chat-template tokens and counting
 differences.
 
-For the running IQ3_M service, use **24,576** for `maxInputTokens` and
-**4,096** for `maxOutputTokens` (28,672 tokens combined), leaving 4,096 tokens
-within the server's 32,768 context for formatting overhead. Treat this as a
-starting profile: a full long-context VS Code agent session has not been measured
-on this model. The GGUF was calibrated at 32,768 tokens; image tokens count
-against the same context. Thinking tokens count against `maxOutputTokens`, so
-very small output caps can be consumed before visible answer text appears.
+For development on this B60, use **40,000** for `maxInputTokens` and
+**8,192** for `maxOutputTokens` with the service's **65,536** context. That
+leaves 17,344 tokens beyond the configured client budget for templates and
+token-counting differences. This is the intended developer experience; use
+smaller limits only for smoke or speed tests. The GGUF was calibrated at
+32,768 tokens, so quality beyond that length should be checked on real coding
+tasks. Image tokens count against the input budget. Thinking tokens count
+toward `maxOutputTokens`.
 
 When switching models, take the server context and client limits from the
 [Models Guide](./Intel-Arc-B60-Models.md#recommended-b60-input-and-output-limits).
@@ -131,7 +132,7 @@ response = client.chat.completions.create(
     messages=[{"role": "user", "content": "Hello!"}],
     temperature=1.0,
     top_p=0.95,
-    max_tokens=4096,
+    max_tokens=8192,
     extra_body={"top_k": 20},
 )
 print(response.choices[0].message.content)
@@ -146,10 +147,9 @@ In Open WebUI settings, add a connection to the running llama.cpp server:
 ## Recommended Client Settings
 For the currently running Qwen3.8-27B IQ3_M GGUF on coding and multimodal requests:
 - **Server sampling defaults:** temperature 1.0, **top_p** 0.95, **top_k** 20, **min_p** 0.0.
-- **Max output tokens** 4096 with the current 32,768-token server context. Reasoning
+- **Max output tokens** 8,192 with the current 65,536-token server context. Reasoning
   and final text share this allowance.
-- **VS Code input allowance** 24,576 tokens, including agent and repository context.
-  The server must be restarted and retested before using a larger client profile. See
+- **VS Code input allowance** 40,000 tokens, including agent and repository context. See
   [Choosing maxInputTokens / maxOutputTokens](#choosing-maxinputtokens--maxoutputtokens).
 
 Background and model comparison: [Models Guide](./Intel-Arc-B60-Models.md#better-for-coding).

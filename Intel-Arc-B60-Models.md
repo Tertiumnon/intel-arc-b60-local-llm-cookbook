@@ -130,7 +130,7 @@ guide](./Intel-Arc-B60-Server-Setup-Vulkan.md) includes model download and launc
 | Model | B60 option | Fit and starting point | Assessment | Quality /5 | Speed /5 | Balance /5 | Arena user rating* |
 |---|---|---|---|---:|---:|---:|---|
 | [Swift 1.5 Qwen3.8-27B](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GGUF) | Q4_K_M GGUF (~17.4 GB) | Previously served at 49,152 context; long input verified ([results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b)) | Coding fine-tune of Qwen3.8-27B. Publisher coding scores are in the [results](./Intel-Arc-B60-Speed-Test-Results.md#published-coding-benchmark-scores); local GGUF coding quality is unmeasured. | **5** | **2** | **3** | Not listed |
-| **[Qwen3.8-27B imatrix IQ3_M](https://huggingface.co/pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF)** (current) | IQ3_M GGUF (~12.1 GiB) + Q8_0 projector (629 MB) | **32,768 context configured**; API load and short generation verified, long context untested | Qwen3.8 base quantized with an included MTP head; separate projector enables image/video input. The publisher rates IQ3_M below its higher-bit options; B60 quality and speed comparisons are unavailable. | **2 (publisher)** | — | — | [Base-model rating](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
+| **[Qwen3.8-27B imatrix IQ3_M](https://huggingface.co/pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF)** (current) | IQ3_M GGUF (~12.1 GiB) + Q8_0 projector (629 MB) | **65,536 configured**; synthetic 42K-input request fit with the 8K output cap | Qwen3.8 base quantized with an included MTP head; separate projector enables image/video input. The publisher rates IQ3_M below its higher-bit options; real agent quality and uncached speed are not measured. | **2 (publisher)** | — | — | [Base-model rating](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
 | **[Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)** | GGUF Q4_K_M (~19 GB) | 4K load check; 49K context untested on this B60 | Strong coding/agent model in this size class; published coding results are in the [benchmark table](./Intel-Arc-B60-Speed-Test-Results.md#published-coding-benchmark-scores). | **5** | **3** | **4** | [See results](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
 | [JEV-27B](https://huggingface.co/autotrust/JEV-27B) (text path) | [GGUF Q4_K_M](https://huggingface.co/prithivMLmods/JEV-27B-GGUF/tree/main) (~16.5 GB) | Start at 4K; 49K context untested on this B60 | Frozen Qwen3.8 backbone, so no published coding advantage over Qwen3.8; the decision adapter/head is absent from this GGUF path. | **5** | **3** | **4** | Not listed |
 | **Qwen3.6-35B-A3B** | GGUF Q4_K_M (~20.4 GB) | Previously verified on this B60 at 49,152 context | Fast MoE option; prior long-input result is in the [results](./Intel-Arc-B60-Speed-Test-Results.md#other-local-context-checks). | **4** | **5** | **4** | Not listed |
@@ -203,7 +203,7 @@ show input capacity, but do not prove a full 8,192-token response can follow a
 
 | Model / runtime | Published context | Server context | VS Code input | VS Code output | Status |
 |---|---:|---:|---:|---:|---|
-| [Qwen3.8-27B imatrix IQ3_M](https://huggingface.co/pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF) GGUF (current) | 262,144 base; 32,768 calibration | **32,768** | **24,576 target** | **4,096 target** | API load and a short generation succeeded; long-context, image/video, and VS Code streaming requests remain untested. MTP draft acceptance was observed. |
+| [Qwen3.8-27B imatrix IQ3_M](https://huggingface.co/pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF) GGUF (current) | 262,144 base; 32,768 calibration | **65,536 configured** | **40,000** | **8,192** | Synthetic 42K prompt fit; cached retry completed with the 8K output cap. Uncached prefill took 386 s; see [results](./Intel-Arc-B60-Speed-Test-Results.md#current-developer-profile-65536-context). Real agent behavior and quality beyond calibration remain unmeasured. |
 | [Swift 1.5 Qwen3.8-27B](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GGUF) GGUF | 262,144 base model | 49,152 previously | 40,000 | 8,192 | Previous live B60/SYCL long-input check; full exchange at both client limits remains unmeasured. |
 | [Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) GGUF | 262,144 | 49,152 previously | 40,000 previously | 8,192 previously | Previous B60 long-input check succeeded; see the [results](./Intel-Arc-B60-Speed-Test-Results.md#other-local-context-checks). Full 40K + 8K use remains unmeasured. |
 | [Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B) OpenVINO INT4 | 262,144 | **49,152 target** | **40,000** | **8,192** | B60 profile to verify after switching to OVMS. The service is not currently running, so no live context reading is available. |
@@ -255,8 +255,10 @@ and [Kimi-VL config](https://huggingface.co/moonshotai/Kimi-VL-A3B-Thinking-2506
 For Kimi-Linear, see the [publisher config](https://huggingface.co/moonshotai/Kimi-Linear-48B-A3B-Instruct/blob/main/config.json)
 and [IQ3_XS quantization listing](https://huggingface.co/mradermacher/Kimi-Linear-48B-A3B-Instruct-i1-GGUF/tree/main).
 
-The running Qwen3.8 imatrix IQ3_M GGUF uses a 32,768 context. Use the 24,576 input
-and 4,096 output profile as a starting point; longer requests have not been measured.
+The running Qwen3.8 imatrix IQ3_M GGUF is configured for 65,536 context. Use the
+40,000 input and 8,192 output profile for development; small limits are reserved
+for smoke and speed tests. The 42K synthetic prompt fits, though uncached prefill
+took about 6 minutes 26 seconds. Evaluate real agent prompts separately.
 Qwen3.8 OpenVINO is the next profile to check after switching servers. Qwen3.5, DeepSeek-Coder-V2-Lite,
 and Kimi-VL have lighter GGUF weights and are candidates for a 49,152-token test;
 Kimi-Linear IQ3_XS is a tighter experiment. The [OpenVINO guide](./Intel-Arc-B60-OpenVINO.md)

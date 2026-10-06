@@ -30,6 +30,38 @@ short streaming runs reused the same prompt after a warm-up, so their TTFT is
 not a cold-start measurement. The long request had only 42 cached prompt tokens
 and is the better measure of prefill at this input length.
 
+## Current developer profile: 65,536 context
+
+On October 6, 2026, the active SYCL service was raised to a 65,536 context.
+The `/v1/models` API reported `n_ctx=65536` and `n_ctx_train=262144`, and
+`/slots` reported the same runtime context. A 42,063-token synthetic prompt
+(repeated code plus the chat template) was accepted with no prompt tokens
+cached. Its prefill took **385.93 seconds**. A first smoke request with only
+64 output tokens ended with `finish_reason=length` before visible answer text;
+this was an output-cap issue, not a context failure.
+
+The same prompt was then retried with the intended **8,192-token output cap**.
+It returned `READY` with `finish_reason=stop`, 42,063 prompt tokens, and 89
+completion tokens in 14.88 seconds. This retry reused the prompt prefix, so its
+elapsed time is a warm-cache result. Together these checks verify the 40K-input
+developer profile fits the configured service, but the uncached prefill time is
+about **6 minutes 26 seconds** on this IQ3_M model. The request was synthetic;
+real VS Code agent prompts, multimodal requests, and quality beyond the GGUF's
+32,768 calibration length still need separate evaluation.
+
+## 49K developer input check
+
+With the 65,536 context still active, a unique synthetic code prompt was sent
+with `max_tokens=8192`. The server counted **49,106 prompt tokens**, including
+chat formatting, and only 42 prompt tokens were reused from cache. It returned
+`READY` with `finish_reason=stop` and 88 completion tokens in **455.63 seconds**.
+The 8,192-token output cap was accepted; the response ended naturally before
+using it. This verifies a 49,152-input / 8,192-output client budget fits this
+server context, leaving 8,192 tokens of margin. The prompt was synthetic, so
+real VS Code agent behavior and quality beyond the GGUF's 32,768 calibration
+length still need evaluation. Cold prefill at this size took about **7 minutes
+36 seconds**.
+
 ## Local llama.cpp: Swift 1.5 Qwen3.8-27B
 
 These are earlier runs with the Swift 1.5 GGUF. The current Intel SYCL model
