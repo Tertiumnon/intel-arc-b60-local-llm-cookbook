@@ -32,6 +32,34 @@ The live SYCL API reported model ID
 context 262,144. The proposed VS Code allowance is **40,000 input plus 8,192
 output**; a complete exchange at both limits has not been measured.
 
+## Local llama.cpp: Unsloth Qwen3.8-27B UD-Q4_K_M
+
+On October 6, 2026, I tested the live LAN API at `192.168.0.29:8001` after
+the model switch. `/v1/models` reported
+`/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf`, a 49,152-token context, and
+Q4_K medium quantization. Requests used the OpenAI-compatible chat endpoint,
+temperature 0.2, and non-streaming responses. Wall time is measured from the
+Windows client and includes network and server overhead.
+
+| Request | Prompt / completion tokens | Result | End-to-end time |
+|---|---:|---|---:|
+| Explain a GPU in four bullets; `max_tokens=256` (3 runs) | 26 / 256 each | All hit `finish_reason=length`; the API returned empty final `content` because the reasoning consumed the output budget. | 4.41–5.47 s |
+| Reply exactly `READY`; `max_tokens=512` (3 runs) | 15 / 136–232 | All returned `READY` with `finish_reason=stop`. Completion counts include reasoning tokens. | 2.41–4.02 s; mean 3.40 s |
+| **Long-context check; `max_tokens=8192`** | **39,931 / 288** | **Completed with `finish_reason=stop`; returned `READY`. Zero prompt tokens were cached.** | **63.31 s end to end** |
+
+The short checks are not a controlled throughput benchmark: prompts were tiny,
+warm-cache conditions varied, and responses were not streamed. The 256-token
+trial shows that a small output cap can be exhausted by this
+model's reasoning before it emits visible final text. In the long-context
+check, the user message contained 39,901 tokenizer-counted synthetic filler
+tokens; the full chat request was 39,931 prompt tokens, followed by the
+instruction to answer `READY`. The 8,192-token output allowance was available,
+but the model used 288 completion tokens including reasoning. This confirms a
+single uncached ~40K request fits and completes on the server. It does not
+establish why VS Code occasionally reports “Sorry, no response was returned”;
+the test used a non-streaming direct API request rather than VS Code's streaming
+path and agent/tool schemas.
+
 ## Other local context checks
 
 The previous Qwen3.6-35B-A3B Q4_K_M llama.cpp service used a 49,152-token

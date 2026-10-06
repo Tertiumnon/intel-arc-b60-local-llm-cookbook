@@ -1,7 +1,7 @@
 # Intel Arc Pro B60 Setup
 
 This is the entry point for the 24 GB B60 guides. The current machine runs
-Ubuntu 26.04 and serves **Swift 1.5 Qwen3.8-27B** through llama.cpp with Intel
+Ubuntu 26.04 and serves **Unsloth Qwen3.8-27B UD-Q4_K_M** through llama.cpp with Intel
 SYCL on port `8001`. OpenVINO Model Server (OVMS) is an optional service on
 port `8000`. Only one inference service should use the B60 at a time.
 
@@ -64,7 +64,7 @@ the selected guide after switching. Use the returned model ID in clients.
 ## Switch the active service
 
 ```bash
-# Run Swift on the current Intel SYCL service:
+# Run the current Unsloth model on the Intel SYCL service:
 sudo systemctl stop openvino-model-server.service
 sudo systemctl restart llama-cpp.service
 

@@ -48,7 +48,10 @@ we have no same-host B60 quality or speed comparison with ggml-org's GGUF. Use t
 and achievable context as separate measurements.
 
 The [published file list](https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/tree/main)
-offers these useful single-B60 choices:
+offers these useful single-B60 choices. The active B60 server now runs the
+`UD-Q4_K_M` variant; a 39,931-token uncached request completed at a 49,152
+server context. This validates that specific text-only request on this host,
+not every GGUF from the repository or the full 40K-input + 8K-output limit.
 
 - `UD-Q4_K_M` **16.5 GB**: first choice for a 40K-input trial because it leaves
   more room for KV cache and buffers than the larger files.
@@ -65,7 +68,7 @@ The [Vulkan guide](./Intel-Arc-B60-Server-Setup-Vulkan.md#qwen38-27b-unsloth-dyn
 has the download and launch recipe.
 
 ## Base Model: Qwen3.8-27B
-Qwen3.8-27B is the base of the current Swift 1.5 coding fine-tune. Its OpenVINO
+Qwen3.8-27B is the base of the previously served Swift 1.5 coding fine-tune. Its OpenVINO
 measurements below describe the base model and a different runtime.
 
 | Property | Value |
@@ -126,7 +129,8 @@ guide](./Intel-Arc-B60-Server-Setup-Vulkan.md) includes model download and launc
 
 | Model | B60 option | Fit and starting point | Assessment | Quality /5 | Speed /5 | Balance /5 | Arena user rating* |
 |---|---|---|---|---:|---:|---:|---|
-| **[Swift 1.5 Qwen3.8-27B](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GGUF)** (current) | Q4_K_M GGUF (~17.4 GB) | **49,152 context configured** with Q8 KV and one slot; long input verified ([results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b)) | Coding fine-tune of Qwen3.8-27B. Publisher coding scores are in the [results](./Intel-Arc-B60-Speed-Test-Results.md#published-coding-benchmark-scores); local GGUF coding quality is unmeasured. | **5** | **2** | **3** | Not listed |
+| [Swift 1.5 Qwen3.8-27B](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GGUF) | Q4_K_M GGUF (~17.4 GB) | Previously served at 49,152 context; long input verified ([results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b)) | Coding fine-tune of Qwen3.8-27B. Publisher coding scores are in the [results](./Intel-Arc-B60-Speed-Test-Results.md#published-coding-benchmark-scores); local GGUF coding quality is unmeasured. | **5** | **2** | **3** | Not listed |
+| **[Qwen3.8-27B, Unsloth UD-Q4_K_M](https://huggingface.co/unsloth/Qwen3.8-27B-GGUF)** (current) | UD-Q4_K_M GGUF (~16.5 GB) | **49,152 context configured; 39,931-token uncached input completed** ([results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-unsloth-qwen38-27b-ud-q4_k_m)) | Dynamic quantization of the Qwen base, not a fine-tune. Unsloth's quality claims are publisher-reported; no matched B60 quality comparison is available. | **5** | **3** | **4** | [Base-model rating](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
 | **[Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)** | GGUF Q4_K_M (~19 GB) | 4K load check; 49K context untested on this B60 | Strong coding/agent model in this size class; published coding results are in the [benchmark table](./Intel-Arc-B60-Speed-Test-Results.md#published-coding-benchmark-scores). | **5** | **3** | **4** | [See results](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
 | [JEV-27B](https://huggingface.co/autotrust/JEV-27B) (text path) | [GGUF Q4_K_M](https://huggingface.co/prithivMLmods/JEV-27B-GGUF/tree/main) (~16.5 GB) | Start at 4K; 49K context untested on this B60 | Frozen Qwen3.8 backbone, so no published coding advantage over Qwen3.8; the decision adapter/head is absent from this GGUF path. | **5** | **3** | **4** | Not listed |
 | **Qwen3.6-35B-A3B** | GGUF Q4_K_M (~20.4 GB) | Previously verified on this B60 at 49,152 context | Fast MoE option; prior long-input result is in the [results](./Intel-Arc-B60-Speed-Test-Results.md#other-local-context-checks). | **4** | **5** | **4** | Not listed |
@@ -189,7 +193,7 @@ differences in token counting. See the
 [VS Code Custom Endpoint reference](https://code.visualstudio.com/docs/agent-customization/language-models#custom-endpoint-configuration-reference)
 and [llama.cpp server options](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md).
 
-The numbers below match either the **live Swift 1.5 server** or each model's initial
+The numbers below match either the **live Unsloth Qwen3.8-27B server** or each model's initial
 launch recipe. They are practical client settings for *that context*, not promises
 that every model can use its published maximum. One parallel llama.cpp slot is assumed.
 For a 49,152-token server, **40,000 input + 8,192 output = 48,192**, leaving 960 tokens
@@ -199,14 +203,13 @@ show input capacity, but do not prove a full 8,192-token response can follow a
 
 | Model / runtime | Published context | Server context | VS Code input | VS Code output | Status |
 |---|---:|---:|---:|---:|---|
-| [Swift 1.5 Qwen3.8-27B](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GGUF) GGUF | 262,144 base model | **49,152** | **40,000** | **8,192** | Live B60/SYCL long-input check succeeded; see the [results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b). A full exchange at both client limits remains unmeasured. |
+| [Qwen3.8-27B Unsloth UD-Q4_K_M](https://huggingface.co/unsloth/Qwen3.8-27B-GGUF) GGUF (current) | 262,144 | **49,152** | **40,000** | **8,192** | One uncached 39,931-token input completed; full 40K + 8K generation and VS Code streaming remain untested. See [results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-unsloth-qwen38-27b-ud-q4_k_m). |
+| [Swift 1.5 Qwen3.8-27B](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GGUF) GGUF | 262,144 base model | 49,152 previously | 40,000 | 8,192 | Previous live B60/SYCL long-input check; full exchange at both client limits remains unmeasured. |
 | [Qwen3.6-35B-A3B](https://huggingface.co/Qwen/Qwen3.6-35B-A3B) GGUF | 262,144 | 49,152 previously | 40,000 previously | 8,192 previously | Previous B60 long-input check succeeded; see the [results](./Intel-Arc-B60-Speed-Test-Results.md#other-local-context-checks). Full 40K + 8K use remains unmeasured. |
 | [Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B) OpenVINO INT4 | 262,144 | **49,152 target** | **40,000** | **8,192** | B60 profile to verify after switching to OVMS. The service is not currently running, so no live context reading is available. |
 | Qwen3.8-27B OpenVINO INT4, longer reasoning | 262,144 | **57,344 target** | **40,000** | **16,384** | Preferred output allowance for long refactors if a 56K-total OVMS request succeeds; 960-token margin. Untested on this B60. |
 | Qwen3.8-27B GGUF, initial | 262,144 | 4,096 | 2,560 | 1,024 | **Load check only**, not a measured context ceiling. The Q4 GGUF is larger than the OpenVINO export. |
 | Qwen3.8-27B GGUF, VS Code target | 262,144 | **49,152 to test** | **40,000** | **8,192** | Same target as OpenVINO, but unverified on this B60. Try text-only first, then images with the projector; monitor VRAM and confirm a long prompt completes. |
-| [Qwen3.8-27B Unsloth UD-Q4_K_M](https://huggingface.co/unsloth/Qwen3.8-27B-GGUF) GGUF, initial | 262,144 | 4,096 | 2,560 | 1,024 | 16.5 GB GGUF first-load check; B60 Vulkan load untested. Same Qwen3.8 base model. |
-| Qwen3.8-27B Unsloth UD-Q4_K_M GGUF, VS Code target | 262,144 | **49,152 to test** | **40,000** | **8,192** | More weight headroom than ggml-org Q4_K_M, but a complete 40K + 8K request and VRAM fit remain unverified. |
 | [JEV-27B](https://huggingface.co/autotrust/JEV-27B) GGUF text path, initial | 262,144 | 4,096 | 2,560 | 1,024 | Load check only; the Q4_K_M file is 16.5 GB, but B60 Vulkan load and context are untested. |
 | JEV-27B GGUF text path, VS Code target | 262,144 | **49,152 to test** | **40,000** | **8,192** | Candidate only; verify VRAM and a long prompt before using these VS Code limits. This profile does not expose System 1 typed decisions. |
 | [Qwen3-Coder-30B-A3B Instruct](https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct) OpenVINO INT4 | 262,144 | **49,152 target** | **40,000** | **8,192** | Legacy OVMS candidate; verify the loaded model and memory before using this client profile. |
@@ -252,9 +255,10 @@ and [Kimi-VL config](https://huggingface.co/moonshotai/Kimi-VL-A3B-Thinking-2506
 For Kimi-Linear, see the [publisher config](https://huggingface.co/moonshotai/Kimi-Linear-48B-A3B-Instruct/blob/main/config.json)
 and [IQ3_XS quantization listing](https://huggingface.co/mradermacher/Kimi-Linear-48B-A3B-Instruct-i1-GGUF/tree/main).
 
-For about 40K input today, choose the **running Swift 1.5 GGUF** profile. Its configured
-context and [completed long-input check](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b) establish a usable input size, though the
-complete 8K-output budget remains unmeasured. Qwen3.8 OpenVINO
+For about 40K input today, choose the **running Unsloth UD-Q4_K_M GGUF** profile.
+Its configured 49,152 context completed a 39,931-token uncached prompt. A full
+40K-input plus 8K-output exchange and the VS Code streaming path remain untested.
+Qwen3.8 OpenVINO
 is the next profile to check after switching servers. Qwen3.5, DeepSeek-Coder-V2-Lite,
 and Kimi-VL have lighter GGUF weights and are candidates for a 49,152-token test;
 Kimi-Linear IQ3_XS is a tighter experiment. The [OpenVINO guide](./Intel-Arc-B60-OpenVINO.md)
@@ -268,7 +272,8 @@ also show the earlier Vulkan run and a short coding prompt.
 For each model, use the starting context and input/output limits in the table above.
 The [Vulkan model recipes](./Intel-Arc-B60-Server-Setup-Vulkan.md#per-model-gguf-download-and-start-recipes)
 contain GGUF filenames, download commands, and projector paths; the
-[current Intel SYCL service](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md) loads Swift 1.5.
+[current Intel SYCL service](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md) loads
+Unsloth Qwen3.8-27B UD-Q4_K_M.
 
 ### Why other famous families are absent
 

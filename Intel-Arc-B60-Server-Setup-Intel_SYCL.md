@@ -57,25 +57,24 @@ For Ubuntu 26.04, check Intel's supported distro/package instructions before
 installing host oneAPI packages. OpenVINO Model Server uses the Intel compute
 runtime through Level Zero/OpenCL and does not need `setvars.sh`.
 
-## Current model: Swift 1.5 Qwen3.8-27B
+## Current model: Unsloth Qwen3.8-27B UD-Q4_K_M
 
-[Swift 1.5 Qwen3.8-27B](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GGUF)
-is a coding-focused fine-tune. Its Q4_K_M GGUF is about 17.4 GB. Read the
-publisher's Swift Open License v1.0 for commercial use. Download on the server:
+The active model is
+[`unsloth/Qwen3.8-27B-GGUF`](https://huggingface.co/unsloth/Qwen3.8-27B-GGUF),
+served from `/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf`. Unsloth's `UD-`
+prefix identifies a Dynamic quantization of the Qwen3.8 base model; this is
+not a separately trained fine-tune. The model's published native context is
+262,144 tokens, but this B60 service is deliberately configured for 49,152.
+Unsloth documents thinking-mode defaults of temperature 1.0, `top_p` 0.95,
+`top_k` 20, and `min_p` 0.0; reasoning effort defaults to `xhigh`. Publisher
+quality claims are not a local B60 comparison against other quantizations.
 
-```bash
-cd /models/gguf
-curl -fL --retry 5 -C - -o Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf \
-  'https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GGUF/resolve/main/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf'
-```
-
-The running service uses one request slot, `--ctx-size 49152`, Q8 key/value
-cache, and full GPU offload. Its API model ID is exactly
-`/models/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf`. Recommended VS Code client
-allowances are 40,000 input and 8,192 output tokens; the complete exchange
-at both limits remains untested. See the [Models Guide](./Intel-Arc-B60-Models.md)
-for ratings and the [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b)
-for the measured long-input trial.
+The live API model ID is exactly
+`/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf`. One uncached 39,931-token
+synthetic prompt completed at this server context. This establishes that
+single text request, not a full 40K-input plus 8K-output exchange or the VS
+Code agent streaming path. See the [Models Guide](./Intel-Arc-B60-Models.md)
+and [measured results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-unsloth-qwen38-27b-ud-q4_k_m).
 
 ## Systemd service
 
@@ -99,10 +98,11 @@ ExecStart=/usr/bin/docker run --rm --name llama-cpp \
   --device /dev/dri --group-add=109 \
   -p 8001:8000 -v /models/gguf:/models:ro \
   ghcr.io/ggml-org/llama.cpp:server-intel \
-  -m /models/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf --host 0.0.0.0 --port 8000 \
+  -m /models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf --host 0.0.0.0 --port 8000 \
   --n-gpu-layers 999 --ctx-size 49152 \
   --cache-type-k q8_0 --cache-type-v q8_0 \
-  --parallel 1 --batch-size 512 --ubatch-size 128
+  --parallel 1 --batch-size 512 --ubatch-size 128 \
+  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0
 ExecStop=/usr/bin/docker stop llama-cpp
 
 [Install]
@@ -128,7 +128,7 @@ For an image-capable model, add its matching `--mmproj` path and include image
 tokens in the input budget. The [Vulkan guide's model recipes](./Intel-Arc-B60-Server-Setup-Vulkan.md#per-model-gguf-download-and-start-recipes)
 list download URLs and projector filenames; use the SYCL image in this unit
 when evaluating those files on SYCL. Other GGUFs are not automatically
-verified on this B60 merely because Swift loaded successfully.
+verified on this B60 merely because this Unsloth quant loaded successfully.
 
 ```bash
 sudo systemctl daemon-reload
@@ -144,7 +144,7 @@ curl -s http://localhost:8001/v1/models
 curl -s http://localhost:8001/slots
 curl http://localhost:8001/v1/chat/completions \
   -H 'Content-Type: application/json' \
-  -d '{"model":"/models/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf","messages":[{"role":"user","content":"Reply with READY"}],"max_tokens":64}'
+  -d '{"model":"/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf","messages":[{"role":"user","content":"Reply with READY"}],"max_tokens":512}'
 
 sudo docker logs -f llama-cpp
 sudo docker stats llama-cpp
@@ -171,7 +171,7 @@ Test a prompt close to the intended VS Code input size after each change.
 
 For an uncached 40K-token prompt, allow several minutes of client timeout.
 Actual timings and prompt-cache conditions are in the
-[Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b).
+[Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-unsloth-qwen38-27b-ud-q4_k_m).
 
 ## Troubleshooting
 

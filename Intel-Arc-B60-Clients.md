@@ -20,7 +20,7 @@ set -a; source .env; set +a
 ```
 
 GUI clients can't read `.env`; paste its values when configuring OVMS. Use the
-explicit llama.cpp URL and placeholder key in the Swift examples below.
+explicit llama.cpp URL and placeholder key in the examples below.
 
 ## Supported Clients
 This setup works with:
@@ -37,8 +37,8 @@ VS Code Chat (including agent mode) connects to either server as a **Custom Endp
 1. In the Chat view open the model picker → **Manage Language Models** (gear icon), or
    run **Chat: Manage Language Models** from the Command Palette.
 2. Select **Add Models** → **Custom Endpoint**. VS Code opens `chatLanguageModels.json`.
-3. Add the provider below for the **currently running llama.cpp model**. Its model ID
-   matches the live `/v1/models` response on October 6, 2026.
+3. Add the provider below for the **currently running Unsloth llama.cpp model**. Its
+   model ID matches the live `/v1/models` response on October 6, 2026.
 
 ```json
 [
@@ -49,15 +49,21 @@ VS Code Chat (including agent mode) connects to either server as a **Custom Endp
     "apiType": "chat-completions",
     "models": [
       {
-        "id": "/models/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",
-        "name": "Swift 1.5 Qwen3.8-27B (B60 coding)",
+        "id": "/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf",
+        "name": "Unsloth Qwen3.8-27B UD-Q4_K_M (B60)",
         "url": "http://192.168.0.29:8001/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
         "thinking": true,
         "streaming": true,
         "maxInputTokens": 40000,
-        "maxOutputTokens": 8192
+        "maxOutputTokens": 8192,
+        "modelOptions": {
+          "temperature": 1.0,
+          "top_p": 0.95,
+          "top_k": 20,
+          "min_p": 0.0
+        }
       }
     ]
   }
@@ -88,12 +94,25 @@ content. Thinking tokens count toward the output cap. Leave some space between t
 sum of both caps and the server's context for chat-template tokens and counting
 differences.
 
-For the running Swift 1.5 service, use **49,152** for `contextWindow`, **40,000**
-for `maxInputTokens`, and **8,192** for `maxOutputTokens`. The 960-token margin
-allows for formatting overhead. A long input has succeeded locally; a full
-40K-input plus 8K-output exchange is still unmeasured. Large uncached prompts
-can take several minutes, so allow enough client request time. See the
-[Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b).
+For the running Unsloth service, use **40,000** for `maxInputTokens` and
+**8,192** for `maxOutputTokens` (48,192 tokens combined). This leaves 960 tokens
+below the server's 49,152 context for formatting overhead. The server reports a
+49,152 context. An uncached 39,931-token synthetic prompt completed with the
+8,192 output allowance configured, but generated only 288 completion tokens;
+a full 40K-input plus 8K-output exchange has not been tested. VS Code streams
+agent prompts with instructions and tool schemas, so the exact 40K serialized
+request and streaming path still need a real agent-session check. See the
+[Unsloth test results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-unsloth-qwen38-27b-ud-q4_k_m).
+
+Unsloth describes this GGUF as a **Dynamic quantization of Qwen3.8-27B**, not a
+separate fine-tune. In thinking mode its documented settings are temperature
+1.0, `top_p` 0.95, `top_k` 20, and `min_p` 0.0; the model defaults to extra-high
+reasoning effort (`xhigh`). Thinking tokens count against `maxOutputTokens`,
+which explains why a request with a small output cap can finish without visible
+answer text. To reduce reasoning length, llama.cpp supports setting
+`reasoning_effort` to `medium` through its `--chat-template-kwargs` server
+option. See Unsloth's
+[Qwen3.8 settings and reasoning guide](https://unsloth.ai/docs/models/qwen3.8#recommended-settings).
 
 When switching models, take the server context and client limits from the
 [Models Guide](./Intel-Arc-B60-Models.md#recommended-b60-input-and-output-limits).
@@ -120,9 +139,9 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="/models/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",
+    model="/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf",
     messages=[{"role": "user", "content": "Hello!"}],
-    temperature=0.6,
+    temperature=1.0,
     top_p=0.95,
     max_tokens=8192,
     extra_body={"top_k": 20},
@@ -134,11 +153,11 @@ print(response.choices[0].message.content)
 In Open WebUI settings, add a connection to the running llama.cpp server:
 - **API URL**: `http://192.168.0.29:8001/v1`
 - **API Key**: `local`
-- **Model**: `/models/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf`
+- **Model**: `/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf`
 
 ## Recommended Client Settings
-For the currently running Swift 1.5 GGUF on large JS/Node refactors:
-- **Temperature** 0.6, **top_p** 0.95, **top_k** 20 as a starting point; tune for your tasks.
+For the currently running Unsloth Qwen3.8-27B GGUF on large JS/Node refactors:
+- **Thinking-mode defaults:** temperature 1.0, **top_p** 0.95, **top_k** 20, **min_p** 0.0.
 - **Max output tokens** 8192 with the current 49,152-token server context. Reasoning
   and final text share this allowance.
 - **VS Code input allowance** 40,000 tokens, including agent and repository context.
@@ -149,12 +168,15 @@ Background and model comparison: [Models Guide](./Intel-Arc-B60-Models.md#better
 
 ## Testing the Configuration
 1. Open a new file in VS Code
-2. Pick "Swift 1.5 Qwen3.8-27B (B60 coding)" in the Chat model picker and send a prompt
+2. Pick "Unsloth Qwen3.8-27B UD-Q4_K_M (B60)" in the Chat model picker and send a prompt
 3. Verify that the response comes from the llama.cpp server on port `8001`
 
 ## Troubleshooting
 ### Common Issues
-- **Connection refused**: Ensure your OpenVINO Model Server is running and accessible
+- **HTTP 503 `Loading model` / VS Code says “Rate limit exceeded”**: llama.cpp is
+  still loading the GGUF; this response is not a request quota. Check
+  `curl -i http://192.168.0.29:8001/health` and retry after it returns HTTP 200.
+- **Connection refused**: Ensure `llama-cpp.service` is running and port `8001` is reachable.
 - **Model not found**: Verify the model name matches exactly what's configured in your service
 - **Network issues**: Confirm `AI_SERVER_HOST` in `.env` is correct for your setup
 
