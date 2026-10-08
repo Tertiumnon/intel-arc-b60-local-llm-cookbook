@@ -8,8 +8,7 @@ OpenVINO exports under `/models` use the separate OVMS service on port `8000`.
 
 | Guide | Use |
 |---|---|
-| [Intel SYCL server setup](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md) | **Current service:** Qwen3.8-27B imatrix IQ3_M on the 24 GB B60, systemd unit, monitoring, and model switching. |
-| [Vulkan server setup](./Intel-Arc-B60-Server-Setup-Vulkan.md) | Alternative backend, GPU checks, per-model GGUF download and start recipes, service setup, and troubleshooting. |
+| [Intel SYCL server setup](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md) | **Current service:** Signal + Terse-Coder on the 24 GB B60. |
 
 The [Models Guide](./Intel-Arc-B60-Models.md) compares model fit, context
 profiles, and practical ratings. [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md)
@@ -17,6 +16,7 @@ contain the local backend measurements and published benchmark scores.
 Use the [Clients Guide](./Intel-Arc-B60-Clients.md) for the exact API model ID
 and VS Code Custom Endpoint settings.
 
-When switching models or backends, run only one inference server on the B60
-at a time. Read `/v1/models` after each restart to confirm the loaded model
-and configured context.
+Use the [Usage guide](./Intel-Arc-B60-Server-Usage.md) to download a GGUF, update
+the service, and verify the loaded model.
+The [Vulkan guide](./Intel-Arc-B60-Server-Setup-Vulkan.md) records earlier
+experiments; use the Intel SYCL service for current models.

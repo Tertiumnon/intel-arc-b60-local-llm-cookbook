@@ -4,12 +4,33 @@ This page collects measured results from this server and published model
 benchmarks. The local server results were recorded in October 2026 on one
 Intel Arc Pro B60 with 24 GB VRAM. Published model scores use different
 harnesses and runtimes; they are not measurements of the GGUF files on this B60.
+The current service runs Signal + Terse-Coder; later sections cover earlier models.
 For commands and tools, see the [speed-test README](./scripts/speed-test/README.md).
+
+## Local llama.cpp: Signal + Terse-Coder
+
+Measured October 8, 2026 on the Intel SYCL service with the
+[i1-Q4_K_M GGUF](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF)
+(16,810,715,712 bytes), Q8 KV cache, one slot, and one MTP draft token. The
+model was loaded on the B60 without a vision projector. The first checks used
+49,152 context; the current service uses 57,344.
+
+| Request | Prompt / completion tokens | Result | End-to-end time |
+|---|---:|---|---:|
+| Short JavaScript function, `max_tokens=1024` | 80 / 266 | Correct function and example; `finish_reason=stop` | 11.28 s |
+| Tool request, `max_tokens=512` | — | Returned a valid `get_time` tool call | 5.3 s |
+| Repeated-code synthetic prompt, `max_tokens=8192` | 37,856 / 37; 42 prompt tokens cached | Returned `READY`, `finish_reason=stop` | 185.1 s |
+| Repeated-code synthetic prompt at 57,344 server context, `max_tokens=8192` | 44,856 / 39; zero prompt tokens cached | Returned `READY`, `finish_reason=stop` | 222.67 s |
+
+These checks establish loading, basic coding output, tool-call formatting, and
+two long-input capacity results. They do not rank coding quality against the
+previous models or measure a full 8,192-token answer. The current
+**45,056 input + 8,192 output** VS Code allowance uses 53,248 of the 57,344
+server tokens, leaving 4,096 tokens of headroom.
 
 ## Local llama.cpp: Qwen3.8-27B imatrix IQ3_M
 
-Measured October 6, 2026 against the active Intel SYCL service at
-`192.168.0.29:8001`. The model was
+Measured October 6, 2026 against the Intel SYCL API on port `8001`. The model was
 `/models/Qwen3.8-27B-IQ3_M.gguf` (13,032,195,616 bytes), with the bundled MTP
 head enabled, the Q8_0 vision projector loaded, one slot, and a 32,768 context.
 The container used `ghcr.io/ggml-org/llama.cpp:server-intel`, build
@@ -30,7 +51,7 @@ short streaming runs reused the same prompt after a warm-up, so their TTFT is
 not a cold-start measurement. The long request had only 42 cached prompt tokens
 and is the better measure of prefill at this input length.
 
-## Current developer profile: 65,536 context
+## Previous IQ3_M developer profile: 65,536 context
 
 On October 6, 2026, the active SYCL service was raised to a 65,536 context.
 The `/v1/models` API reported `n_ctx=65536` and `n_ctx_train=262144`, and
@@ -43,8 +64,8 @@ this was an output-cap issue, not a context failure.
 The same prompt was then retried with the intended **8,192-token output cap**.
 It returned `READY` with `finish_reason=stop`, 42,063 prompt tokens, and 89
 completion tokens in 14.88 seconds. This retry reused the prompt prefix, so its
-elapsed time is a warm-cache result. Together these checks verify the 40K-input
-developer profile fits the configured service, but the uncached prefill time is
+elapsed time is a warm-cache result. Together these checks verify the earlier
+long-input profile fit the configured service, but the uncached prefill time is
 about **6 minutes 26 seconds** on this IQ3_M model. The request was synthetic;
 real VS Code agent prompts, multimodal requests, and quality beyond the GGUF's
 32,768 calibration length still need separate evaluation.
@@ -64,8 +85,7 @@ length still need evaluation. Cold prefill at this size took about **7 minutes
 
 ## Local llama.cpp: Swift 1.5 Qwen3.8-27B
 
-These are earlier runs with the Swift 1.5 GGUF. The current Intel SYCL model
-is covered above; the [Vulkan setup](./Intel-Arc-B60-Server-Setup-Vulkan.md)
+These are earlier runs with the Swift 1.5 GGUF. The [Vulkan setup](./Intel-Arc-B60-Server-Setup-Vulkan.md)
 documents the alternative backend. The file was
 `Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf` (17,442,399,936 bytes) on
 Ubuntu 26.04 with Docker. Both backends used one slot, 49,152 server context,
@@ -83,14 +103,14 @@ and speed, not coding quality on a repository.
 The Vulkan retry and nearly uncached SYCL run used different prompt-cache
 conditions, so their total times are not directly comparable. Deep-context
 generation in these runs was 3.55 tok/s on Vulkan and 10.62 tok/s on SYCL.
-The live SYCL API reported model ID
+The SYCL API then reported model ID
 `/models/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf`, context 49,152, and trained
-context 262,144. The proposed VS Code allowance is **40,000 input plus 8,192
-output**; a complete exchange at both limits has not been measured.
+context 262,144. These are historical limits for the Swift deployment; a
+complete exchange at its prior client limits was not measured.
 
 ## Local llama.cpp: Unsloth Qwen3.8-27B UD-Q4_K_M
 
-On October 6, 2026, I tested the live LAN API at `192.168.0.29:8001` after
+On October 6, 2026, I tested the LAN SYCL API on port `8001` after
 the model switch. `/v1/models` reported
 `/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf`, a 49,152-token context, and
 Q4_K medium quantization. Requests used the OpenAI-compatible chat endpoint,
@@ -120,14 +140,14 @@ path and agent/tool schemas.
 
 The previous Qwen3.6-35B-A3B Q4_K_M llama.cpp service used a 49,152-token
 server context and Q8 key/value cache. A 42,041-token input succeeded on the
-B60. This did not test a full 8,192-token reply after a 40K input, and it does
+B60. This did not test a full 8,192-token reply after that long input, and it does
 not establish the context capacity of any other model.
 
 ## Local OpenVINO Model Server: Qwen3.8-27B INT4
 
 These are prior measurements of `OpenVINO/Qwen3.8-27B-int4-ov` on the same B60,
 using OVMS on port 8000. They are a different model/runtime configuration from
-the current Qwen3.8 IQ3_M GGUF service. Reasoning tokens were counted in generation.
+the current Signal + Terse-Coder GGUF service. Reasoning tokens were counted in generation.
 
 ### Bun speed-test quick check
 
@@ -202,8 +222,8 @@ found for the other models in the guide at that snapshot.
 ## Interpreting the numbers
 
 - A model's published context length is a model limit, not a measured B60
-  capacity. The earlier Swift service completed a 40K-input request, but a full
-  40K-input plus 8K-output exchange remains unmeasured.
+  capacity. The earlier Swift service completed a long-input request, but a
+  full client-budget exchange remains unmeasured.
 - The Bun quick check, AIPerf check, and direct Swift API requests used
   different prompt sizes and runtime settings. Compare within each test first.
 - Model quality and the 1–5 practical ratings remain in the

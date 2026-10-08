@@ -4,9 +4,9 @@ This guide documents the **current** Ubuntu 26.04 llama.cpp service on the
 Intel Arc Pro B60 (24 GB VRAM). It serves a GGUF model through Intel's SYCL
 backend at `http://<server-ip>:8001/v1`. Models live on the host in
 `/models/gguf` and are mounted read-only at `/models` in Docker. The
-[Vulkan guide](./Intel-Arc-B60-Server-Setup-Vulkan.md) covers the alternative
-backend; [speed measurements](./Intel-Arc-B60-Speed-Test-Results.md) stay in
-the separate results file.
+[speed measurements](./Intel-Arc-B60-Speed-Test-Results.md) stay in
+the separate results file. For model downloads, switches, and restarts, use the
+[Usage guide](./Intel-Arc-B60-Server-Usage.md).
 
 The current host was Ubuntu 26.04.1 with kernel 7.0.0-38. The llama.cpp image
 is the official `ghcr.io/ggml-org/llama.cpp:server-intel`, which the
@@ -34,56 +34,20 @@ On this host, the container listed `Intel(R) Arc(TM) Pro B60 Graphics` with
 24,480 MiB total memory. The render group GID was `109`; recheck it after an
 OS reinstall rather than assuming that number elsewhere.
 
-### Optional host oneAPI toolkit for local builds
+## Current model: Signal + Terse-Coder
 
-The prebuilt Docker image contains its own SYCL userspace, so the host does
-not need the full oneAPI Base Toolkit just to run this service. Install the
-toolkit if you build or run SYCL programs directly on the host. The prior
-Ubuntu 24.04 host setup used Intel's oneAPI repository:
-
-```bash
-wget https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-sudo gpg --dearmor -o /usr/share/keyrings/oneapi-archive-keyring.gpg \
-  GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB
-echo 'deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main' \
-  | sudo tee /etc/apt/sources.list.d/oneapi.list
-sudo apt update
-sudo apt install intel-oneapi-basekit
-source /opt/intel/oneapi/setvars.sh
-sycl-ls
-```
-
-For Ubuntu 26.04, check Intel's supported distro/package instructions before
-installing host oneAPI packages. OpenVINO Model Server uses the Intel compute
-runtime through Level Zero/OpenCL and does not need `setvars.sh`.
-
-## Current model: Qwen3.8-27B imatrix IQ3_M
-
-The active model is
-[`pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF`](https://huggingface.co/pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF),
-served from `/models/Qwen3.8-27B-IQ3_M.gguf`. The GGUF includes its MTP draft
-head; the separate `/models/mmproj-Qwen3.8-27B-Q8_0.gguf` projector enables
-image and video input. The model was calibrated at 32,768 tokens, while the
-base model supports a 262,144-token context. The B60 service is configured for
-**65,536 total tokens** to provide a practical developer profile above the
-quantization calibration length. The publisher's IQ3_M entry is 12.14 GiB; the
-reported quantization and coding evaluations are publisher measurements, not
-a matched B60 comparison.
-
-The live API model ID is exactly `/models/Qwen3.8-27B-IQ3_M.gguf`. The API
-reports a 65,536 context with text, image, and video input capabilities. A
-42,063-token synthetic prompt fit, and a cached retry returned a short answer
-with an 8,192-token output cap. Uncached prefill took 385.93 seconds; real
-VS Code agent latency and quality beyond the 32,768 calibration length remain
-unmeasured. See the
-[Models Guide](./Intel-Arc-B60-Models.md) and
-[Clients Guide](./Intel-Arc-B60-Clients.md) for the active profile.
+The unit currently loads
+[`Signal + Terse-Coder Q4_K_M`](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF)
+at 57,344 context, with one MTP draft token and text input. Model comparisons
+are in the [Models Guide](./Intel-Arc-B60-Models.md#better-for-coding); measured
+requests are in [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-signal--terse-coder).
 
 ## Systemd service
 
-The following unit reproduces the live Docker arguments. Stop any other
-server using the B60 before starting it. The current host's render GID is
-`109`; substitute your own value from `getent group render` when needed.
+This is a new-host recipe for the current unit. On the existing host, edit the
+saved unit through the [Usage guide](./Intel-Arc-B60-Server-Usage.md) so its other
+settings stay intact. The render GID here is `109`; check `getent group render`
+on another host.
 
 ```bash
 sudo tee /etc/systemd/system/llama-cpp.service >/dev/null <<'EOF'
@@ -99,15 +63,15 @@ TimeoutStartSec=0
 ExecStartPre=-/usr/bin/docker rm -f llama-cpp
 ExecStart=/usr/bin/docker run --rm --name llama-cpp \
   --device /dev/dri --group-add=109 \
+  --health-cmd="curl -fsS http://localhost:8000/health" --health-start-period=90s \
   -p 8001:8000 -v /models/gguf:/models:ro \
   ghcr.io/ggml-org/llama.cpp:server-intel \
-  -m /models/Qwen3.8-27B-IQ3_M.gguf --host 0.0.0.0 --port 8000 \
-  --n-gpu-layers 999 --ctx-size 65536 \
+  -m /models/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf --host 0.0.0.0 --port 8000 \
+  --n-gpu-layers 999 --ctx-size 57344 \
   --cache-type-k q8_0 --cache-type-v q8_0 \
   --parallel 1 --batch-size 512 --ubatch-size 128 \
-  --temp 1.0 --top-p 0.95 --top-k 20 --min-p 0.0 \
-  --spec-type draft-mtp --spec-draft-n-max 1 --jinja \
-  --mmproj /models/mmproj-Qwen3.8-27B-Q8_0.gguf
+  --temp 0.6 --top-p 0.95 --top-k 20 \
+  --spec-type draft-mtp --spec-draft-n-max 1 --jinja
 ExecStop=/usr/bin/docker stop llama-cpp
 
 [Install]
@@ -119,68 +83,24 @@ sudo systemctl restart llama-cpp.service
 ```
 
 Pulling a newer image does not replace a running container; restart the service
-after an image update.
-
-## Select another GGUF
-
-The service loads one model at a time. Download the desired GGUF into
-`/models/gguf`, stop any other GPU inference workload, and edit the unit's
-`-m /models/<file>.gguf` argument. Set `--ctx-size` to that model's starting
-value in the [Models Guide context table](./Intel-Arc-B60-Models.md#recommended-b60-input-and-output-limits).
-For an image-capable model, add its matching `--mmproj` path and include image
-tokens in the input budget. The [Vulkan guide's model recipes](./Intel-Arc-B60-Server-Setup-Vulkan.md#per-model-gguf-download-and-start-recipes)
-list download URLs and projector filenames; use the SYCL image in this unit
-when evaluating those files on SYCL. Other GGUFs are not automatically
-verified on this B60 merely because this IQ3_M quant loaded successfully.
-
-```bash
-sudo systemctl daemon-reload
-sudo systemctl restart llama-cpp.service
-sudo systemctl status llama-cpp.service --no-pager
-curl -s http://localhost:8001/v1/models
-```
-
-## Verify and monitor
-
-```bash
-curl -s http://localhost:8001/v1/models
-curl -s http://localhost:8001/slots
-curl http://localhost:8001/v1/chat/completions \
-  -H 'Content-Type: application/json' \
-  -d '{"model":"/models/Qwen3.8-27B-IQ3_M.gguf","messages":[{"role":"user","content":"Reply with READY"}],"max_tokens":512}'
-
-sudo docker logs -f llama-cpp
-sudo docker stats llama-cpp
-sudo systemctl status llama-cpp.service --no-pager
-sudo journalctl -u llama-cpp.service -f
-```
-
-The API's `/v1/models` endpoint reports the loaded ID and context. `/slots`
-shows slot activity and prompt progress. `docker stats` reports host/container
-memory, not reliable per-process B60 VRAM. For an idle-device snapshot, rerun
-`server-intel --list-devices` from the first section. `intel_gpu_top` can show
-GPU engine activity when installed. On this host, `xpu-smi stats -d 0` returned
-`device not found` even while SYCL detected the B60; `intel_gpu_top` was not
-installed at the time of the switch.
+after an image update. The [Usage guide](./Intel-Arc-B60-Server-Usage.md) covers
+verification and logs.
 
 ## Memory and context tuning
 
 When model loading or inference fails because of memory pressure, stop other
-GPU workloads and keep `--parallel 1`. Lower `--ctx-size` only as a temporary
-diagnostic or recovery step, then restore the 65,536 developer profile after
-resolving the cause. Reduce `--batch-size` if prompt-processing buffers are the
+GPU workloads and keep `--parallel 1`. Lower `--ctx-size` if the model cannot
+load at 57,344. Reduce `--batch-size` if prompt-processing buffers are the
 issue. Keep Q8 KV cache unless testing a smaller supported cache type. Reduce
 `--n-gpu-layers` only when the model cannot otherwise load; CPU offload can
 slow generation sharply.
-The developer profile is **40,000 input + 8,192 output** on a 65,536-token
-server context. This leaves more than 17K tokens for templates, counting
-differences, and longer agent turns. A smaller prompt is useful for smoke and
-speed tests, but is not the development client limit. Test the full intended
-input and response after changing the service.
+The [Clients Guide](./Intel-Arc-B60-Clients.md#choosing-maxinputtokens--maxoutputtokens)
+recommends **45,056 input + 8,192 output** for usual developer work on this
+57,344-token server. The 53,248-token client budget leaves 4,096 tokens of
+server headroom. Test real agent requests before relying on the full allowance.
 
-For an uncached 40K-token prompt, allow several minutes of client timeout.
-Actual timings and prompt-cache conditions are in the
-[Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-unsloth-qwen38-27b-ud-q4_k_m).
+For an uncached long prompt, allow several minutes of client timeout.
+Actual timings are in [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-signal--terse-coder).
 
 ## Troubleshooting
 

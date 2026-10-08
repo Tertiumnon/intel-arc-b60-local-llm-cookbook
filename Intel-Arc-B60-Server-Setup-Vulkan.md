@@ -1,11 +1,14 @@
 # Intel Arc B60 llama.cpp Server Setup: Vulkan
 
-This guide covers the Vulkan Docker backend for `llama-server` on Ubuntu 26.04:
+This guide records earlier Vulkan Docker trials for `llama-server` on Ubuntu 26.04.
+Use the [Intel SYCL service](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md) for
+current models and VS Code settings; context values below are historical trials
+or unverified starting points.
 
 - Ubuntu 26.04.1, kernel 7.0.0-38
 - Intel Arc Pro B60 with 24 GB VRAM
 - llama.cpp API on `http://<server-ip>:8001/v1`
-- Existing OpenVINO Model Server (OVMS) remains on port `8000`
+- OpenVINO Model Server (OVMS) remains installed but disabled on port `8000`
 - Models are stored under `/models`; GGUF files are under `/models/gguf`
 
 The setup uses the official llama.cpp Vulkan container. llama.cpp needs GGUF weights;
@@ -102,7 +105,7 @@ inspect `sudo docker logs --tail 80 llama-cpp` if needed.
 #### Swift 1.5 Qwen3.8-27B (Vulkan comparison)
 
 The current service uses [Intel SYCL](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md)
-for this coding fine-tune. To reproduce the Vulkan backend used in the
+with Signal + Terse-Coder. To reproduce the Vulkan backend used in the
 [backend comparison](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b),
 download the Q4_K_M GGUF and run it with the same context and cache settings:
 
@@ -118,8 +121,8 @@ start_vulkan Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf 49152
 
 This is the recent coding and image-capable model. The Q8_0 projector is needed for image
 input; the Q4_K_M weights alone are for text-only requests. The 4,096-token launch below
-is a **first-load check**, not a measured B60 maximum. The OpenVINO guide's 49,152-token
-target has not been verified either. This GGUF is larger than the OpenVINO INT4 export
+is a **first-load check**, not a measured B60 maximum. The earlier 49,152-token
+target was not verified for this GGUF. This GGUF is larger than the OpenVINO INT4 export
 (~19 GB versus ~16 GB of published files), but that alone does not establish the
 largest usable context in either runtime.
 
@@ -138,12 +141,8 @@ To run the downloaded GGUF with llama.cpp Vulkan:
 start_vulkan Qwen3.8-27B-Q4_K_M.gguf 4096 512 128 mmproj-Qwen3.8-27B-Q8_0.gguf
 ```
 
-For a VS Code 40,000-input / 8,192-output profile, rerun `start_vulkan`
-with `49152` as its second argument and **omit the projector argument for
-the first text-only trial**. Confirm the
-new context through `/v1/models`, then send a long prompt while monitoring B60 VRAM.
-Only add the projector after text-only use succeeds; image tokens reduce available
-text input. This larger GGUF profile is a candidate, not a recorded B60 result.
+This was a first-load check, not a current VS Code profile. Verify a long prompt
+and VRAM use before raising context on a new model.
 
 
 #### Qwen3.8-27B (Unsloth Dynamic GGUF)
@@ -166,9 +165,7 @@ curl -fL --retry 5 -C - -o mmproj-Qwen3.8-27B-Unsloth-F16.gguf \
 start_vulkan Qwen3.8-27B-UD-Q4_K_M.gguf 4096
 ```
 
-The 4K context is a first-load check. For a **40,000-input / 8,192-output** VS Code
-trial, rerun `start_vulkan Qwen3.8-27B-UD-Q4_K_M.gguf 49152` and confirm a long
-request plus VRAM usage before setting those client limits. For image requests,
+The 4K context is a first-load check, not a current VS Code profile. For image requests,
 pass `mmproj-Qwen3.8-27B-Unsloth-F16.gguf` as the fifth helper argument and
 account for image tokens within the input budget. If comparing quality with the ggml-org quant above, keep
 the same prompt, context, sampling settings, and runtime build.
@@ -233,10 +230,8 @@ curl -fL --retry 5 -C - -o JEV-27B.Q4_K_M.gguf \
 start_vulkan JEV-27B.Q4_K_M.gguf 4096
 ```
 
-The 4K setting is an initial load check. For the VS Code 40,000-input / 8,192-output
-candidate, change the helper's context argument from `4096` to `49152`, restart, and verify VRAM
-and a long prompt before advertising that limit. Its published 262,144-token context
-is a model maximum, not a measured B60 setting.
+The 4K setting is an initial load check, not a current VS Code profile. Its
+published 262,144-token context is a model maximum, not a measured B60 setting.
 
 #### Qwen3.6-35B-A3B
 
@@ -309,7 +304,7 @@ start_vulkan Kimi-VL-A3B-Thinking-2506-Q4_K_M.gguf 16384 512 128 mmproj-Kimi-VL-
 Use the importance-matrix `IQ3_XS` GGUF (~20.2 GB). Q4 and MXFP4 files exceed the
 B60's 24 GB before cache and buffers. This is an experimental Intel Vulkan recipe:
 start at 4K context to confirm it loads, then check GPU memory and long-prompt behavior
-before trying the 48K total context needed for a 40K VS Code input allowance.
+before trying a long VS Code input allowance.
 
 ```bash
 cd /models/gguf

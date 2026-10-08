@@ -1,8 +1,8 @@
 # AI Speed Test
 
-A small, dependency-free **quick check** for the Intel Arc B60 OpenVINO Model
-Server (OVMS), which exposes an OpenAI-compatible API at `AI_API_URL`. Use it after
-restarts, model switches or driver updates. For load tests, percentiles and concurrency,
+A small, dependency-free **quick check** for the active OpenAI-compatible API at
+`AI_API_URL` (currently llama.cpp on port `8001`). Use it after restarts, model
+switches or driver updates. For load tests, percentiles and concurrency,
 use [AIPerf](#full-benchmarks-aiperf).
 Recorded measurements are in the
 [Speed Test Results](../../Intel-Arc-B60-Speed-Test-Results.md).
@@ -37,7 +37,7 @@ bun install   # dev-only: TypeScript types
 bun run bench
 
 # Benchmark a specific model
-bun run bench OpenVINO/Qwen3.8-27B-int4-ov
+bun run bench /models/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf
 
 # Just list the models the server exposes
 bun run list
@@ -109,8 +109,10 @@ actively maintained) works with OVMS's `/v3` API and adds what this script can't
 # One-time install (any OS with Python 3.10+)
 python -m venv ~/aiperf-venv && ~/aiperf-venv/bin/pip install aiperf   # Windows: aiperf-venv\Scripts\pip
 
-# Load .env, then benchmark (concurrency 1, then 4)
+# OVMS-only example: enable OVMS in place of llama.cpp first.
+# Load .env, then point this command at port 8000 (concurrency 1, then 4).
 set -a; source ../../.env; set +a
+AI_API_URL="http://${AI_SERVER_HOST}:8000/v3"
 for c in 1 4; do
   aiperf profile \
     --model OpenVINO/Qwen3.8-27B-int4-ov --tokenizer Qwen/Qwen3.8-27B \
@@ -140,17 +142,17 @@ Recorded single-request and concurrency measurements are in the
 well-maintained option. It offers rate sweeps (`--profile kind=sweep`) and HTML reports. Use
 `--backend kind=openai_http,target=...,request_format=/v3/chat/completions,api_key=...`.
 
-## llama.cpp Swift 1.5 results
+## Earlier llama.cpp Swift 1.5 results
 
-Direct API measurements of the current Swift model, including the Vulkan and
-SYCL 40K-input trials, are in the
+Direct API measurements of Swift 1.5, including the Vulkan and
+SYCL long-input trials, are in the
 [Speed Test Results](../../Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b).
 
 ## Troubleshooting
 
-- **Connection refused / timeout** — confirm OVMS is running and reachable:
+- **Connection refused / timeout** — confirm the selected service is running and reachable:
   `curl -H "Authorization: Bearer $AI_API_KEY" "$AI_API_URL/models"`
 - **Model not found** — run `bun run list` to see the exact model names the
   server exposes, then pass one of them as the argument to `bun run bench`.
-- **HTTP 401**: set `AI_API_KEY` in the root `.env` to match `API_KEY` in the
-  server's `/etc/ovms/ovms.env`.
+- **HTTP 401**: if using OVMS, set `AI_API_KEY` in the root `.env` to match
+  the key configured in its saved service.
