@@ -3,7 +3,7 @@
 ## Overview
 This guide compares models for Intel Arc Pro B60 GPUs, with recommendations for coding, chat, and image tasks. The primary workload is **refactoring and implementing large JS/Node.js projects**. For that work, quality matters more than raw speed.
 
-> **Last updated:** October 8, 2026
+> **Last updated:** October 9, 2026
 
 For current serving steps, see the [Intel SYCL Usage guide](./Intel-Arc-B60-Server-Usage.md).
 For connecting clients, see the [Clients Guide](./Intel-Arc-B60-Clients.md).
@@ -134,7 +134,8 @@ guide](./Intel-Arc-B60-Server-Setup-Vulkan.md) includes model download and launc
 | Model | B60 option | Fit and starting point | Assessment | Quality /5 | Speed /5 | Balance /5 | Arena user rating* |
 |---|---|---|---|---:|---:|---:|---|
 | [Swift 1.5 Qwen3.8-27B](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GGUF) | Q4_K_M GGUF (~17.4 GB) | Previously served at 49,152 context; long input verified ([results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b)) | Coding fine-tune of Qwen3.8-27B. Publisher coding scores are in the [results](./Intel-Arc-B60-Speed-Test-Results.md#published-coding-benchmark-scores); local GGUF coding quality is unmeasured. | **5** | **2** | **3** | Not listed |
-| [Signal + Terse-Coder](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF) (current) | i1-Q4_K_M GGUF (16.8 GB) | 57,344 served; 44,856-token prompt completed | Coding fine-tune with shorter reasoning; led local variants in one [469-question user comparison](https://www.reddit.com/r/LocalLLaMA/comments/1x0gaqv/comparing_qwen3827b_finetunes_and_baselining_vs/). | — | — | — | Not listed |
+| [Qwen3.6-27B MTP](https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF) (current) | IQ4_XS GGUF (15.7 GB) | 57,344 context served on SYCL; see [local checks](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-qwen36-27b-mtp-iq4_xs) | Dense coding model with bundled MTP draft head. Thinking is on by default and uses the output allowance. | — | — | — | Not listed |
+| [Signal + Terse-Coder](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF) | i1-Q4_K_M GGUF (16.8 GB) | Previously served at 57,344; 44,856-token prompt completed | Coding fine-tune with shorter reasoning; led local variants in one [469-question user comparison](https://www.reddit.com/r/LocalLLaMA/comments/1x0gaqv/comparing_qwen3827b_finetunes_and_baselining_vs/). | — | — | — | Not listed |
 | [Qwen3.8-27B-pi](https://huggingface.co/bytkim/Qwen3.8-27B-pi-GGUF) | Q4_K_M GGUF (~16.5 GB); optional MTP draft ~2.0 GB | Start at 4K without draft; B60 untested | Fine-tuned on Pi coding-agent sessions; publisher reports fewer output tokens at matched task success. | — | — | — | Not listed |
 | [ThinkingCap Qwen3.8-27B](https://huggingface.co/bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF) | IQ4_XS GGUF (~15.5 GB) | Start at 4K; B60 untested | Publisher reports 37% fewer reasoning tokens with a small accuracy loss; [commercial use is restricted](https://huggingface.co/bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF#license). | — | — | — | Not listed |
 | **[Qwen3.8-27B imatrix IQ3_M](https://huggingface.co/pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF)** | IQ3_M GGUF (~12.1 GiB) + Q8_0 projector (629 MB) | Previously served at 65,536; synthetic 42K input fit | Good coding quality, but slow responses (user report). Publisher rates this quant 2/5; no controlled local quality comparison. | — | — | — | [Base-model rating](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
@@ -190,7 +191,7 @@ and [launch recipe](./Intel-Arc-B60-Server-Setup-Vulkan.md#cloudflareclef-flash-
 
 ### Recommended B60 input and output limits
 
-For usual coding work, configure the current Signal + Terse-Coder GGUF on the
+For usual coding work, configure the current Qwen3.6-27B IQ4_XS GGUF on the
 Intel SYCL service as follows:
 
 | Server context | VS Code `maxInputTokens` | VS Code `maxOutputTokens` | Client total | Server headroom |

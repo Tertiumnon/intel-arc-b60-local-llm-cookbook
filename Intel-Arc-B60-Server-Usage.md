@@ -10,20 +10,33 @@ local `.env` (see [.env.example](./.env.example)).
 
 ## Download a GGUF
 
-Find the exact file name in its Hugging Face repository, then set these two
-values. This example downloads the current Signal + Terse-Coder build; replace
-both values for another model.
+Find the exact file name in its Hugging Face repository, then set these
+values. This example downloads the current Qwen3.6-27B IQ4_XS build.
 
 ```bash
-repo=mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF
-file=Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf
+repo=unsloth/Qwen3.6-27B-MTP-GGUF
+file=Qwen3.6-27B-IQ4_XS.gguf
+local_file=qwen3.6-27b-iq4_xs.gguf
 df -h /models
 cd /models/gguf
-curl -fL --retry 5 -C - -o "$file" \
+curl -fL --retry 5 -C - -o "$local_file" \
   "https://huggingface.co/$repo/resolve/main/$file"
 ```
 
-Compare `sha256sum "$file"` with the file's SHA-256 on Hugging Face before
+If you used `hf download` with `/models/.hf-cache`, the snapshot link points
+outside the Docker mount. On this host, make a hard link to the downloaded blob
+without copying another 15.7 GB:
+
+```bash
+snapshot=$(find /models/.hf-cache/hub/models--unsloth--Qwen3.6-27B-MTP-GGUF/snapshots \
+  -name Qwen3.6-27B-IQ4_XS.gguf -print -quit)
+ln -f "$(readlink -f "$snapshot")" /models/gguf/qwen3.6-27b-iq4_xs.gguf
+```
+
+The service model path is `/models/qwen3.6-27b-iq4_xs.gguf` inside the
+container. The bind mount already maps `/models/gguf` on the host to `/models`.
+
+Compare the selected GGUF's SHA-256 with the file's SHA-256 on Hugging Face before
 switching the service. Keep the previous GGUF until the replacement works.
 
 ## Select and restart

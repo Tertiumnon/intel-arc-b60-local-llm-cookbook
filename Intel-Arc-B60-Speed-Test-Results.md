@@ -4,8 +4,31 @@ This page collects measured results from this server and published model
 benchmarks. The local server results were recorded in October 2026 on one
 Intel Arc Pro B60 with 24 GB VRAM. Published model scores use different
 harnesses and runtimes; they are not measurements of the GGUF files on this B60.
-The current service runs Signal + Terse-Coder; later sections cover earlier models.
+The current service runs Qwen3.6-27B MTP IQ4_XS; later sections cover earlier models.
 For commands and tools, see the [speed-test README](./scripts/speed-test/README.md).
+
+## Local llama.cpp: Qwen3.6-27B MTP IQ4_XS
+
+Measured October 9, 2026 on the Intel SYCL service with the
+[Unsloth IQ4_XS GGUF](https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF)
+(15,705,859,200 bytes). The service used a 57,344-token context, Q8 key/value
+cache, one slot, and one MTP draft token. It loaded without a vision projector.
+`/v1/models` reported `/models/qwen3.6-27b-iq4_xs.gguf` and a 262,144-token
+trained context.
+
+| Request | Prompt / completion tokens | Result | End-to-end time |
+|---|---:|---|---:|
+| Reply exactly `READY`, thinking on | 15 / 95 | Returned `READY`, `finish_reason=stop` | About 7 s including model lookup |
+| Short JavaScript function, thinking on, `max_tokens=512` | 28 / 512 | Output allowance ended during thinking; no final code | 27.05 s |
+| Same function, thinking off, `max_tokens=512` | 30 / 43 | Returned a `sumEven` implementation, `finish_reason=stop` | 2.86 s |
+| `get_time` tool request | 284 / 189 | Returned a valid call with `Europe/Belgrade`, `finish_reason=tool_calls` | 15.55 s |
+| Repeated-code prompt, `max_tokens=1024` | 44,821 / 104; zero prompt tokens cached | Returned `READY`, `finish_reason=stop` | 326.38 s |
+
+The long prompt repeated `function add(a, b) { return a + b; }` 3,200 times.
+This verifies an input close to the 45,056-token VS Code limit on this service.
+It does not test a full 8,192-token output or real agent tool traffic at that
+context. Thinking tokens count against the output cap; for short direct answers,
+the model card documents `chat_template_kwargs: {"enable_thinking": false}`.
 
 ## Local llama.cpp: Signal + Terse-Coder
 
@@ -13,7 +36,7 @@ Measured October 8, 2026 on the Intel SYCL service with the
 [i1-Q4_K_M GGUF](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF)
 (16,810,715,712 bytes), Q8 KV cache, one slot, and one MTP draft token. The
 model was loaded on the B60 without a vision projector. The first checks used
-49,152 context; the current service uses 57,344.
+49,152 context; the final Signal service used 57,344.
 
 | Request | Prompt / completion tokens | Result | End-to-end time |
 |---|---:|---|---:|
@@ -24,7 +47,7 @@ model was loaded on the B60 without a vision projector. The first checks used
 
 These checks establish loading, basic coding output, tool-call formatting, and
 two long-input capacity results. They do not rank coding quality against the
-previous models or measure a full 8,192-token answer. The current
+previous models or measure a full 8,192-token answer. The then-current
 **45,056 input + 8,192 output** VS Code allowance uses 53,248 of the 57,344
 server tokens, leaving 4,096 tokens of headroom.
 
@@ -147,7 +170,7 @@ not establish the context capacity of any other model.
 
 These are prior measurements of `OpenVINO/Qwen3.8-27B-int4-ov` on the same B60,
 using OVMS on port 8000. They are a different model/runtime configuration from
-the current Signal + Terse-Coder GGUF service. Reasoning tokens were counted in generation.
+the current Qwen3.6-27B GGUF service. Reasoning tokens were counted in generation.
 
 ### Bun speed-test quick check
 

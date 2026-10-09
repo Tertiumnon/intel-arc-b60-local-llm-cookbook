@@ -33,7 +33,7 @@ VS Code Chat (including agent mode) connects to either server as a **Custom Endp
 1. In the Chat view open the model picker → **Manage Language Models** (gear icon), or
    run **Chat: Manage Language Models** from the Command Palette.
 2. Select **Add Models** → **Custom Endpoint**. VS Code opens `chatLanguageModels.json`.
-3. Add the provider below for the running Signal + Terse-Coder model. Its model ID
+3. Add the provider below for the running Qwen3.6-27B model. Its model ID
    must match `/v1/models`.
 
 ```json
@@ -45,8 +45,8 @@ VS Code Chat (including agent mode) connects to either server as a **Custom Endp
     "apiType": "chat-completions",
     "models": [
       {
-        "id": "/models/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
-        "name": "Signal + Terse-Coder (B60)",
+        "id": "/models/qwen3.6-27b-iq4_xs.gguf",
+        "name": "Qwen3.6-27B IQ4_XS (B60)",
         "url": "http://<server-host>:8001/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
@@ -91,6 +91,10 @@ For usual coding work with the current model, use **45,056 input** and
 The client budget totals 53,248, leaving 4,096 tokens of server headroom.
 This is a practical allowance, not a claim that every request needs 45K tokens.
 Thinking tokens count toward `maxOutputTokens`.
+With this Qwen3.6 model, a 512-token coding test spent its entire allowance on
+thinking and returned no final answer. Keep a larger output cap for thinking
+requests, or send `chat_template_kwargs: {"enable_thinking": false}` for a
+short direct response ([model card](https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF)).
 
 When switching models, take the server context and client limits from the
 [Models Guide](./Intel-Arc-B60-Models.md#recommended-b60-input-and-output-limits).
@@ -111,7 +115,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="/models/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
+    model="/models/qwen3.6-27b-iq4_xs.gguf",
     messages=[{"role": "user", "content": "Hello!"}],
     temperature=0.6,
     top_p=0.95,
@@ -125,11 +129,11 @@ print(response.choices[0].message.content)
 In Open WebUI settings, add a connection to the running SYCL API:
 - **API URL**: `AI_API_URL` from `.env`
 - **API Key**: `AI_API_KEY` from `.env`
-- **Model**: `/models/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf`
+- **Model**: `/models/qwen3.6-27b-iq4_xs.gguf`
 
 ## Testing the Configuration
 1. Open a new file in VS Code
-2. Pick "Signal + Terse-Coder (B60)" in the Chat model picker and send a prompt
+2. Pick "Qwen3.6-27B IQ4_XS (B60)" in the Chat model picker and send a prompt
 3. Verify that the response comes from the llama.cpp server on port `8001`
 
 ## Troubleshooting

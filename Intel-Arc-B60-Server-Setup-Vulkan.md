@@ -105,7 +105,7 @@ inspect `sudo docker logs --tail 80 llama-cpp` if needed.
 #### Swift 1.5 Qwen3.8-27B (Vulkan comparison)
 
 The current service uses [Intel SYCL](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md)
-with Signal + Terse-Coder. To reproduce the Vulkan backend used in the
+with Qwen3.6-27B MTP IQ4_XS. To reproduce the Vulkan backend used in the
 [backend comparison](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b),
 download the Q4_K_M GGUF and run it with the same context and cache settings:
 

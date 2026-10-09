@@ -37,7 +37,7 @@ bun install   # dev-only: TypeScript types
 bun run bench
 
 # Benchmark a specific model
-bun run bench /models/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf
+bun run bench /models/qwen3.6-27b-iq4_xs.gguf
 
 # Just list the models the server exposes
 bun run list
@@ -68,21 +68,22 @@ Any of them can be overridden for one run from the shell, e.g.
 
 - `--list` — list available models and exit
 - `--no-warmup` — skip the (uncounted) warm-up run
-- `--no-reasoning` — ask the server to skip the model's chain-of-thought
-  (sends `reasoning: { effort: "none" }`), so throughput reflects only the
-  final answer
+- `--no-reasoning` — request no thinking with `reasoning: { effort: "none" }`;
+  support depends on the server and model
 
 ### Reasoning models
 
-The default model (`OpenVINO/Qwen3.8-27B-int4-ov`) is a **reasoning model**: it
+The current Qwen3.6-27B model is a **reasoning model**: it
 streams its thinking in a `reasoning_content` delta before producing the final
 answer in `content`. This script counts **both** when reporting throughput, and
 shows the reasoning token count separately (e.g. `512 tok +128 reasoning`).
 
-Token counts are exact: the script requests `stream_options: { include_usage: true }`
-and OVMS returns `usage` in the final chunk. It falls back to a whitespace estimate,
+Token counts are exact when the server returns final `usage`: the script requests
+`stream_options: { include_usage: true }`. It falls back to a whitespace estimate,
 marked `(est)`, only if a server ignores that option. Use `--no-reasoning` to
-measure only the final-answer speed. If every run shows exactly
+request final-answer-only speed; Qwen3.6's documented switch is
+`chat_template_kwargs: {"enable_thinking": false}` and this flag has not been
+validated against it. If every run shows exactly
 `SPEED_TEST_MAX_TOKENS` tokens, the output hit the limit.
 
 ## Example

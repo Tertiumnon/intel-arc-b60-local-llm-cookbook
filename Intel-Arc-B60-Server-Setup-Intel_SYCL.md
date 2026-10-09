@@ -34,13 +34,13 @@ On this host, the container listed `Intel(R) Arc(TM) Pro B60 Graphics` with
 24,480 MiB total memory. The render group GID was `109`; recheck it after an
 OS reinstall rather than assuming that number elsewhere.
 
-## Current model: Signal + Terse-Coder
+## Current model: Qwen3.6-27B MTP IQ4_XS
 
 The unit currently loads
-[`Signal + Terse-Coder Q4_K_M`](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF)
+[`Qwen3.6-27B IQ4_XS`](https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF)
 at 57,344 context, with one MTP draft token and text input. Model comparisons
 are in the [Models Guide](./Intel-Arc-B60-Models.md#better-for-coding); measured
-requests are in [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-signal--terse-coder).
+requests are in [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-qwen36-27b-mtp-iq4_xs).
 
 ## Systemd service
 
@@ -66,7 +66,7 @@ ExecStart=/usr/bin/docker run --rm --name llama-cpp \
   --health-cmd="curl -fsS http://localhost:8000/health" --health-start-period=90s \
   -p 8001:8000 -v /models/gguf:/models:ro \
   ghcr.io/ggml-org/llama.cpp:server-intel \
-  -m /models/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf --host 0.0.0.0 --port 8000 \
+  -m /models/qwen3.6-27b-iq4_xs.gguf --host 0.0.0.0 --port 8000 \
   --n-gpu-layers 999 --ctx-size 57344 \
   --cache-type-k q8_0 --cache-type-v q8_0 \
   --parallel 1 --batch-size 512 --ubatch-size 128 \
@@ -100,7 +100,7 @@ recommends **45,056 input + 8,192 output** for usual developer work on this
 server headroom. Test real agent requests before relying on the full allowance.
 
 For an uncached long prompt, allow several minutes of client timeout.
-Actual timings are in [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-signal--terse-coder).
+Actual timings are in [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-qwen36-27b-mtp-iq4_xs).
 
 ## Troubleshooting
 

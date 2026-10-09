@@ -8,7 +8,7 @@ OpenVINO exports under `/models` use the separate OVMS service on port `8000`.
 
 | Guide | Use |
 |---|---|
-| [Intel SYCL server setup](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md) | **Current service:** Signal + Terse-Coder on the 24 GB B60. |
+| [Intel SYCL server setup](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md) | **Current service:** Qwen3.6-27B MTP IQ4_XS on the 24 GB B60. |
 
 The [Models Guide](./Intel-Arc-B60-Models.md) compares model fit, context
 profiles, and practical ratings. [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md)
