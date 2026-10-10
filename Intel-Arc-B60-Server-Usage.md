@@ -28,6 +28,23 @@ new model, runs the speed test, and appends the output to the gitignored local
 Endpoint entry, then prints that entry. Existing model files stay available.
 The service helper restores the previous unit if the replacement cannot load.
 
+## Downloaded model results
+
+Measured October 10, 2026 with three runs after one warm-up, a 256-token output
+limit, and the same JavaScript prompt. RAM is the remote `llama-server` process
+RSS; GPU memory is not included.
+
+| Model | Context | Average TTFT | Generation | Peak test RAM | Process RAM HWM |
+|---|---:|---:|---:|---:|---:|
+| Signal + Terse-Coder i1-Q4_K_M | 57,344 | 543 ms | **28.53 tok/s** | 2,921 MiB | 16,650 MiB |
+| Unsloth Qwen3.6-27B IQ4_XS | 57,344 | **504 ms** | 19.32 tok/s | **2,451 MiB** | 15,748 MiB |
+| Pearson Qwen3.8-27B IQ3_M + projector | 65,536 | 919 ms | 7.75 tok/s | 3,327 MiB | **13,186 MiB** |
+
+Pearson and Unsloth used all 256 output tokens in every measured run. Signal
+finished normally with 74–202 tokens, so generation speed is more comparable
+than total request time. Signal remains selected after the tests. Full command
+output is in the local `Intel-Arc-B60-Models-Log.md`.
+
 ## Check the service
 
 ```bash

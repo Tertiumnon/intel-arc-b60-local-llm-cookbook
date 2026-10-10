@@ -1,4 +1,6 @@
 #!/usr/bin/env bun
+import { spawn } from "node:child_process";
+
 /**
  * speed-test.ts
  * Speed & latency benchmark for an OpenAI-compatible AI server
@@ -9,6 +11,7 @@
  *   - Token generation throughput     — tokens/sec after the first token
  *   - Overall throughput              — tokens/sec over the whole request
  *   - Prompt / completion token counts (from the server `usage` field)
+ *   - Remote llama-server RAM          — sampled over SSH during the request
  *
  * Runs on Bun with no dependencies: it uses the built-in `fetch` + streaming
  * to parse the SSE response.
@@ -58,6 +61,12 @@ interface RunResult {
   genTokensPerSec: number;
   overallTokensPerSec: number;
   outputPreview: string;
+  ramPeakMiB: number | null;
+  ramHighWaterMiB: number | null;
+}
+
+interface MemoryMonitor {
+  stop(): Promise<{ peakMiB: number | null; highWaterMiB: number | null }>;
 }
 
 // --- helpers ---------------------------------------------------------------
@@ -115,6 +124,32 @@ function stats(values: number[]) {
   };
 }
 
+function monitorServerMemory(): MemoryMonitor {
+  const host = Bun.env.AI_SSH_HOST?.trim();
+  if (!host) return { stop: async () => ({ peakMiB: null, highWaterMiB: null }) };
+  const script = `while :; do p=$(pgrep -x llama-server | head -1); if [ -n "$p" ]; then sed -n 's/^VmRSS:[[:space:]]*\\([0-9]*\\).*/rss \\1/p; s/^VmHWM:[[:space:]]*\\([0-9]*\\).*/hwm \\1/p' /proc/$p/status; fi; sleep 0.5; done`;
+  const child = spawn("ssh", ["-o", "BatchMode=yes", host, script], { stdio: ["ignore", "pipe", "ignore"] });
+  let output = "";
+  child.on("error", () => {});
+  child.stdout.on("data", (chunk: Buffer) => (output += chunk.toString()));
+  return {
+    stop: async () => {
+      if (child.exitCode === null && child.signalCode === null) {
+        child.kill();
+        await new Promise<void>((resolve) => child.once("close", () => resolve()));
+      }
+      const values = (name: string) =>
+        [...output.matchAll(new RegExp(`^${name} (\\d+)$`, "gm"))].map((match) => Number(match[1]) / 1024);
+      const rss = values("rss");
+      const hwm = values("hwm");
+      return {
+        peakMiB: rss.length ? Math.max(...rss) : null,
+        highWaterMiB: hwm.length ? Math.max(...hwm) : null,
+      };
+    },
+  };
+}
+
 // --- API calls -------------------------------------------------------------
 
 async function listModels(cfg: Config): Promise<string[]> {
@@ -149,6 +184,7 @@ async function runCompletion(cfg: Config): Promise<RunResult> {
   let promptTokens: number | null = null;
   let completionTokens: number | null = null;
   let reasoningTokens: number | null = null;
+  const memory = monitorServerMemory();
 
   const body: Record<string, unknown> = {
     model: cfg.model,
@@ -163,28 +199,29 @@ async function runCompletion(cfg: Config): Promise<RunResult> {
   // Ask the server to skip it when --no-reasoning is set.
   if (cfg.noReasoning) body.reasoning = { effort: "none" };
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${cfg.apiKey}`,
-    },
-    body: JSON.stringify(body),
-    signal: controller.signal,
-  });
-
-  if (!res.ok || !res.body) {
-    const body = await res.text().catch(() => "");
-    clearTimeout(timer);
-    throw new Error(`POST /chat/completions failed: HTTP ${res.status} ${res.statusText} — ${body.slice(0, 500)}`);
-  }
-
-  // Parse the Server-Sent-Events stream.
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let buffer = "";
-
+  let ramPeakMiB: number | null = null;
+  let ramHighWaterMiB: number | null = null;
   try {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${cfg.apiKey}`,
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+
+    if (!res.ok || !res.body) {
+      const responseBody = await res.text().catch(() => "");
+      throw new Error(`POST /chat/completions failed: HTTP ${res.status} ${res.statusText} — ${responseBody.slice(0, 500)}`);
+    }
+
+    // Parse the Server-Sent-Events stream.
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = "";
+
     for (;;) {
       const { done, value } = await reader.read();
       if (done) break;
@@ -228,6 +265,7 @@ async function runCompletion(cfg: Config): Promise<RunResult> {
     }
   } finally {
     clearTimeout(timer);
+    ({ peakMiB: ramPeakMiB, highWaterMiB: ramHighWaterMiB } = await memory.stop());
   }
 
   const totalMs = performance.now() - start;
@@ -252,6 +290,8 @@ async function runCompletion(cfg: Config): Promise<RunResult> {
     genTokensPerSec: estTokens / (genMs / 1000),
     overallTokensPerSec: estTokens / (totalMs / 1000),
     outputPreview: content.slice(0, 120).replace(/\s+/g, " ").trim(),
+    ramPeakMiB,
+    ramHighWaterMiB,
   };
 }
 
@@ -272,11 +312,12 @@ function printRun(i: number, r: RunResult, label: string): void {
   // Show the server-reported count when available, else the whitespace estimate.
   const tok = r.completionTokens !== null ? `${r.completionTokens} tok` : `${r.estTokens} tok (est)`;
   const reasoning = r.reasoningTokens !== null ? ` +${r.reasoningTokens} reasoning` : "";
+  const ram = r.ramPeakMiB === null ? "" : ` | RAM ${fmt(r.ramPeakMiB, 0)} MiB peak (${fmt(r.ramHighWaterMiB ?? r.ramPeakMiB, 0)} MiB process HWM)`;
   console.log(
     `  [${label}] run ${i}: TTFT ${fmt(r.ttftMs, 0)}ms | ` +
       `${fmt(r.genTokensPerSec)} tok/s (gen) | ` +
       `${fmt(r.overallTokensPerSec)} tok/s (total) | ` +
-      `${tok}${reasoning} | ${fmt(r.totalMs, 0)}ms`
+      `${tok}${reasoning} | ${fmt(r.totalMs, 0)}ms${ram}`
   );
 }
 
@@ -284,6 +325,7 @@ function printSummary(results: RunResult[]): void {
   const ttft = results.map((r) => r.ttftMs);
   const gen = results.map((r) => r.genTokensPerSec);
   const total = results.map((r) => r.overallTokensPerSec);
+  const ram = results.flatMap((r) => (r.ramPeakMiB === null ? [] : [r.ramPeakMiB]));
   const s = (arr: number[]) => stats(arr);
 
   console.log("\n----------------------------");
@@ -291,6 +333,7 @@ function printSummary(results: RunResult[]): void {
   console.log(`  TTFT            : min ${fmt(s(ttft).min, 0)}ms | avg ${fmt(s(ttft).avg, 0)}ms | max ${fmt(s(ttft).max, 0)}ms`);
   console.log(`  Gen throughput  : min ${fmt(s(gen).min)} | avg ${fmt(s(gen).avg)} | max ${fmt(s(gen).max)} tok/s`);
   console.log(`  Overall tok/s   : min ${fmt(s(total).min)} | avg ${fmt(s(total).avg)} | max ${fmt(s(total).max)} tok/s`);
+  if (ram.length) console.log(`  Peak process RAM: max ${fmt(s(ram).max, 0)} MiB`);
   console.log("");
 }
 

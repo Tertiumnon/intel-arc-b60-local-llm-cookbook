@@ -10,6 +10,7 @@ Recorded measurements are in the
 It measures, per run:
 
 - **Time To First Token (TTFT)** — request latency
+- **Peak llama-server RAM** — sampled over SSH during each request
 - **Token generation throughput** — tokens/sec after the first token
 - **Overall throughput** — tokens/sec across the whole request
 - **Prompt / completion token counts**: exact, from the server `usage` field
@@ -54,6 +55,7 @@ use the defaults below unless overridden there.
 |---------------------------|-----------------------------------------------|
 | `AI_API_URL`              | Base URL of the OpenAI-compatible API         |
 | `AI_API_KEY`              | API key                                       |
+| `AI_SSH_HOST`             | SSH alias used for optional RAM sampling      |
 | `SPEED_TEST_MODEL`        | Model name (empty = first from `/models`)     |
 | `SPEED_TEST_ITERATIONS`   | Measured runs                                 |
 | `SPEED_TEST_MAX_TOKENS`   | Max output tokens                             |
@@ -63,6 +65,9 @@ use the defaults below unless overridden there.
 
 Any of them can be overridden for one run from the shell, e.g.
 `SPEED_TEST_ITERATIONS=5 bun run bench`.
+
+When `AI_SSH_HOST` is set, the benchmark samples the remote `llama-server`
+process every 500 ms and reports peak RSS and its lifetime high-water mark.
 
 ### Flags
 
