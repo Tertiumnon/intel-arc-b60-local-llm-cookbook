@@ -3,7 +3,7 @@
 ## Overview
 This guide compares models for Intel Arc Pro B60 GPUs, with recommendations for coding, chat, and image tasks. The primary workload is **refactoring and implementing large JS/Node.js projects**. For that work, quality matters more than raw speed.
 
-> **Last updated:** October 8, 2026
+> **Last updated:** October 9, 2026
 
 For current serving steps, see the [Intel SYCL Usage guide](./Intel-Arc-B60-Server-Usage.md).
 For connecting clients, see the [Clients Guide](./Intel-Arc-B60-Clients.md).

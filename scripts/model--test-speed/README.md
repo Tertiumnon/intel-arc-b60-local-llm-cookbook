@@ -68,9 +68,8 @@ Any of them can be overridden for one run from the shell, e.g.
 
 - `--list` — list available models and exit
 - `--no-warmup` — skip the (uncounted) warm-up run
-- `--no-reasoning` — ask the server to skip the model's chain-of-thought
-  (sends `reasoning: { effort: "none" }`), so throughput reflects only the
-  final answer
+- `--no-reasoning` — request no thinking with `reasoning: { effort: "none" }`;
+  support depends on the server and model
 
 ### Reasoning models
 
@@ -81,7 +80,9 @@ throughput, and shows the reasoning token count separately when available.
 Token counts are exact: the script requests `stream_options: { include_usage: true }`
 and a compatible server returns `usage` in the final chunk. It falls back to a whitespace estimate,
 marked `(est)`, only if a server ignores that option. Use `--no-reasoning` to
-measure only the final-answer speed. If every run shows exactly
+request final-answer-only speed; Qwen3.6's documented switch is
+`chat_template_kwargs: {"enable_thinking": false}` and this flag has not been
+validated against it. If every run shows exactly
 `SPEED_TEST_MAX_TOKENS` tokens, the output hit the limit.
 
 ## Example
