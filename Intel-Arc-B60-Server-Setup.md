@@ -1,7 +1,7 @@
 # Intel Arc Pro B60 Setup
 
 This is the entry point for the 24 GB B60 guides. The Ubuntu 26.04 host serves
-**Signal + Terse-Coder** through llama.cpp with Intel SYCL on port `8001`.
+one GGUF model through llama.cpp with Intel SYCL on port `8001`.
 OpenVINO Model Server (OVMS) is installed on port `8000` but disabled. Its
 service and configuration remain available. Use the SYCL API for current GGUF
 models; this repository has more successful B60 coding runs on SYCL than on the

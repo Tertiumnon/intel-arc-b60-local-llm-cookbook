@@ -1,1 +1,0 @@
-{"compilerOptions":{"target":"ESNext","module":"ESNext","moduleResolution":"Bundler","lib":["ESNext"],"types":["bun"],"strict":true,"noEmit":true,"skipLibCheck":true},"include":["speed-test.ts"]}

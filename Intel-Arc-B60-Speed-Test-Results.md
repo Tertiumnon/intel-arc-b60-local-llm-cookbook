@@ -4,8 +4,8 @@ This page collects measured results from this server and published model
 benchmarks. The local server results were recorded in October 2026 on one
 Intel Arc Pro B60 with 24 GB VRAM. Published model scores use different
 harnesses and runtimes; they are not measurements of the GGUF files on this B60.
-The current service runs Signal + Terse-Coder; later sections cover earlier models.
-For commands and tools, see the [speed-test README](./scripts/speed-test/README.md).
+Results below are historical measurements, not the live service configuration.
+For commands and tools, see the [speed-test README](./scripts/model--test-speed/README.md).
 
 ## Local llama.cpp: Signal + Terse-Coder
 
@@ -13,7 +13,7 @@ Measured October 8, 2026 on the Intel SYCL service with the
 [i1-Q4_K_M GGUF](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF)
 (16,810,715,712 bytes), Q8 KV cache, one slot, and one MTP draft token. The
 model was loaded on the B60 without a vision projector. The first checks used
-49,152 context; the current service uses 57,344.
+49,152 context; a later check used 57,344.
 
 | Request | Prompt / completion tokens | Result | End-to-end time |
 |---|---:|---|---:|
@@ -24,9 +24,9 @@ model was loaded on the B60 without a vision projector. The first checks used
 
 These checks establish loading, basic coding output, tool-call formatting, and
 two long-input capacity results. They do not rank coding quality against the
-previous models or measure a full 8,192-token answer. The current
-**45,056 input + 8,192 output** VS Code allowance uses 53,248 of the 57,344
-server tokens, leaving 4,096 tokens of headroom.
+previous models or measure a full 8,192-token answer. A
+**45,056 input + 8,192 output** client allowance used 53,248 of the 57,344
+server tokens, leaving 4,096 tokens of headroom in this test.
 
 ## Local llama.cpp: Qwen3.8-27B imatrix IQ3_M
 
@@ -147,7 +147,7 @@ not establish the context capacity of any other model.
 
 These are prior measurements of `OpenVINO/Qwen3.8-27B-int4-ov` on the same B60,
 using OVMS on port 8000. They are a different model/runtime configuration from
-the current Signal + Terse-Coder GGUF service. Reasoning tokens were counted in generation.
+the GGUF results above. Reasoning tokens were counted in generation.
 
 ### Bun speed-test quick check
 

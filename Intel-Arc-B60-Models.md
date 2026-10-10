@@ -126,15 +126,15 @@ when an exact entry was found. “Not listed” is not a zero score.
 | [Kimi-Linear-48B-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-Linear-48B-A3B-Instruct) | [IQ3_XS imatrix GGUF](https://huggingface.co/mradermacher/Kimi-Linear-48B-A3B-Instruct-i1-GGUF/tree/main) ~20.2 GB | Tight; start at 4K; B60 Vulkan untested | Long-context linear-attention MoE experiment. Lower-bit weights and limited headroom make quality and fit checks essential. | **4** | **4** | **3** | Not listed |
 
 For a quick personal comparison, send the same ordinary chat prompt to each model and
-compare answer quality, latency, and how much context you need. The [llama.cpp setup
-guide](./Intel-Arc-B60-Server-Setup-Vulkan.md) includes model download and launch commands.
+compare answer quality, latency, and how much context you need. The [Usage
+guide](./Intel-Arc-B60-Server-Usage.md) covers download and selection on SYCL.
 
 ### Better for coding
 
 | Model | B60 option | Fit and starting point | Assessment | Quality /5 | Speed /5 | Balance /5 | Arena user rating* |
 |---|---|---|---|---:|---:|---:|---|
 | [Swift 1.5 Qwen3.8-27B](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GGUF) | Q4_K_M GGUF (~17.4 GB) | Previously served at 49,152 context; long input verified ([results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b)) | Coding fine-tune of Qwen3.8-27B. Publisher coding scores are in the [results](./Intel-Arc-B60-Speed-Test-Results.md#published-coding-benchmark-scores); local GGUF coding quality is unmeasured. | **5** | **2** | **3** | Not listed |
-| [Signal + Terse-Coder](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF) (current) | i1-Q4_K_M GGUF (16.8 GB) | 57,344 served; 44,856-token prompt completed | Coding fine-tune with shorter reasoning; led local variants in one [469-question user comparison](https://www.reddit.com/r/LocalLLaMA/comments/1x0gaqv/comparing_qwen3827b_finetunes_and_baselining_vs/). | — | — | — | Not listed |
+| [Signal + Terse-Coder](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF) | i1-Q4_K_M GGUF (16.8 GB) | 57,344 served; 44,856-token prompt completed | Coding fine-tune with shorter reasoning; led local variants in one [469-question user comparison](https://www.reddit.com/r/LocalLLaMA/comments/1x0gaqv/comparing_qwen3827b_finetunes_and_baselining_vs/). | — | — | — | Not listed |
 | [Qwen3.8-27B-pi](https://huggingface.co/bytkim/Qwen3.8-27B-pi-GGUF) | Q4_K_M GGUF (~16.5 GB); optional MTP draft ~2.0 GB | Start at 4K without draft; B60 untested | Fine-tuned on Pi coding-agent sessions; publisher reports fewer output tokens at matched task success. | — | — | — | Not listed |
 | [ThinkingCap Qwen3.8-27B](https://huggingface.co/bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF) | IQ4_XS GGUF (~15.5 GB) | Start at 4K; B60 untested | Publisher reports 37% fewer reasoning tokens with a small accuracy loss; [commercial use is restricted](https://huggingface.co/bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF#license). | — | — | — | Not listed |
 | **[Qwen3.8-27B imatrix IQ3_M](https://huggingface.co/pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF)** | IQ3_M GGUF (~12.1 GiB) + Q8_0 projector (629 MB) | Previously served at 65,536; synthetic 42K input fit | Good coding quality, but slow responses (user report). Publisher rates this quant 2/5; no controlled local quality comparison. | — | — | — | [Base-model rating](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
@@ -190,8 +190,8 @@ and [launch recipe](./Intel-Arc-B60-Server-Setup-Vulkan.md#cloudflareclef-flash-
 
 ### Recommended B60 input and output limits
 
-For usual coding work, configure the current Signal + Terse-Coder GGUF on the
-Intel SYCL service as follows:
+For coding work, choose client limits from the context that the selected GGUF
+actually loads on the Intel SYCL service. This is one tested example:
 
 | Server context | VS Code `maxInputTokens` | VS Code `maxOutputTokens` | Client total | Server headroom |
 |---:|---:|---:|---:|---:|
@@ -203,8 +203,8 @@ instructions, tools, history, and repository content; thinking consumes the
 output allowance. The server's `--ctx-size` must cover both, with room for
 chat-template and tokenizer differences. See the
 [llama.cpp server reference](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md).
-This is the current one-slot B60 profile, not a measured limit for other GGUFs.
-Check a new model on SYCL before reusing it. Historical context tests are in
+This example used one server slot. Check a new model on SYCL before reusing
+these limits. Historical context tests are in
 [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md).
 
 ### llama.cpp model launch settings

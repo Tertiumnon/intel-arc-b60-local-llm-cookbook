@@ -1,6 +1,6 @@
 # Intel Arc B60 llama.cpp Server Setup: Intel SYCL
 
-This guide documents the **current** Ubuntu 26.04 llama.cpp service on the
+This guide documents an Ubuntu 26.04 llama.cpp service on the
 Intel Arc Pro B60 (24 GB VRAM). It serves a GGUF model through Intel's SYCL
 backend at `http://<server-ip>:8001/v1`. Models live on the host in
 `/models/gguf` and are mounted read-only at `/models` in Docker. The
@@ -34,20 +34,12 @@ On this host, the container listed `Intel(R) Arc(TM) Pro B60 Graphics` with
 24,480 MiB total memory. The render group GID was `109`; recheck it after an
 OS reinstall rather than assuming that number elsewhere.
 
-## Current model: Signal + Terse-Coder
-
-The unit currently loads
-[`Signal + Terse-Coder Q4_K_M`](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF)
-at 57,344 context, with one MTP draft token and text input. Model comparisons
-are in the [Models Guide](./Intel-Arc-B60-Models.md#better-for-coding); measured
-requests are in [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-signal--terse-coder).
-
 ## Systemd service
 
-This is a new-host recipe for the current unit. On the existing host, edit the
-saved unit through the [Usage guide](./Intel-Arc-B60-Server-Usage.md) so its other
-settings stay intact. The render GID here is `109`; check `getent group render`
-on another host.
+This is a new-host recipe. Replace `MODEL.gguf` and `CONTEXT_TOKENS` with the
+selected file and a context that fits in VRAM. On an existing host, edit the
+saved unit through the [Usage guide](./Intel-Arc-B60-Server-Usage.md).
+The render GID here is `109`; check `getent group render` on your host.
 
 ```bash
 sudo tee /etc/systemd/system/llama-cpp.service >/dev/null <<'EOF'
@@ -66,12 +58,11 @@ ExecStart=/usr/bin/docker run --rm --name llama-cpp \
   --health-cmd="curl -fsS http://localhost:8000/health" --health-start-period=90s \
   -p 8001:8000 -v /models/gguf:/models:ro \
   ghcr.io/ggml-org/llama.cpp:server-intel \
-  -m /models/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf --host 0.0.0.0 --port 8000 \
-  --n-gpu-layers 999 --ctx-size 57344 \
+  -m /models/MODEL.gguf --host 0.0.0.0 --port 8000 \
+  --n-gpu-layers 999 --ctx-size CONTEXT_TOKENS \
   --cache-type-k q8_0 --cache-type-v q8_0 \
   --parallel 1 --batch-size 512 --ubatch-size 128 \
-  --temp 0.6 --top-p 0.95 --top-k 20 \
-  --spec-type draft-mtp --spec-draft-n-max 1 --jinja
+  --jinja
 ExecStop=/usr/bin/docker stop llama-cpp
 
 [Install]
@@ -90,17 +81,15 @@ verification and logs.
 
 When model loading or inference fails because of memory pressure, stop other
 GPU workloads and keep `--parallel 1`. Lower `--ctx-size` if the model cannot
-load at 57,344. Reduce `--batch-size` if prompt-processing buffers are the
+load. Reduce `--batch-size` if prompt-processing buffers are the
 issue. Keep Q8 KV cache unless testing a smaller supported cache type. Reduce
 `--n-gpu-layers` only when the model cannot otherwise load; CPU offload can
 slow generation sharply.
-The [Clients Guide](./Intel-Arc-B60-Clients.md#choosing-maxinputtokens--maxoutputtokens)
-recommends **45,056 input + 8,192 output** for usual developer work on this
-57,344-token server. The 53,248-token client budget leaves 4,096 tokens of
-server headroom. Test real agent requests before relying on the full allowance.
+Set client input and output limits below the loaded context, with room for chat
+formatting. See the [Clients Guide](./Intel-Arc-B60-Clients.md#choosing-maxinputtokens--maxoutputtokens).
 
 For an uncached long prompt, allow several minutes of client timeout.
-Actual timings are in [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-signal--terse-coder).
+Historical timings are in [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md).
 
 ## Troubleshooting
 

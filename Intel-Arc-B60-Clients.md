@@ -27,14 +27,16 @@ This setup works with:
 
 ## VS Code AI Configuration
 
-VS Code Chat (including agent mode) connects to either server as a **Custom Endpoint**.
+VS Code Chat (including agent mode) connects to the SYCL API as a **Custom Endpoint**.
+The [model command](./Intel-Arc-B60-Server-Usage.md#download-switch-and-test)
+updates the local endpoint automatically. Use the steps below for manual setup.
 
 ### Configure Custom Endpoint
 1. In the Chat view open the model picker → **Manage Language Models** (gear icon), or
    run **Chat: Manage Language Models** from the Command Palette.
 2. Select **Add Models** → **Custom Endpoint**. VS Code opens `chatLanguageModels.json`.
-3. Add the provider below for the running Signal + Terse-Coder model. Its model ID
-   must match `/v1/models`.
+3. Add the provider below. Copy the model ID from `/v1/models` and set limits
+   for the loaded server context.
 
 ```json
 [
@@ -45,20 +47,14 @@ VS Code Chat (including agent mode) connects to either server as a **Custom Endp
     "apiType": "chat-completions",
     "models": [
       {
-        "id": "/models/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
-        "name": "Signal + Terse-Coder (B60)",
+        "id": "/models/MODEL.gguf",
+        "name": "Arc B60 model",
         "url": "http://<server-host>:8001/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
-        "thinking": true,
         "streaming": true,
         "maxInputTokens": 45056,
-        "maxOutputTokens": 8192,
-        "modelOptions": {
-          "temperature": 0.6,
-          "top_p": 0.95,
-          "top_k": 20
-        }
+        "maxOutputTokens": 8192
       }
     ]
   }
@@ -74,7 +70,8 @@ Notes:
 - `vendor` must be **`customendpoint`**. With `vendor: openai`, VS Code ignores
   `maxInputTokens`/`maxOutputTokens` ([vscode#322216](https://github.com/microsoft/vscode/issues/322216)).
 - The model `url` is the **full path** including `/v1/chat/completions`.
-- The `id` must match the active server's `/models` response exactly.
+- The `id` must match the active server's `/models` response exactly. Set
+  `toolCalling`, `vision`, and `thinking` to match capabilities you tested.
 - Don't commit `chatLanguageModels.json` to a repository.
 
 ### Choosing `maxInputTokens` / `maxOutputTokens`
@@ -86,15 +83,13 @@ content. Thinking tokens count toward the output cap. Leave some space between t
 sum of both caps and the server's context for chat-template tokens and counting
 differences.
 
-For usual coding work with the current model, use **45,056 input** and
-**8,192 output** tokens with the SYCL server's **57,344-token** context.
-The client budget totals 53,248, leaving 4,096 tokens of server headroom.
-This is a practical allowance, not a claim that every request needs 45K tokens.
-Thinking tokens count toward `maxOutputTokens`.
+The example uses **45,056 input** and **8,192 output** tokens, which totals
+53,248. It leaves 4,096 tokens of headroom if the server loads at 57,344
+context. Use lower limits for a smaller context, or adjust them after a real
+agent request succeeds. Thinking tokens count toward `maxOutputTokens`.
 
-When switching models, take the server context and client limits from the
-[Models Guide](./Intel-Arc-B60-Models.md#recommended-b60-input-and-output-limits).
-Check the live server context and memory before advertising an untested profile.
+When switching models, check the live server context in `/v1/models` and
+memory before advertising an untested profile.
 If a reasoning answer is cut off, increase server context or lower input before
 raising `maxOutputTokens`. With parallel requests, KV cache capacity is shared.
 
@@ -111,12 +106,9 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="/models/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
+    model=os.environ["AI_MODEL_ID"],
     messages=[{"role": "user", "content": "Hello!"}],
-    temperature=0.6,
-    top_p=0.95,
-    max_tokens=8192,
-    extra_body={"top_k": 20},
+    max_tokens=2048,
 )
 print(response.choices[0].message.content)
 ```
@@ -125,11 +117,11 @@ print(response.choices[0].message.content)
 In Open WebUI settings, add a connection to the running SYCL API:
 - **API URL**: `AI_API_URL` from `.env`
 - **API Key**: `AI_API_KEY` from `.env`
-- **Model**: `/models/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf`
+- **Model**: the exact ID from `/v1/models`
 
 ## Testing the Configuration
 1. Open a new file in VS Code
-2. Pick "Signal + Terse-Coder (B60)" in the Chat model picker and send a prompt
+2. Pick your configured B60 model in the Chat model picker and send a prompt
 3. Verify that the response comes from the llama.cpp server on port `8001`
 
 ## Troubleshooting
@@ -139,6 +131,9 @@ In Open WebUI settings, add a connection to the running SYCL API:
   `curl -i "${AI_API_URL%/v1}/health"` and retry after it returns HTTP 200.
 - **Connection refused**: Ensure `llama-cpp.service` is running and port `8001` is reachable.
 - **Model not found**: Verify the model name matches exactly what's configured in your service
+- **“Sorry, no response was returned” after a long wait**: inspect the server
+  log for request errors and reduce `maxInputTokens` if prefill is taking too
+  long. A successful direct API request does not verify VS Code's streaming path.
 - **Network issues**: Confirm `AI_SERVER_HOST` in `.env` is correct for your setup
 
 ### Verification Steps

@@ -2,7 +2,7 @@
 /**
  * speed-test.ts
  * Speed & latency benchmark for an OpenAI-compatible AI server
- * (OpenVINO Model Server / OVMS) on the Intel Arc B60 box.
+ * on the Intel Arc B60 box.
  *
  * What it measures per run:
  *   - Time To First Token (TTFT)      — request latency
@@ -13,16 +13,15 @@
  * Runs on Bun with no dependencies: it uses the built-in `fetch` + streaming
  * to parse the SSE response.
  *
- * Usage (from this folder):
+ * Usage (from the repository root):
  *   bun run bench [model]
  *   bun run list
  *
- * All settings come from the repo-root .env (see .env.example) — nothing is
- * hardcoded here:
+ * API settings come from the repo-root .env (see .env.example):
  *   AI_API_URL              base URL (required)
  *   AI_API_KEY              API key (required)
  *   SPEED_TEST_MODEL        model name (empty = first model from /models)
- *   SPEED_TEST_ITERATIONS   measured runs
+ *   SPEED_TEST_ITERATIONS   measured runs (default 3)
  *   SPEED_TEST_MAX_TOKENS   max output tokens
  *   SPEED_TEST_TEMPERATURE  sampling temperature
  *   SPEED_TEST_PROMPT       prompt text
@@ -75,8 +74,8 @@ function env(name: string): string {
   return v;
 }
 
-function envNum(name: string): number {
-  const n = Number(env(name));
+function envNum(name: string, fallback: number): number {
+  const n = Number(Bun.env[name] || fallback);
   if (!Number.isFinite(n)) throw new Error(`${name} must be a number, got "${Bun.env[name]}"`);
   return n;
 }
@@ -88,11 +87,11 @@ function resolveConfig(argv: string[]): Config {
     baseUrl: env("AI_API_URL").replace(/\/+$/, ""),
     model: modelArg ?? Bun.env.SPEED_TEST_MODEL ?? "",
     apiKey: env("AI_API_KEY"),
-    iterations: Math.max(1, Math.round(envNum("SPEED_TEST_ITERATIONS"))),
-    maxTokens: Math.max(1, Math.round(envNum("SPEED_TEST_MAX_TOKENS"))),
-    temperature: envNum("SPEED_TEST_TEMPERATURE"),
-    prompt: env("SPEED_TEST_PROMPT"),
-    timeoutMs: envNum("SPEED_TEST_TIMEOUT_MS"),
+    iterations: Math.max(1, Math.round(envNum("SPEED_TEST_ITERATIONS", 3))),
+    maxTokens: Math.max(1, Math.round(envNum("SPEED_TEST_MAX_TOKENS", 256))),
+    temperature: envNum("SPEED_TEST_TEMPERATURE", 0.7),
+    prompt: Bun.env.SPEED_TEST_PROMPT || "Write a concise JavaScript function that sorts unique numbers.",
+    timeoutMs: envNum("SPEED_TEST_TIMEOUT_MS", 120000),
     listOnly: argv.includes("--list"),
     noWarmup: argv.includes("--no-warmup"),
     noReasoning: argv.includes("--no-reasoning"),

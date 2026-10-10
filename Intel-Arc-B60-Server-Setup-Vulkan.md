@@ -105,7 +105,7 @@ inspect `sudo docker logs --tail 80 llama-cpp` if needed.
 #### Swift 1.5 Qwen3.8-27B (Vulkan comparison)
 
 The current service uses [Intel SYCL](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md)
-with Signal + Terse-Coder. To reproduce the Vulkan backend used in the
+for GGUF models. To reproduce the Vulkan backend used in the
 [backend comparison](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b),
 download the Q4_K_M GGUF and run it with the same context and cache settings:
 
@@ -522,7 +522,6 @@ llama.cpp's API. Use a controlled prompt size and one request first; run long-co
 tests separately for each model.
 
 ```bash
-cd scripts/speed-test
 AI_API_URL='http://<server-ip>:8001/v1' bun run bench
 ```
 
@@ -566,5 +565,5 @@ models listed in the Models guide on this 24 GB Linux setup.
 - [llama.cpp Docker images](https://github.com/ggml-org/llama.cpp/pkgs/container/llama.cpp)
 - [Intel Arc B60 Models Guide](./Intel-Arc-B60-Models.md)
 - [Intel Arc B60 Server Setup Guide](./Intel-Arc-B60-Server-Setup.md)
-- [Speed test instructions](./scripts/speed-test/README.md)
+- [Speed test instructions](./scripts/model--test-speed/README.md)
 - [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md)

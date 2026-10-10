@@ -5,67 +5,44 @@ on port `8001`; **OpenVINO Model Server** is installed but disabled on port
 `8000`. Both systemd units and their model files are kept. For first-time
 backend setup, see [Server Setup](./Intel-Arc-B60-Server-Setup.md).
 
-Run the following on the Ubuntu server. Keep its SSH host and user in your
-local `.env` (see [.env.example](./.env.example)).
+Use the [one-time SSH and helper setup](./scripts/model--download-and-test/README.md)
+first. Then run model changes from the repository root on your computer.
 
-## Download a GGUF
+## Download, switch, and test
 
-Find the exact file name in its Hugging Face repository, then set these two
-values. This example downloads the current Signal + Terse-Coder build; replace
-both values for another model.
-
-```bash
-repo=mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF
-file=Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf
-df -h /models
-cd /models/gguf
-curl -fL --retry 5 -C - -o "$file" \
-  "https://huggingface.co/$repo/resolve/main/$file"
-```
-
-Compare `sha256sum "$file"` with the file's SHA-256 on Hugging Face before
-switching the service. Keep the previous GGUF until the replacement works.
-
-## Select and restart
+Set `HF_MODEL_REPO`, `HF_MODEL_FILE`, and `MODEL_CONTEXT_TOKENS` in local
+`.env` (see [.env.example](./.env.example)). Set `MODEL_MTP=1` only if the
+GGUF contains an MTP draft head. For images, also set `HF_MMPROJ_REPO` and
+`HF_MMPROJ_FILE` to a matching projector.
 
 ```bash
-sudoedit /etc/systemd/system/llama-cpp.service
-# Change -m /models/<file>.gguf and --ctx-size for the new model.
-sudo systemd-analyze verify /etc/systemd/system/llama-cpp.service
-sudo systemctl daemon-reload
-sudo systemctl restart llama-cpp.service
+bun scripts/model--download-and-test/model--download-and-test.ts
 ```
 
-The host path `/models/gguf/<file>.gguf` becomes `/models/<file>.gguf` inside
-the container. Remove `--spec-type draft-mtp --spec-draft-n-max 1` if the new
-GGUF lacks an MTP head. Remove an old `--mmproj` path; add the new model's
-matching projector only when using images. Choose context and client limits
-from the [Models Guide](./Intel-Arc-B60-Models.md#recommended-b60-input-and-output-limits).
+`bun run model` is the shorter equivalent after the one-time `bun install`.
+
+The command downloads through `hf`, names the server file
+`<repo-owner>__<filename>`, switches the single SYCL service, waits for the
+new model, runs the speed test, and appends the output to the gitignored local
+`Intel-Arc-B60-Models-Log.md`. It updates `.env` and the VS Code Custom
+Endpoint entry, then prints that entry. Existing model files stay available.
+The service helper restores the previous unit if the replacement cannot load.
+
+## Check the service
 
 ```bash
-systemctl status llama-cpp.service --no-pager
-curl -f http://localhost:8001/health
-curl -s http://localhost:8001/v1/models
+ssh your-ssh-alias 'systemctl is-active llama-cpp.service openvino-model-server.service'
+bun run list
 ```
 
-Large models can return HTTP 503 while loading. If startup fails, inspect
-`sudo journalctl -u llama-cpp.service -n 100 --no-pager`. Copy the exact model
-ID from `/v1/models` into your [client settings](./Intel-Arc-B60-Clients.md).
+If a model fails to load, inspect `ssh your-ssh-alias 'journalctl -u
+llama-cpp.service -n 100 --no-pager'`. Large models can return HTTP 503 while
+loading. The [Clients Guide](./Intel-Arc-B60-Clients.md) explains the VS Code
+limits calculated from the configured context.
 
 ## Service state
 
-```bash
-systemctl is-enabled llama-cpp.service openvino-model-server.service
-systemctl is-active llama-cpp.service openvino-model-server.service
-```
-
-The expected state is `enabled / disabled` and `active / inactive`, in that
-order. To keep OVMS off while using llama.cpp:
-
-```bash
-sudo systemctl disable --now openvino-model-server.service
-sudo systemctl enable --now llama-cpp.service
-```
+The expected state is `active / inactive` for llama.cpp and OVMS, in that order.
 
 The preserved [OpenVINO service](./Intel-Arc-B60-OpenVINO.md) is for historical
 reference. Use the SYCL API on port `8001` for current model work.
