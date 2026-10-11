@@ -1,170 +1,98 @@
 # Intel Arc B60 Speed Test and Benchmark Results
 
-This page collects measured results from this server and published model
-benchmarks. The local server results were recorded in October 2026 on one
-Intel Arc Pro B60 with 24 GB VRAM. Published model scores use different
-harnesses and runtimes; they are not measurements of the GGUF files on this B60.
-Results below are historical measurements, not the live service configuration.
-For commands and tools, see the [speed-test README](./scripts/model--test-speed/README.md).
+One Intel Arc Pro B60, 24 GB VRAM. Local rows are October 2026 measurements;
+published model and community rows use other machines or test methods. Values
+from different prompts, caches, and runtimes are not head-to-head rankings.
+For commands, see the [speed-test README](./scripts/model--test-speed/README.md).
 
-## Local llama.cpp: Qwen3.6-27B MTP IQ4_XS
+## Local Strata: Qwen3.8-Flash-Next Coder IQ1_M
 
-Measured October 9, 2026 on the Intel SYCL service with the
-[Unsloth IQ4_XS GGUF](https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF)
-(15,705,859,200 bytes). The service used a 57,344-token context, Q8 key/value
-cache, one slot, and one MTP draft token. It loaded without a vision projector.
-`/v1/models` reported `/models/qwen3.6-27b-iq4_xs.gguf` and a 262,144-token
-trained context.
+October 11, 2026; Strata 0.1.43, SYCL on one Arc Pro B60, 30.2 GiB host RAM,
+131,072 context, one slot, 8-bit KV, thinking off, temperature 0. Strata's
+`bench.sh` used the already loaded model; startup time is excluded. One warm-up
+chat and a 1K prompt were discarded. Prompt and decode rates come from engine
+timings; TTFT is measured by the HTTP client.
 
-| Request | Prompt / completion tokens | Result | End-to-end time |
-|---|---:|---|---:|
-| Reply exactly `READY`, thinking on | 15 / 95 | Returned `READY`, `finish_reason=stop` | About 7 s including model lookup |
-| Short JavaScript function, thinking on, `max_tokens=512` | 28 / 512 | Output allowance ended during thinking; no final code | 27.05 s |
-| Same function, thinking off, `max_tokens=512` | 30 / 43 | Returned a `sumEven` implementation, `finish_reason=stop` | 2.86 s |
-| `get_time` tool request | 284 / 189 | Returned a valid call with `Europe/Belgrade`, `finish_reason=tool_calls` | 15.55 s |
-| Repeated-code prompt, `max_tokens=1024` | 44,821 / 104; zero prompt tokens cached | Returned `READY`, `finish_reason=stop` | 326.38 s |
+| Workload | Prompt tokens | Requests | Prompt speed, median (range) | Decode speed, median (range) | TTFT, median (range) |
+|---|---:|---:|---:|---:|---:|
+| Short chat, up to 100 output tokens | 46 (43–51) | 9 | — | **28.2 tok/s** (19.4–34.2) | 0.94 s (0.91–0.97) |
+| Fresh 4K prompt, 24 output token cap | 4,019 | 3 | **1,070.5 tok/s** (296.1–1,070.8) | — | 3.80 s (3.80–13.62) |
+| Fresh 16K prompt, 24 output token cap | 16,058 | 3 | **1,064.1 tok/s** (848.9–1,064.3) | — | 15.14 s (15.14–18.97) |
+| Agent follow-up turns, up to 64 output tokens | ~14,397 at last turn | 15 turns in 3 sessions | — | **39.1 tok/s** (28.6–49.6) | 3.72 s (2.47–19.35) |
 
-The long prompt repeated `function add(a, b) { return a + b; }` 3,200 times.
-This verifies an input close to the 45,056-token VS Code limit on this service.
-It does not test a full 8,192-token output or real agent tool traffic at that
-context. Thinking tokens count against the output cap; for short direct answers,
-the model card documents `chat_template_kwargs: {"enable_thinking": false}`.
+| Agent session metric | Median (range) |
+|---|---:|
+| Follow-up prompt cache hit | 68.68% (68.52–68.68%) |
+| Earlier-turn tokens read again per session | 4 (3–74) |
+| First turn TTFT, no cache | 1.58 s (1.58–3.41) |
 
-## Local llama.cpp: Signal + Terse-Coder
+The agent workload used four tools and six turns per session. The benchmark
+measured speed only, not answer correctness; the first 4K run was much slower
+than the next two. Its report remains on the server at
+`/models/Strata/bench/results/2026-10-11-community-arc-gpu-qwen3-8-flash-next-coder-iq1-m/`.
 
-Measured October 8, 2026 on the Intel SYCL service with the
-[i1-Q4_K_M GGUF](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF)
-(16,810,715,712 bytes), Q8 KV cache, one slot, and one MTP draft token. The
-model was loaded on the B60 without a vision projector. The first checks used
-49,152 context; a later check used 57,344.
+## Local short-request speed
 
-| Request | Prompt / completion tokens | Result | End-to-end time |
-|---|---:|---|---:|
-| Short JavaScript function, `max_tokens=1024` | 80 / 266 | Correct function and example; `finish_reason=stop` | 11.28 s |
-| Tool request, `max_tokens=512` | — | Returned a valid `get_time` tool call | 5.3 s |
-| Repeated-code synthetic prompt, `max_tokens=8192` | 37,856 / 37; 42 prompt tokens cached | Returned `READY`, `finish_reason=stop` | 185.1 s |
-| Repeated-code synthetic prompt at 57,344 server context, `max_tokens=8192` | 44,856 / 39; zero prompt tokens cached | Returned `READY`, `finish_reason=stop` | 222.67 s |
+October 10, 2026: three measured runs after one warm-up, the same JavaScript
+prompt and a 256-token output cap. RAM is the remote `llama-server` process RSS,
+excluding GPU memory.
 
-These checks establish loading, basic coding output, tool-call formatting, and
-two long-input capacity results. They do not rank coding quality against the
-previous models or measure a full 8,192-token answer. A
-**45,056 input + 8,192 output** client allowance used 53,248 of the 57,344
-server tokens, leaving 4,096 tokens of headroom in this test.
+| Backend and model | Context | Average TTFT | Generation | Peak test RAM | Process RAM HWM |
+|---|---:|---:|---:|---:|---:|
+| SYCL · Signal + Terse-Coder i1-Q4_K_M | 57,344 | 543 ms | **28.53 tok/s** | 2,921 MiB | 16,650 MiB |
+| SYCL · Unsloth Qwen3.6-27B IQ4_XS | 57,344 | **504 ms** | 19.32 tok/s | **2,451 MiB** | 15,748 MiB |
+| SYCL · Pearson Qwen3.8-27B IQ3_M + projector | 65,536 | 919 ms | 7.75 tok/s | 3,327 MiB | **13,186 MiB** |
 
-## Local llama.cpp: Qwen3.8-27B imatrix IQ3_M
+Unsloth and Pearson used all 256 output tokens. Signal stopped after 74–202;
+compare generation speed more readily than total request time. Raw output is
+in the gitignored `Intel-Arc-B60-Models-Log.md`.
 
-Measured October 6, 2026 against the Intel SYCL API on port `8001`. The model was
-`/models/Qwen3.8-27B-IQ3_M.gguf` (13,032,195,616 bytes), with the bundled MTP
-head enabled, the Q8_0 vision projector loaded, one slot, and a 32,768 context.
-The container used `ghcr.io/ggml-org/llama.cpp:server-intel`, build
-`b11434-5e03bdd87`, all model layers on the B60, Q8 key/value cache, batch 512,
-microbatch 128, and `draft-mtp` with one draft token. Requests used temperature
-0.2. Times include the Windows client and LAN unless the server timing is named.
+## Local llama.cpp profiles
 
-| Request | Prompt / completion tokens | Result | Time and throughput |
-|---|---:|---|---|
-| Streaming short generation; “Explain what a GPU does in four concise bullet points”; 3 measured runs after one warm-up, `max_tokens=256` | 117–156 completion tokens per run | All completed. Reasoning and answer tokens are both counted. The repeated prompt and warm-up make TTFT a warm-cache result. | TTFT **890 ms average** (888–892 ms); generation **7.39 tok/s average** (7.14–7.55); overall **7.04 tok/s average** (6.86–7.17); 16.51–22.75 s per request. |
-| **Long-context synthetic code prompt; `max_tokens=512`** | **23,860 / 38** | **Returned `READY`, `finish_reason=stop`; 42 prompt tokens cached.** | **195.02 s end to end; server measured 189.39 s prefill at 125.76 tok/s and generation at 7.01 tok/s.** MTP proposed 20 tokens and 17 were accepted. |
+| Model | Backend | Context | Key settings |
+|---|---|---:|---|
+| [Unsloth Qwen3.6-27B MTP IQ4_XS](https://huggingface.co/unsloth/Qwen3.6-27B-MTP-GGUF) | SYCL | 57,344 | Q8 KV, one slot, one MTP draft token, no projector; October 9 |
+| [Signal + Terse-Coder i1-Q4_K_M](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF) | SYCL | 49,152 then 57,344 | Q8 KV, one slot, one MTP draft token, no projector; October 8 |
+| Qwen3.8-27B IQ3_M | SYCL | 32,768 then 65,536 | Q8 KV, one slot, Q8_0 vision projector, one MTP draft token; October 6 |
+| Swift 1.5 Qwen3.8-27B Q4_K_M | Vulkan / SYCL | 49,152 | Q8 KV, one slot, batch 512, microbatch 128, all layers on GPU |
+| Unsloth Qwen3.8-27B UD-Q4_K_M | SYCL | 49,152 | Temperature 0.2, non-streaming; October 6 |
+| Qwen3.6-35B-A3B Q4_K_M | llama.cpp | 49,152 | Q8 KV; earlier capacity check |
 
-The long request repeated `function add(a, b) { return a + b; }` 1,700 times,
-then asked for `READY`. Its 23,860-token prompt plus 38 completion tokens fit
-within the configured 32,768 context. This is a synthetic near-client-limit
-capacity and speed check, not a coding-quality or multimodal-image test. The
-short streaming runs reused the same prompt after a warm-up, so their TTFT is
-not a cold-start measurement. The long request had only 42 cached prompt tokens
-and is the better measure of prefill at this input length.
+### Short requests and functionality
 
-## Previous IQ3_M developer profile: 65,536 context
+| Model | Request | Prompt / completion | Result | Time or speed |
+|---|---|---:|---|---:|
+| Qwen3.6 MTP IQ4_XS | Reply `READY`, thinking on | 15 / 95 | Stopped normally | ~7 s including model lookup |
+| Qwen3.6 MTP IQ4_XS | JavaScript function, thinking on, cap 512 | 28 / 512 | Hit cap during thinking; no final code | 27.05 s |
+| Qwen3.6 MTP IQ4_XS | Same function, thinking off, cap 512 | 30 / 43 | Returned code | 2.86 s |
+| Qwen3.6 MTP IQ4_XS | `get_time` tool request | 284 / 189 | Valid call | 15.55 s |
+| Signal + Terse-Coder | JavaScript function, cap 1,024 | 80 / 266 | Correct function and example | 11.28 s |
+| Signal + Terse-Coder | `get_time` tool request | — | Valid call | 5.3 s |
+| Qwen3.8 IQ3_M | Four GPU bullet points, 3 runs after warm-up, cap 256 | 117–156 output per run | All completed; warm cache | TTFT 890 ms; generation **7.39 tok/s**; overall 7.04 tok/s; 16.51–22.75 s |
+| Swift 1.5 SYCL | Short coding prompt | 74 / 117 | Completed | 7.09 s |
+| Swift 1.5 SYCL | Service restart smoke test | 56 / 22 | Returned `READY` | ~3.5 s |
+| Unsloth Qwen3.8 UD-Q4_K_M | Four GPU bullet points, 3 runs, cap 256 | 26 / 256 each | All hit cap during thinking | 4.41–5.47 s |
+| Unsloth Qwen3.8 UD-Q4_K_M | Reply `READY`, 3 runs, cap 512 | 15 / 136–232 | All stopped normally | 2.41–4.02 s; mean 3.40 s |
 
-On October 6, 2026, the active SYCL service was raised to a 65,536 context.
-The `/v1/models` API reported `n_ctx=65536` and `n_ctx_train=262144`, and
-`/slots` reported the same runtime context. A 42,063-token synthetic prompt
-(repeated code plus the chat template) was accepted with no prompt tokens
-cached. Its prefill took **385.93 seconds**. A first smoke request with only
-64 output tokens ended with `finish_reason=length` before visible answer text;
-this was an output-cap issue, not a context failure.
+### Long input and prefill
 
-The same prompt was then retried with the intended **8,192-token output cap**.
-It returned `READY` with `finish_reason=stop`, 42,063 prompt tokens, and 89
-completion tokens in 14.88 seconds. This retry reused the prompt prefix, so its
-elapsed time is a warm-cache result. Together these checks verify the earlier
-long-input profile fit the configured service, but the uncached prefill time is
-about **6 minutes 26 seconds** on this IQ3_M model. The request was synthetic;
-real VS Code agent prompts, multimodal requests, and quality beyond the GGUF's
-32,768 calibration length still need separate evaluation.
+| Model / backend | Prompt / completion | Cached prompt | Result | End to end | Prefill | Generation |
+|---|---:|---:|---|---:|---:|---:|
+| Qwen3.6 MTP IQ4_XS / SYCL | 44,821 / 104 | 0 | `READY` | 326.38 s | — | — |
+| Signal + Terse-Coder / SYCL | 37,856 / 37 | 42 | `READY` | 185.1 s | — | — |
+| Signal + Terse-Coder / SYCL, 57K context | 44,856 / 39 | 0 | `READY` | 222.67 s | — | — |
+| Qwen3.8 IQ3_M / SYCL, 32K context | 23,860 / 38 | 42 | `READY` | 195.02 s | 189.39 s; 125.76 tok/s | 7.01 tok/s |
+| Qwen3.8 IQ3_M / SYCL, 65K context | 42,063 / 89 | 0 on first request | `READY` on warm retry, cap 8,192 | 14.88 s retry | 385.93 s uncached | — |
+| Qwen3.8 IQ3_M / SYCL, 65K context | 49,106 / 88 | 42 | `READY`, cap 8,192 | 455.63 s | ~7 min 36 s | — |
+| Swift 1.5 / Vulkan | 40,022 / 32 | 31,274 on retry | Completed on retry; first request timed out at 300 s | 157.91 s retry | 58.7 tok/s for remainder | 3.55 tok/s |
+| Swift 1.5 / SYCL | 40,009 / 32 | 42 | Completed | 199.91 s | 203.30 tok/s | 10.62 tok/s |
+| Unsloth Qwen3.8 UD-Q4_K_M / SYCL | 39,931 / 288 | 0 | `READY`, cap 8,192 | 63.31 s | — | — |
+| Qwen3.6-35B-A3B Q4_K_M | 42,041 / — | — | Input accepted | — | — | — |
 
-## 49K developer input check
-
-With the 65,536 context still active, a unique synthetic code prompt was sent
-with `max_tokens=8192`. The server counted **49,106 prompt tokens**, including
-chat formatting, and only 42 prompt tokens were reused from cache. It returned
-`READY` with `finish_reason=stop` and 88 completion tokens in **455.63 seconds**.
-The 8,192-token output cap was accepted; the response ended naturally before
-using it. This verifies a 49,152-input / 8,192-output client budget fits this
-server context, leaving 8,192 tokens of margin. The prompt was synthetic, so
-real VS Code agent behavior and quality beyond the GGUF's 32,768 calibration
-length still need evaluation. Cold prefill at this size took about **7 minutes
-36 seconds**.
-
-## Local llama.cpp: Swift 1.5 Qwen3.8-27B
-
-These are earlier runs with the Swift 1.5 GGUF. The [Vulkan setup](./Intel-Arc-B60-Server-Setup-Vulkan.md)
-documents the alternative backend. The file was
-`Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf` (17,442,399,936 bytes) on
-Ubuntu 26.04 with Docker. Both backends used one slot, 49,152 server context,
-Q8 key/value cache, batch size 512, microbatch size 128, and all layers on the
-B60. The long inputs were repetitive synthetic text. They establish capacity
-and speed, not coding quality on a repository.
-
-| Backend and request | Prompt / output tokens | Result | Time and throughput |
-|---|---:|---|---|
-| Vulkan, long prompt | 40,022 / 32 | Completed without truncation on retry; 31,274 prompt tokens were cached. The first attempt exceeded a 300 s client timeout. | Retry took 157.91 s; remaining prompt processing measured 58.7 tok/s and generation measured 3.55 tok/s near 40K context. |
-| SYCL, short coding prompt | 74 / 117 | Completed, with reasoning and code in the answer. | 7.09 s end to end. |
-| **SYCL, long prompt** | **40,009 / 32** | **Completed without truncation; 42 prompt tokens were cached.** | **199.91 s end to end; server logs measured 203.30 prompt tok/s and 10.62 generation tok/s near 40K context.** |
-| SYCL, systemd restart check | 56 / 22 | Returned `READY` through the service on port 8001. | About 3.5 s end to end. |
-
-The Vulkan retry and nearly uncached SYCL run used different prompt-cache
-conditions, so their total times are not directly comparable. Deep-context
-generation in these runs was 3.55 tok/s on Vulkan and 10.62 tok/s on SYCL.
-The SYCL API then reported model ID
-`/models/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf`, context 49,152, and trained
-context 262,144. These are historical limits for the Swift deployment; a
-complete exchange at its prior client limits was not measured.
-
-## Local llama.cpp: Unsloth Qwen3.8-27B UD-Q4_K_M
-
-On October 6, 2026, I tested the LAN SYCL API on port `8001` after
-the model switch. `/v1/models` reported
-`/models/Unsloth-Qwen3.8-27B-UD-Q4_K_M.gguf`, a 49,152-token context, and
-Q4_K medium quantization. Requests used the OpenAI-compatible chat endpoint,
-temperature 0.2, and non-streaming responses. Wall time is measured from the
-Windows client and includes network and server overhead.
-
-| Request | Prompt / completion tokens | Result | End-to-end time |
-|---|---:|---|---:|
-| Explain a GPU in four bullets; `max_tokens=256` (3 runs) | 26 / 256 each | All hit `finish_reason=length`; the API returned empty final `content` because the reasoning consumed the output budget. | 4.41–5.47 s |
-| Reply exactly `READY`; `max_tokens=512` (3 runs) | 15 / 136–232 | All returned `READY` with `finish_reason=stop`. Completion counts include reasoning tokens. | 2.41–4.02 s; mean 3.40 s |
-| **Long-context check; `max_tokens=8192`** | **39,931 / 288** | **Completed with `finish_reason=stop`; returned `READY`. Zero prompt tokens were cached.** | **63.31 s end to end** |
-
-The short checks are not a controlled throughput benchmark: prompts were tiny,
-warm-cache conditions varied, and responses were not streamed. The 256-token
-trial shows that a small output cap can be exhausted by this
-model's reasoning before it emits visible final text. In the long-context
-check, the user message contained 39,901 tokenizer-counted synthetic filler
-tokens; the full chat request was 39,931 prompt tokens, followed by the
-instruction to answer `READY`. The 8,192-token output allowance was available,
-but the model used 288 completion tokens including reasoning. This confirms a
-single uncached ~40K request fits and completes on the server. It does not
-establish why VS Code occasionally reports “Sorry, no response was returned”;
-the test used a non-streaming direct API request rather than VS Code's streaming
-path and agent/tool schemas.
-
-## Other local context checks
-
-The previous Qwen3.6-35B-A3B Q4_K_M llama.cpp service used a 49,152-token
-server context and Q8 key/value cache. A 42,041-token input succeeded on the
-B60. This did not test a full 8,192-token reply after that long input, and it does
-not establish the context capacity of any other model.
+Long inputs were repeated synthetic code or filler, not repository tasks. A cap
+of 8,192 was accepted where shown; none of those replies actually used all
+8,192 tokens. Warm retries and uncached runs should not be compared by elapsed
+time. The Qwen3.8 IQ3_M 32K run proposed 20 MTP tokens and accepted 17.
 
 ## Local OpenVINO Model Server: Qwen3.8-27B INT4
 
@@ -181,8 +109,7 @@ Two measured runs, 256 output tokens each, temperature 0.7:
 | 1 | 287 ms | 25.02 tok/s | 24.33 tok/s | 10,521 ms |
 | 2 | 279 ms | 25.03 tok/s | 24.36 tok/s | 10,509 ms |
 
-TTFT averaged 283 ms (279–287 ms). Generation averaged 25.02 tok/s;
-overall throughput averaged 24.35 tok/s.
+| **Average** | **283 ms** | **25.02 tok/s** | **24.35 tok/s** | — |
 
 ### AIPerf load check
 
@@ -193,10 +120,8 @@ Synthetic 512-token input and 256-token output, with one warmup request:
 | 1 | 616 ms | 40.4 ms | 24.7 | 23.4 |
 | 4 | 1,260 ms | 45.9 ms | 21.8 | **78.2** |
 
-Four parallel requests yielded about 3.3 times the aggregate throughput of
-one request; per-request throughput was about 12% lower. A separate reported
-512-token prompt-prefill rate was about 830 tok/s. Neither this short-prompt
-rate nor the concurrency check establishes 40K–80K prompt latency or memory fit.
+The four-request run delivered about 3.3× aggregate throughput; a separate
+512-token prefill check measured about 830 tok/s. Neither checks long prompts.
 
 ## Published coding benchmark scores
 
@@ -235,20 +160,20 @@ Dual cards can still help when a model or context requires their combined VRAM.
 
 ## Published Arena user ratings
 
-The October 6, 2026 text-leaderboard snapshot listed
-[Qwen3.8-27B at 1438 Elo from 6,913 votes](https://modelmarkets.ai/benchmarks/lmarena-text?model=Qwen/Qwen3.8-27B)
-and [Gemma 4 26B-A4B Instruct at 1435 Elo from 5,813 votes](https://modelmarkets.ai/benchmarks/lmarena-text?model=google/gemma-4-26B-A4B-it).
-These are crowd-preference ratings for the listed models, not evaluations of
-their quantized GGUF files on this B60. No directly comparable Arena entry was
-found for the other models in the guide at that snapshot.
+October 6, 2026 text-leaderboard snapshot; crowd ratings, not B60 tests:
+
+| Model | Elo | Votes |
+|---|---:|---:|
+| [Qwen3.8-27B](https://modelmarkets.ai/benchmarks/lmarena-text?model=Qwen/Qwen3.8-27B) | 1,438 | 6,913 |
+| [Gemma 4 26B-A4B Instruct](https://modelmarkets.ai/benchmarks/lmarena-text?model=google/gemma-4-26B-A4B-it) | 1,435 | 5,813 |
 
 ## Interpreting the numbers
 
 - A model's published context length is a model limit, not a measured B60
   capacity. The earlier Swift service completed a long-input request, but a
   full client-budget exchange remains unmeasured.
-- The Bun quick check, AIPerf check, and direct Swift API requests used
-  different prompt sizes and runtime settings. Compare within each test first.
+- Strata, Bun, AIPerf, and direct API checks used different prompts and runtime
+  settings. Compare runs within the same test first.
 - Model quality and the 1–5 practical ratings remain in the
   [Models Guide](./Intel-Arc-B60-Models.md); the tables there are recommendations,
   not controlled B60 benchmarks.
