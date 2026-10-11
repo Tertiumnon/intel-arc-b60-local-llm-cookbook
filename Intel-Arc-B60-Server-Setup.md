@@ -1,7 +1,8 @@
 # Intel Arc Pro B60 Setup
 
-This is the entry point for the 24 GB B60 guides. The Ubuntu 26.04 host serves
-one GGUF model through llama.cpp with Intel SYCL on port `8001`.
+This is the entry point for the 24 GB B60 guides. The Ubuntu 26.04 host has
+llama.cpp with Intel SYCL on port `8001` and experimental Strata on port
+`8080` on the local network. Run one inference model at a time.
 OpenVINO Model Server (OVMS) is installed on port `8000` but disabled. Its
 service and configuration remain available. Use the SYCL API for current GGUF
 models; this repository has more successful B60 coding runs on SYCL than on the
@@ -13,6 +14,8 @@ saved OVMS setup. For daily model changes, use the
 Ubuntu 26.04 runs llama.cpp with Intel SYCL. See the
 [Intel SYCL server setup](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md) for the
 service unit and the [Usage guide](./Intel-Arc-B60-Server-Usage.md) for model changes.
+The experimental [Strata setup](./Intel-Arc-B60-Server-Setup-Strata.md) is also
+available for Qwen3.8-Flash-Next.
 
 Choose a model in the [Models Guide](./Intel-Arc-B60-Models.md), configure VS
 Code in the [Clients Guide](./Intel-Arc-B60-Clients.md), and compare measured

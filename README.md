@@ -1,7 +1,8 @@
 # Intel Arc B60 Local LLM Cookbook
 
-Run one GGUF model on a 24 GB Intel Arc B60 with llama.cpp and Intel SYCL.
-The active API uses port `8001`; the saved OpenVINO service on `8000` stays disabled.
+Run local models on a 24 GB Intel Arc B60. The llama.cpp Intel SYCL service uses
+port `8001`; the experimental Strata API uses port `8080` on the local network. The saved
+OpenVINO service on `8000` stays disabled.
 
 ## Use a model
 
@@ -27,6 +28,7 @@ For a speed check without changing models, run `bun run bench`. Run
 
 - [Models and fit](./Intel-Arc-B60-Models.md)
 - [Daily server usage](./Intel-Arc-B60-Server-Usage.md)
+- [Experimental Strata setup](./Intel-Arc-B60-Server-Setup-Strata.md)
 - [VS Code and other clients](./Intel-Arc-B60-Clients.md)
 - [Speed test usage](./scripts/model--test-speed/README.md) and
   [historical results](./Intel-Arc-B60-Speed-Test-Results.md)
