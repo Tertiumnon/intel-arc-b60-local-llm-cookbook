@@ -106,7 +106,7 @@ inspect `sudo docker logs --tail 80 llama-cpp` if needed.
 
 The current service uses [Intel SYCL](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md)
 for GGUF models. To reproduce the Vulkan backend used in the
-[backend comparison](./Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b),
+[backend comparison](./Intel-Arc-B60-Speed-Test-Results.md#long-input-and-prefill),
 download the Q4_K_M GGUF and run it with the same context and cache settings:
 
 ```bash

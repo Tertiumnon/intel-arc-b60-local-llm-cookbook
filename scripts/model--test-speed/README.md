@@ -1,7 +1,7 @@
 # AI Speed Test
 
 A small, dependency-free **quick check** for the active OpenAI-compatible API at
-`AI_API_URL` (currently llama.cpp on port `8001`). Use it after restarts, model
+`AI_API_URL`. Use it after restarts, model
 switches or driver updates. For load tests, percentiles and concurrency,
 use [AIPerf](#full-benchmarks-aiperf).
 Recorded measurements are in the
@@ -151,7 +151,7 @@ well-maintained option. It offers rate sweeps (`--profile kind=sweep`) and HTML 
 
 Direct API measurements of Swift 1.5, including the Vulkan and
 SYCL long-input trials, are in the
-[Speed Test Results](../../Intel-Arc-B60-Speed-Test-Results.md#local-llamacpp-swift-15-qwen38-27b).
+[Speed Test Results](../../Intel-Arc-B60-Speed-Test-Results.md#long-input-and-prefill).
 
 ## Troubleshooting
 
