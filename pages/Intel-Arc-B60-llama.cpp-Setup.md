@@ -1,8 +1,8 @@
 # llama.cpp on Intel Arc Pro B60
 
 The Ubuntu server runs a single GGUF model through llama.cpp at
-`http://<server-ip>:8001/v1`. Model files live under `/models/gguf`; the
-OpenVINO exports under `/models` use the separate OVMS service on port `8000`.
+`http://<server-ip>:8080/v1`. Model files live under `/models/gguf`; the
+OpenVINO exports under `/models` use the separate OVMS service on port `8080`.
 
 ## Choose the backend
 

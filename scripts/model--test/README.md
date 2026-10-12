@@ -1,11 +1,11 @@
-# AI Speed Test
+# Model Test
 
-A small, dependency-free **quick check** for the active OpenAI-compatible API at
-`AI_API_URL`. Use it after restarts, model
-switches or driver updates. For load tests, percentiles and concurrency,
+A local speed test for the selected OpenAI-compatible API at `AI_API_URL`.
+It saves each run under `test-results/{model}/` (with path characters replaced
+by underscores) and appends a timestamped
+row to `test-results/test-results.md`. For load tests, percentiles and concurrency,
 use [AIPerf](#full-benchmarks-aiperf).
-Recorded measurements are in the
-[Speed Test Results](../../Intel-Arc-B60-Speed-Test-Results.md).
+Older measurements are in [Speed Test Results](../../pages/Intel-Arc-B60-Speed-Test-Results.md).
 
 It measures, per run:
 
@@ -13,6 +13,8 @@ It measures, per run:
 - **Peak llama-server RAM** — sampled over SSH during each request
 - **Token generation throughput** — tokens/sec after the first token
 - **Overall throughput** — tokens/sec across the whole request
+- **Prefill throughput** — a separate long prompt, using server prompt timing
+  when available or an estimate from time to first token
 - **Prompt / completion token counts**: exact, from the server `usage` field
   (requested via `stream_options.include_usage`)
 
@@ -34,17 +36,17 @@ bun install   # from repository root
 
 ```bash
 # Benchmark SPEED_TEST_MODEL (or the first model the server reports)
-bun run bench
+bun run test
 
 # Benchmark a specific model
-bun run bench /models/YOUR_MODEL.gguf
+bun run test /models/YOUR_MODEL.gguf
 
 # Just list the models the server exposes
 bun run list
 ```
 
 Run these from the repository root. Bun loads the root `.env` automatically.
-For a full model change, use [`bun run model`](../model--download-and-test/README.md).
+For a model change, use [`bun run switch`](../model--switch/README.md).
 
 ### Configuration
 
@@ -64,7 +66,7 @@ use the defaults below unless overridden there.
 | `SPEED_TEST_TIMEOUT_MS`   | Per-request timeout                           |
 
 Any of them can be overridden for one run from the shell, e.g.
-`SPEED_TEST_ITERATIONS=5 bun run bench`.
+`SPEED_TEST_ITERATIONS=5 bun run test`.
 
 When `AI_SSH_HOST` is set, the benchmark samples the remote `llama-server`
 process every 500 ms and reports peak RSS and its lifetime high-water mark.
@@ -93,15 +95,15 @@ validated against it. If every run shows exactly
 ## Example
 
 ```bash
-SPEED_TEST_ITERATIONS=2 bun run bench --no-warmup
+SPEED_TEST_ITERATIONS=2 bun run test --no-warmup
 ```
 
-See the [recorded Bun runs](../../Intel-Arc-B60-Speed-Test-Results.md#bun-speed-test-quick-check)
+See the [recorded Bun runs](../../pages/Intel-Arc-B60-Speed-Test-Results.md#bun-speed-test-quick-check)
 for real output and timings.
 
 ## Full Benchmarks: AIPerf
 
-This script is a **quick smoke test**: one request at a time, no Python, settings from
+This script is a **single-client speed check**: one request at a time, no Python, settings from
 `.env`. For real measurements use an established tool. **AIPerf** (NVIDIA, Apache-2.0,
 actively maintained) works with OVMS's `/v3` API and adds what this script can't measure:
 
@@ -115,9 +117,9 @@ actively maintained) works with OVMS's `/v3` API and adds what this script can't
 python -m venv ~/aiperf-venv && ~/aiperf-venv/bin/pip install aiperf   # Windows: aiperf-venv\Scripts\pip
 
 # OVMS-only example: enable OVMS in place of llama.cpp first.
-# Load .env, then point this command at port 8000 (concurrency 1, then 4).
+# Load .env, then point this command at port 8080 (concurrency 1, then 4).
 set -a; source .env; set +a
-AI_API_URL="http://${AI_SERVER_HOST}:8000/v3"
+AI_API_URL="http://${AI_SERVER_HOST}:8080/v3"
 for c in 1 4; do
   aiperf profile \
     --model OpenVINO/Qwen3.8-27B-int4-ov --tokenizer Qwen/Qwen3.8-27B \
@@ -140,7 +142,7 @@ Notes:
   encoding.
 
 Recorded single-request and concurrency measurements are in the
-[OpenVINO results](../../Intel-Arc-B60-Speed-Test-Results.md#local-openvino-model-server-qwen38-27b-int4).
+[OpenVINO results](../../pages/Intel-Arc-B60-Speed-Test-Results.md#local-openvino-model-server-qwen38-27b-int4).
 
 ### Alternative: GuideLLM
 [GuideLLM](https://github.com/vllm-project/guidellm) (vLLM project) is the other
@@ -151,13 +153,13 @@ well-maintained option. It offers rate sweeps (`--profile kind=sweep`) and HTML 
 
 Direct API measurements of Swift 1.5, including the Vulkan and
 SYCL long-input trials, are in the
-[Speed Test Results](../../Intel-Arc-B60-Speed-Test-Results.md#long-input-and-prefill).
+[Speed Test Results](../../pages/Intel-Arc-B60-Speed-Test-Results.md#long-input-and-prefill).
 
 ## Troubleshooting
 
 - **Connection refused / timeout** — confirm the selected service is running and reachable:
   `curl -H "Authorization: Bearer $AI_API_KEY" "$AI_API_URL/models"`
 - **Model not found** — run `bun run list` to see the exact model names the
-  server exposes, then pass one of them as the argument to `bun run bench`.
+  server exposes, then pass one of them as the argument to `bun run test`.
 - **HTTP 401**: if using OVMS, set `AI_API_KEY` in the root `.env` to match
   the key configured in its saved service.

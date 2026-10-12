@@ -3,7 +3,7 @@
 One Intel Arc Pro B60, 24 GB VRAM. Local rows are October 2026 measurements;
 published model and community rows use other machines or test methods. Values
 from different prompts, caches, and runtimes are not head-to-head rankings.
-For commands, see the [speed-test README](./scripts/model--test-speed/README.md).
+For current commands and saved results, see the [model test README](./scripts/model--test/README.md).
 
 ## Local Strata: Qwen3.8-Flash-Next Coder IQ1_M
 

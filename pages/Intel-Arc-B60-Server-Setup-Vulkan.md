@@ -522,7 +522,7 @@ llama.cpp's API. Use a controlled prompt size and one request first; run long-co
 tests separately for each model.
 
 ```bash
-AI_API_URL='http://<server-ip>:8001/v1' bun run bench
+AI_API_URL='http://<server-ip>:8001/v1' bun run test
 ```
 
 ## Memory and context tuning
@@ -565,5 +565,5 @@ models listed in the Models guide on this 24 GB Linux setup.
 - [llama.cpp Docker images](https://github.com/ggml-org/llama.cpp/pkgs/container/llama.cpp)
 - [Intel Arc B60 Models Guide](./Intel-Arc-B60-Models.md)
 - [Intel Arc B60 Server Setup Guide](./Intel-Arc-B60-Server-Setup.md)
-- [Speed test instructions](./scripts/model--test-speed/README.md)
+- [Model test instructions](./scripts/model--test/README.md)
 - [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md)

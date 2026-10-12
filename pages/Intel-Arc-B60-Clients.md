@@ -2,9 +2,8 @@
 
 ## Overview
 This guide covers connecting AI clients to the Intel Arc B60 inference server. The
-current server is llama.cpp with Intel SYCL on port `8001`. OpenVINO Model Server
-is installed but disabled. Use the SYCL API for current model work.
-The live llama.cpp service is documented in the
+selected service listens on port `8080`. Strata and llama.cpp use `/v1`;
+OpenVINO Model Server uses `/v3`. The llama.cpp service is documented in the
 [Intel SYCL setup guide](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md).
 
 ## Connection Details
@@ -49,7 +48,7 @@ updates the local endpoint automatically. Use the steps below for manual setup.
       {
         "id": "/models/MODEL.gguf",
         "name": "Arc B60 model",
-        "url": "http://<server-host>:8001/v1/chat/completions",
+        "url": "http://<server-host>:8080/v1/chat/completions",
         "toolCalling": true,
         "vision": false,
         "streaming": true,
@@ -122,14 +121,14 @@ In Open WebUI settings, add a connection to the running SYCL API:
 ## Testing the Configuration
 1. Open a new file in VS Code
 2. Pick your configured B60 model in the Chat model picker and send a prompt
-3. Verify that the response comes from the llama.cpp server on port `8001`
+3. Verify that the response comes from the llama.cpp server on port `8080`
 
 ## Troubleshooting
 ### Common Issues
 - **HTTP 503 `Loading model` / VS Code says “Rate limit exceeded”**: llama.cpp is
   still loading the GGUF; this response is not a request quota. Check
   `curl -i "${AI_API_URL%/v1}/health"` and retry after it returns HTTP 200.
-- **Connection refused**: Ensure `llama-cpp.service` is running and port `8001` is reachable.
+- **Connection refused**: Ensure `llama-cpp.service` is running and port `8080` is reachable.
 - **Model not found**: Verify the model name matches exactly what's configured in your service
 - **“Sorry, no response was returned” after a long wait**: inspect the server
   log for request errors and reduce `maxInputTokens` if prefill is taking too

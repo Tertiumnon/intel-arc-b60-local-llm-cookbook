@@ -1,9 +1,9 @@
 # Intel Arc Pro B60 Setup
 
 This is the entry point for the 24 GB B60 guides. The Ubuntu 26.04 host has
-llama.cpp with Intel SYCL on port `8001` and experimental Strata on port
-`8080` on the local network. Run one inference model at a time.
-OpenVINO Model Server (OVMS) is installed on port `8000` but disabled. Its
+llama.cpp with Intel SYCL and experimental Strata on port `8080` on the local
+network. Run one inference model at a time.
+OpenVINO Model Server (OVMS) also uses port `8080` when selected. Its
 service and configuration remain available. Use the SYCL API for current GGUF
 models; this repository has more successful B60 coding runs on SYCL than on the
 saved OVMS setup. For daily model changes, use the
@@ -11,11 +11,10 @@ saved OVMS setup. For daily model changes, use the
 
 ## Current setup
 
-Ubuntu 26.04 runs llama.cpp with Intel SYCL. See the
-[Intel SYCL server setup](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md) for the
-service unit and the [Usage guide](./Intel-Arc-B60-Server-Usage.md) for model changes.
-The experimental [Strata setup](./Intel-Arc-B60-Server-Setup-Strata.md) is also
-available for Qwen3.8-Flash-Next.
+Ubuntu 26.04 currently runs [Strata with Intel SYCL](./Intel-Arc-B60-Server-Setup-Strata.md)
+for Qwen3.8-Flash-Next. The preserved llama.cpp service is described in the
+[Intel SYCL server setup](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md); see the
+[Usage guide](./Intel-Arc-B60-Server-Usage.md) to switch services or models.
 
 Choose a model in the [Models Guide](./Intel-Arc-B60-Models.md), configure VS
 Code in the [Clients Guide](./Intel-Arc-B60-Clients.md), and compare measured
@@ -57,11 +56,11 @@ runtimes.
 |---|---|
 | GGUF files | `/models/gguf` on host, `/models` in llama.cpp container |
 | OpenVINO exports/cache | `/models` on host and in OVMS container |
-| llama.cpp API | `http://<server-ip>:8001/v1` |
-| OVMS API | `http://<server-ip>:8000/v3` |
+| llama.cpp and Strata API | `http://<server-ip>:8080/v1` |
+| OVMS API | `http://<server-ip>:8080/v3` |
 | Local connection template | [.env.example](./.env.example) |
 
-The `.env.example` API defaults target the active llama.cpp service. Use the
+The `.env.example` API defaults target Strata or llama.cpp. Use the
 model ID returned by `/v1/models` in clients. The
 [Usage guide](./Intel-Arc-B60-Server-Usage.md) has service switching and restart
 commands; backend details stay in their setup guides.

@@ -1,8 +1,8 @@
 # Intel Arc B60 OpenVINO Archive
 
 The host keeps `openvino-model-server.service` and its model cache, but the unit
-is disabled on port `8000`. Use the [Intel SYCL llama.cpp API](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md)
-on port `8001` for current GGUF models and coding clients. The saved OVMS setup
+is disabled and uses host port `8080` when selected. Use the [Intel SYCL llama.cpp API](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md)
+on port `8080` for current GGUF models and coding clients. The saved OVMS setup
 covers a narrower set of prepared models; the [OVMS GGUF support guide](https://docs.openvino.ai/2025/model-server/ovms_demos_gguf.html)
 lists its supported GGUF paths.
 

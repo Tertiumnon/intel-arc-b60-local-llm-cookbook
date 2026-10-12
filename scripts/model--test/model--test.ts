@@ -1,8 +1,10 @@
 #!/usr/bin/env bun
 import { spawn } from "node:child_process";
+import { appendFile, mkdir, readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
 
 /**
- * speed-test.ts
+ * model--test.ts
  * Speed & latency benchmark for an OpenAI-compatible AI server
  * on the Intel Arc B60 box.
  *
@@ -17,7 +19,7 @@ import { spawn } from "node:child_process";
  * to parse the SSE response.
  *
  * Usage (from the repository root):
- *   bun run bench [model]
+ *   bun run test [model]
  *   bun run list
  *
  * API settings come from the repo-root .env (see .env.example):
@@ -61,6 +63,9 @@ interface RunResult {
   genTokensPerSec: number;
   overallTokensPerSec: number;
   outputPreview: string;
+  content: string;
+  reasoning: string;
+  promptMs: number | null;
   ramPeakMiB: number | null;
   ramHighWaterMiB: number | null;
 }
@@ -184,6 +189,7 @@ async function runCompletion(cfg: Config): Promise<RunResult> {
   let promptTokens: number | null = null;
   let completionTokens: number | null = null;
   let reasoningTokens: number | null = null;
+  let promptMs: number | null = null;
   const memory = monitorServerMemory();
 
   const body: Record<string, unknown> = {
@@ -258,6 +264,8 @@ async function runCompletion(cfg: Config): Promise<RunResult> {
               json.usage.reasoning_tokens ??
               reasoningTokens;
           }
+          if (Number.isFinite(json.timings?.prompt_ms) && json.timings.prompt_ms > 0) promptMs = json.timings.prompt_ms;
+          promptTokens = json.timings?.prompt_n ?? promptTokens;
         } catch {
           // Ignore keep-alive / non-JSON lines.
         }
@@ -290,6 +298,9 @@ async function runCompletion(cfg: Config): Promise<RunResult> {
     genTokensPerSec: estTokens / (genMs / 1000),
     overallTokensPerSec: estTokens / (totalMs / 1000),
     outputPreview: content.slice(0, 120).replace(/\s+/g, " ").trim(),
+    content,
+    reasoning,
+    promptMs,
     ramPeakMiB,
     ramHighWaterMiB,
   };
@@ -365,11 +376,12 @@ async function main(): Promise<void> {
   printHeader(cfg);
 
   // Warm-up run (not counted) to avoid cold-start skew.
+  let warmup: RunResult | null = null;
   if (!cfg.noWarmup) {
     process.stdout.write("  [warm-up] running…\n");
     try {
-      const w = await runCompletion(cfg);
-      printRun(0, w, "warm-up");
+      warmup = await runCompletion(cfg);
+      printRun(0, warmup, "warm-up");
     } catch (err) {
       console.error(`  [warm-up] failed: ${(err as Error).message}`);
     }
@@ -392,6 +404,36 @@ async function main(): Promise<void> {
   }
 
   printSummary(results);
+
+  // Avoid prompt-cache reuse between prefill runs.
+  const prefillPrompt = `${crypto.randomUUID()} Read this repeated text, then reply READY.\n${"The quick brown fox jumps over the lazy dog. The model should read this entire sentence carefully.\n".repeat(64)}`;
+  const prefill = await runCompletion({ ...cfg, prompt: prefillPrompt, maxTokens: 16, noReasoning: true });
+  const prefillTokenCount = prefill.promptTokens ?? prefillPrompt.trim().split(/\s+/).length;
+  const prefillTokensPerSec = prefillTokenCount / ((prefill.promptMs ?? prefill.ttftMs) / 1000);
+  const prefillSource = prefill.promptMs === null ? "TTFT estimate" : "server prompt timing";
+  console.log(`  Prefill         : ${fmt(prefillTokensPerSec)} tok/s (${prefillSource}, ${prefillTokenCount} ${prefill.promptTokens === null ? "estimated " : ""}tokens)`);
+
+  const timestamp = new Date().toISOString();
+  const folder = path.join(import.meta.dir, "../..", "test-results", cfg.model.replace(/[^A-Za-z0-9._-]+/g, "_").replace(/^[._-]+/, "") || "unknown");
+  const filename = `${timestamp.replace(/[:.]/g, "-")}.json`;
+  const summary = {
+    ttftMs: stats(results.map((run) => run.ttftMs)).avg,
+    decodeTokensPerSec: stats(results.map((run) => run.genTokensPerSec)).avg,
+    totalTokensPerSec: stats(results.map((run) => run.overallTokensPerSec)).avg,
+    prefillTokensPerSec,
+    prefillSource,
+  };
+  await mkdir(folder, { recursive: true });
+  await writeFile(path.join(folder, filename), JSON.stringify({ timestamp, endpoint: cfg.baseUrl, model: cfg.model, settings: { prompt: cfg.prompt, iterations: cfg.iterations, maxTokens: cfg.maxTokens, temperature: cfg.temperature, noReasoning: cfg.noReasoning }, warmup, results, prefill, summary }, null, 2) + "\n");
+  const table = path.join(import.meta.dir, "../..", "test-results", "test-results.md");
+  try {
+    await readFile(table);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code !== "ENOENT") throw error;
+    await writeFile(table, "# Model test results\n\nPrefill uses server prompt timing when available; otherwise it estimates from time to first token. An asterisk marks estimated timing or token count. Decode and TTFT are averages of measured runs.\n\n| Timestamp (UTC) | Model | Endpoint | Prefill tok/s | TTFT ms | Decode tok/s | Overall tok/s | Details |\n|---|---|---|---:|---:|---:|---:|---|\n");
+  }
+  await appendFile(table, `| ${timestamp} | ${cfg.model.replaceAll("|", "\\|")} | ${cfg.baseUrl} | ${fmt(prefillTokensPerSec)}${prefill.promptMs === null || prefill.promptTokens === null ? "*" : ""} | ${fmt(summary.ttftMs, 0)} | ${fmt(summary.decodeTokensPerSec)} | ${fmt(summary.totalTokensPerSec)} | [JSON](./${path.basename(folder)}/${filename}) |\n`);
+  console.log(`Saved results: ${path.join(folder, filename)}`);
 }
 
 main().catch((err) => {

@@ -1,34 +1,34 @@
 # Intel Arc B60 Local LLM Cookbook
 
-Run local models on a 24 GB Intel Arc B60. The llama.cpp Intel SYCL service uses
-port `8001`; the experimental Strata API uses port `8080` on the local network. The saved
-OpenVINO service on `8000` stays disabled.
+Run local models on a 24 GB Intel Arc B60. Llama.cpp, Strata, and OpenVINO use
+port `8080` on the local network, with one service active at a time.
 
 ## Use a model
 
-1. Follow the [server setup](./Intel-Arc-B60-Server-Setup.md) and the
-   [one-time SSH setup](./scripts/model--download-and-test/README.md).
+1. Follow the [server setup](./pages/Intel-Arc-B60-Server-Setup.md) and the
+   [one-time SSH setup](./scripts/model--switch/README.md).
 2. Copy `.env.example` to `.env`. Set `HF_MODEL_REPO`, `HF_MODEL_FILE`, and
    `MODEL_CONTEXT_TOKENS` for the GGUF you want.
 3. From the repository root, run:
 
 ```bash
 bun install
-bun run model
+bun run switch
 ```
 
-The command downloads through Hugging Face, switches the SYCL service, checks
-the API, runs a speed test, and updates the local VS Code model entry. It prints
-the result and saves it in the gitignored `Intel-Arc-B60-Models-Log.md`.
+The command downloads a missing model, switches services, checks health and one
+short reply, then updates the local VS Code model entry. Use `--service=strata`
+or `--service=openvino` for those backends.
 
-For a speed check without changing models, run `bun run bench`. Run
+For timing tests and saved results, run `bun run test`. Results go under
+`test-results/`, with a summary in `test-results/test-results.md`. Run
 `bun run list` to see the model served by the API.
 
 ## Guides
 
-- [Models and fit](./Intel-Arc-B60-Models.md)
-- [Daily server usage](./Intel-Arc-B60-Server-Usage.md)
-- [Experimental Strata setup](./Intel-Arc-B60-Server-Setup-Strata.md)
-- [VS Code and other clients](./Intel-Arc-B60-Clients.md)
-- [Speed test usage](./scripts/model--test-speed/README.md) and
-  [historical results](./Intel-Arc-B60-Speed-Test-Results.md)
+- [Models and fit](./pages/Intel-Arc-B60-Models.md)
+- [Daily server usage](./pages/Intel-Arc-B60-Server-Usage.md)
+- [Experimental Strata setup](./pages/Intel-Arc-B60-Server-Setup-Strata.md)
+- [VS Code and other clients](./pages/Intel-Arc-B60-Clients.md)
+- [Model test usage](./scripts/model--test/README.md) and
+  [historical results](./pages/Intel-Arc-B60-Speed-Test-Results.md)

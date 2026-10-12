@@ -1,0 +1,19 @@
+[Unit]
+Description=Strata SYCL server (Arc B60)
+After=docker.service network-online.target
+Requires=docker.service
+Conflicts=llama-cpp.service
+
+[Service]
+User=ai
+Group=ai
+SupplementaryGroups=docker render
+WorkingDirectory=/models/Strata
+ExecStart=/models/Strata/run-coder-iq1_m.sh
+ExecStopPost=-/usr/bin/docker rm -f strata-sycl-serve
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=0
+
+[Install]
+WantedBy=multi-user.target

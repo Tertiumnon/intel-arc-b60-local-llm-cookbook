@@ -2,7 +2,7 @@
 
 This guide documents an Ubuntu 26.04 llama.cpp service on the
 Intel Arc Pro B60 (24 GB VRAM). It serves a GGUF model through Intel's SYCL
-backend at `http://<server-ip>:8001/v1`. Models live on the host in
+backend at `http://<server-ip>:8080/v1`. Models live on the host in
 `/models/gguf` and are mounted read-only at `/models` in Docker. The
 [speed measurements](./Intel-Arc-B60-Speed-Test-Results.md) stay in
 the separate results file. For model downloads, switches, and restarts, use the
@@ -56,7 +56,7 @@ ExecStartPre=-/usr/bin/docker rm -f llama-cpp
 ExecStart=/usr/bin/docker run --rm --name llama-cpp \
   --device /dev/dri --group-add=109 \
   --health-cmd="curl -fsS http://localhost:8000/health" --health-start-period=90s \
-  -p 8001:8000 -v /models/gguf:/models:ro \
+  -p 8080:8000 -v /models/gguf:/models:ro \
   ghcr.io/ggml-org/llama.cpp:server-intel \
   -m /models/MODEL.gguf --host 0.0.0.0 --port 8000 \
   --n-gpu-layers 999 --ctx-size CONTEXT_TOKENS \
@@ -98,10 +98,10 @@ Historical timings are in [Speed Test Results](./Intel-Arc-B60-Speed-Test-Result
 - **Service does not load:** inspect `sudo docker logs llama-cpp` and
   `sudo journalctl -u llama-cpp.service -n 100 --no-pager`; confirm the GGUF
   exists and the image supports its architecture.
-- **Port 8001 is in use:** stop the previous standalone container or service
+- **Port 8080 is in use:** stop the previous standalone container or service
   before restarting the systemd unit.
 - **Model not found in client:** send the exact `id` from `/v1/models` and use
-  `http://<server-ip>:8001/v1` as the OpenAI-compatible base URL.
+  `http://<server-ip>:8080/v1` as the OpenAI-compatible base URL.
 
 For upstream image names and SYCL device mapping, see the
 [official llama.cpp Docker documentation](https://github.com/ggml-org/llama.cpp/blob/master/docs/docker.md).
