@@ -45,7 +45,8 @@ excluding GPU memory.
 
 Unsloth and Pearson used all 256 output tokens. Signal stopped after 74–202;
 compare generation speed more readily than total request time. Raw output is
-in the gitignored `Intel-Arc-B60-Models-Log.md`.
+in the gitignored
+[`Intel-Arc-B60-Models-Log.md`](./Intel-Arc-B60-Models-Log.md).
 
 ## Local llama.cpp profiles
 
