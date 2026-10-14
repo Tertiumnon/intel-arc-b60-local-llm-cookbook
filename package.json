@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "switch": "bun scripts/model--switch/model--switch.ts",
+    "switch:qwen38-27b-intel-tuned": "MODEL_CONTEXT_TOKENS=57344 MODEL_MTP=1 bun run switch --service=llama --model=Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-GSQ-RCO-IQ3_S-Intel-Arc-Tuned-MTP-Q4_K.gguf",
     "switch:terse": "MODEL_CONTEXT_TOKENS=57344 MODEL_MTP=1 bun run switch --service=llama --model=mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
     "switch:strata": "bun run switch --service=strata --model=coder:IQ1_M",
     "test": "bun scripts/model--test/model--test.ts",
