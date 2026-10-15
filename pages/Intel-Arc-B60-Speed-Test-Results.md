@@ -72,7 +72,7 @@ in the gitignored
 | Qwen3.8 IQ3_M | Four GPU bullet points, 3 runs after warm-up, cap 256 | 117–156 output per run | All completed; warm cache | TTFT 890 ms; generation **7.39 tok/s**; overall 7.04 tok/s; 16.51–22.75 s |
 | Swift 1.5 SYCL | Short coding prompt | 74 / 117 | Completed | 7.09 s |
 | Swift 1.5 SYCL | Service restart smoke test | 56 / 22 | Returned `READY` | ~3.5 s |
-| [Greatjedi Qwen3.8 Intel Arc tuned IQ3_S MTP](https://huggingface.co/Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF) | "commit changes", 3 runs after warm-up, cap 2,048, thinking on | 12 / 183–248 each | Completed; answer is git add/commit commands after thinking | TTFT 467–482 ms; generation **27.8 tok/s** (27.0–28.9); 6.8–9.7 s; warm-up 327 tokens, 14.3 s |
+| [Greatjedi Qwen3.8 Intel Arc tuned IQ3_S MTP](https://huggingface.co/Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF) | "commit changes", 3 runs after warm-up, cap 2,048, thinking on | 12 / 183–248 each | Completed; answer is git add/commit commands after thinking; **verdict: rejected**, too weak (failed "make conventional commits") | TTFT 467–482 ms; generation **27.8 tok/s** (27.0–28.9); 6.8–9.7 s; warm-up 327 tokens, 14.3 s |
 | [Tiel-Coder 35B-A3B UD-Q4_K_XL MTP](https://huggingface.co/peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF-MTP) | "commit changes", 3 runs after warm-up, cap 2,048, thinking on, 57,344 context | 12 / 150–595 each | Completed | TTFT 120–265 ms; generation **49.3 tok/s** (48.5–50.3); 3.2–12.2 s; process RAM HWM 22,329 MiB |
 | Unsloth Qwen3.8 UD-Q4_K_M | Four GPU bullet points, 3 runs, cap 256 | 26 / 256 each | All hit cap during thinking | 4.41–5.47 s |
 | Unsloth Qwen3.8 UD-Q4_K_M | Reply `READY`, 3 runs, cap 512 | 15 / 136–232 | All stopped normally | 2.41–4.02 s; mean 3.40 s |

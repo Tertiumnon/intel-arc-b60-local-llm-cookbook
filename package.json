@@ -6,9 +6,16 @@
   "type": "module",
   "scripts": {
     "switch": "bun scripts/model--switch/model--switch.ts",
-    "switch:qwen38-27b-intel-tuned": "MODEL_CONTEXT_TOKENS=57344 MODEL_MTP=1 bun run switch --service=llama --model=Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-GSQ-RCO-IQ3_S-Intel-Arc-Tuned-MTP-Q4_K.gguf",
     "switch:terse": "MODEL_CONTEXT_TOKENS=57344 MODEL_MTP=1 bun run switch --service=llama --model=mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
     "switch:strata": "bun run switch --service=strata --model=coder:IQ1_M",
+    "delete": "bun scripts/model--delete/model--delete.ts",
+    "switch:qwen36-27b-mtp": "MODEL_CONTEXT_TOKENS=57344 MODEL_MTP=1 bun run switch --service=llama --model=unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+    "switch:qwen38-27b-iq3m": "MODEL_CONTEXT_TOKENS=32768 MODEL_MTP=1 bun run switch --service=llama --model=pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF/Qwen3.8-27B-IQ3_M.gguf",
+    "switch:qwen38-27b-unsloth": "MODEL_CONTEXT_TOKENS=49152 MODEL_MTP=0 bun run switch --service=llama --model=unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_M.gguf",
+    "switch:swift-1.5": "MODEL_CONTEXT_TOKENS=49152 MODEL_MTP=0 bun run switch --service=llama --model=ukisai/Swift-1.5-Qwen3.8-27B-GGUF/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",
+    "switch:dirk": "MODEL_CONTEXT_TOKENS=4096 MODEL_MTP=1 bun run switch --service=llama --model=peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF/Dirk-Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "switch:qwen38-pi": "MODEL_CONTEXT_TOKENS=4096 MODEL_MTP=0 bun run switch --service=llama --model=bytkim/Qwen3.8-27B-pi-GGUF/Qwen3.8-27B-pi-Q4_K_M.gguf",
+    "switch:thinkingcap": "MODEL_CONTEXT_TOKENS=4096 MODEL_MTP=0 bun run switch --service=llama --model=bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF/ThinkingCap-Qwen3.8-27B-IQ4_XS.gguf",
     "test": "bun scripts/model--test/model--test.ts",
     "list": "bun scripts/model--test/model--test.ts --list",
     "typecheck": "tsc --noEmit"

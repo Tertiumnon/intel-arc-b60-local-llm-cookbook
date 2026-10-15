@@ -72,7 +72,7 @@ function vscodePath(): string {
 type VsModel = Record<string, unknown> & { id?: string; url?: string };
 type VsProvider = Record<string, unknown> & { models: VsModel[] };
 
-async function updateVsCode(modelId: string, context: number, vision: boolean, previousId: string, service: string, url: string) {
+async function updateVsCode(modelId: string, context: number, vision: boolean, service: string, url: string) {
   const file = vscodePath();
   let providers: VsProvider[];
   let original = "";
@@ -86,18 +86,18 @@ async function updateVsCode(modelId: string, context: number, vision: boolean, p
   }
 
   url = `${url}/chat/completions`;
-  let provider = providers.find((entry) => Array.isArray(entry.models) && entry.models.some((m) => m.id === previousId && m.url === url));
-  provider ??= providers.find((entry) => Array.isArray(entry.models) && entry.models.some((m) => m.url === url));
+  // One provider per service, found by name. Matching by URL is ambiguous because every service shares port 8080.
+  const providerName = `Arc B60 (${service})`;
+  const legacyName = service === "strata" ? "Strata (Arc B60)" : undefined;
+  let provider = providers.find((entry) => entry.name === providerName) ?? providers.find((entry) => entry.name === legacyName);
   if (!provider) {
-    provider = { name: `Arc B60 (${service})`, vendor: "customendpoint", apiKey: required("AI_API_KEY"), apiType: "chat-completions", models: [] };
+    provider = { name: providerName, vendor: "customendpoint", apiKey: required("AI_API_KEY"), apiType: "chat-completions", models: [] };
     providers.push(provider);
   }
-  let model = provider.models.find((entry) => entry.id === previousId && entry.url === url);
-  model ??= provider.models.find((entry) => entry.url === url);
-  if (!model) {
-    model = {};
-    provider.models.push(model);
-  }
+  provider.name = providerName;
+  // Keep exactly one model per service so stale entries cannot pile up.
+  const model: VsModel = {};
+  provider.models = [model];
   const output = Math.min(8192, Math.floor(context / 4));
   const headroom = Math.min(4096, Math.floor(context / 8));
   Object.assign(model, {
@@ -160,7 +160,6 @@ async function main() {
   }
   const sshHost = required("AI_SSH_HOST");
   if (!/^[A-Za-z0-9._-]+$/.test(sshHost)) throw new Error("AI_SSH_HOST must be an SSH config alias");
-  const previousId = Bun.env.AI_MODEL_ID ?? "";
   const port = 8080;
   const version = service === "openvino" ? "v3" : "v1";
   const url = `http://${required("AI_SERVER_HOST")}:${port}/${version}`;
@@ -236,7 +235,7 @@ fi
   Bun.env.AI_API_URL = url;
   Bun.env.AI_MODEL_ID = id;
   Bun.env.SPEED_TEST_MODEL = id;
-  await updateVsCode(id, context, vision, previousId, service, url);
+  await updateVsCode(id, context, vision, service, url);
 
   console.log(`Selected ${service}: ${description}${details}`);
 }
