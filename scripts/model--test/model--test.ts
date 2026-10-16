@@ -433,6 +433,8 @@ async function main(): Promise<void> {
     await writeFile(table, "# Model test results\n\nPrefill uses server prompt timing when available; otherwise it estimates from time to first token. An asterisk marks estimated timing or token count. Decode and TTFT are averages of measured runs.\n\n| Timestamp (UTC) | Model | Endpoint | Prefill tok/s | TTFT ms | Decode tok/s | Overall tok/s | Details |\n|---|---|---|---:|---:|---:|---:|---|\n");
   }
   await appendFile(table, `| ${timestamp} | ${cfg.model.replaceAll("|", "\\|")} | ${cfg.baseUrl} | ${fmt(prefillTokensPerSec)}${prefill.promptMs === null || prefill.promptTokens === null ? "*" : ""} | ${fmt(summary.ttftMs, 0)} | ${fmt(summary.decodeTokensPerSec)} | ${fmt(summary.totalTokensPerSec)} | [JSON](./${path.basename(folder)}/${filename}) |\n`);
+  // Same log file as the quality harness: one line per run with its parameters.
+  await appendFile(path.join(import.meta.dir, "../..", "test-results", "runs.jsonl"), JSON.stringify({ time: timestamp, test: "speed", endpoint: cfg.baseUrl, model: cfg.model, settings: { prompt: cfg.prompt, iterations: cfg.iterations, maxTokens: cfg.maxTokens, temperature: cfg.temperature, noReasoning: cfg.noReasoning }, summary }) + "\n");
   console.log(`Saved results: ${path.join(folder, filename)}`);
 }
 

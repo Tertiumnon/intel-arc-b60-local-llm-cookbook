@@ -1,0 +1,150 @@
+{
+  "_comment": "Switch presets for: bun run switch --preset=NAME. service is llama (GGUF on llama.cpp), context is the server context in tokens, mtp turns on the draft head. tested: whether this exact setting has been run on the B60.",
+  "terse": {
+    "service": "llama",
+    "model": "mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
+    "context": 57344,
+    "mtp": true,
+    "tested": true
+  },
+  "terse:ctx32k": {
+    "service": "llama",
+    "model": "mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
+    "context": 32768,
+    "mtp": true,
+    "tested": false
+  },
+  "terse:no-mtp": {
+    "service": "llama",
+    "model": "mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
+    "context": 57344,
+    "mtp": false,
+    "tested": false
+  },
+  "terse:ctx128k": {
+    "service": "llama",
+    "model": "mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
+    "context": 131072,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen36-27b-mtp": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+    "context": 57344,
+    "mtp": true,
+    "tested": true
+  },
+  "qwen36-27b-mtp:ctx32k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+    "context": 32768,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen36-27b-mtp:no-mtp": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+    "context": 57344,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen36-27b-mtp:ctx128k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+    "context": 131072,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen38-27b-iq3m": {
+    "service": "llama",
+    "model": "pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF/Qwen3.8-27B-IQ3_M.gguf",
+    "context": 32768,
+    "mtp": true,
+    "tested": true
+  },
+  "qwen38-27b-iq3m:no-mtp": {
+    "service": "llama",
+    "model": "pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF/Qwen3.8-27B-IQ3_M.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-iq3m:ctx64k": {
+    "service": "llama",
+    "model": "pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF/Qwen3.8-27B-IQ3_M.gguf",
+    "context": 65536,
+    "mtp": true,
+    "tested": true
+  },
+  "qwen38-27b-iq3m:ctx128k": {
+    "service": "llama",
+    "model": "pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF/Qwen3.8-27B-IQ3_M.gguf",
+    "context": 131072,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen38-27b-unsloth": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_M.gguf",
+    "context": 49152,
+    "mtp": false,
+    "tested": true
+  },
+  "qwen38-27b-unsloth:ctx32k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_M.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-unsloth:ctx128k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_M.gguf",
+    "context": 131072,
+    "mtp": false,
+    "tested": false
+  },
+  "swift-1.5": {
+    "service": "llama",
+    "model": "ukisai/Swift-1.5-Qwen3.8-27B-GGUF/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",
+    "context": 49152,
+    "mtp": false,
+    "tested": true
+  },
+  "swift-1.5:ctx32k": {
+    "service": "llama",
+    "model": "ukisai/Swift-1.5-Qwen3.8-27B-GGUF/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "swift-1.5:ctx128k": {
+    "service": "llama",
+    "model": "ukisai/Swift-1.5-Qwen3.8-27B-GGUF/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",
+    "context": 131072,
+    "mtp": false,
+    "tested": false
+  },
+  "dirk": {
+    "service": "llama",
+    "model": "peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF/Dirk-Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 4096,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen38-pi": {
+    "service": "llama",
+    "model": "bytkim/Qwen3.8-27B-pi-GGUF/Qwen3.8-27B-pi-Q4_K_M.gguf",
+    "context": 4096,
+    "mtp": false,
+    "tested": false
+  },
+  "thinkingcap": {
+    "service": "llama",
+    "model": "bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF/ThinkingCap-Qwen3.8-27B-IQ4_XS.gguf",
+    "context": 4096,
+    "mtp": false,
+    "tested": false
+  }
+}

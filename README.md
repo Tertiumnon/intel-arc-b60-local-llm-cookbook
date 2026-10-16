@@ -7,22 +7,28 @@ port `8080` on the local network, with one service active at a time.
 
 1. Follow the [server setup](./pages/Intel-Arc-B60-Server-Setup.md) and the
    [one-time SSH setup](./scripts/model--switch/README.md).
-2. Copy `.env.example` to `.env`. Set `HF_MODEL_REPO`, `HF_MODEL_FILE`, and
-   `MODEL_CONTEXT_TOKENS` for the GGUF you want.
+2. Copy `.env.example` to `.env` and set `AI_SSH_HOST` to your SSH alias.
 3. From the repository root, run:
 
 ```bash
 bun install
-bun run switch
+bun run switch:list                 # all llama presets: context, MTP, tested or not
+bun run switch:qwen38-27b-iq3m:ctx64k
+bun run switch:strata               # Strata coder IQ1_M
 ```
 
-The command downloads a missing model, switches services, checks health and one
-short reply, then updates the local VS Code model entry. Use `--service=strata`
-or `--service=openvino` for those backends.
+Each `switch:*` script is a preset from
+[scripts/model--switch/presets.json](./scripts/model--switch/presets.json). The
+command downloads a missing model, switches services, checks health and one
+short reply, then updates the VS Code provider for that service.
 
 For timing tests and saved results, run `bun run test`. Results go under
 `test-results/`, with a summary in `test-results/test-results.md`. Run
 `bun run list` to see the model served by the API.
+
+Other scripts:
+- `bun run quality` runs JS/TS and commit-message tasks with automatic checks.
+- `bun run delete` lists or removes model files on the server (dry run by default).
 
 ## Guides
 

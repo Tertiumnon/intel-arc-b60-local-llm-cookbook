@@ -10,6 +10,23 @@ For connecting clients, see the [Clients Guide](./Intel-Arc-B60-Clients.md).
 Local speed measurements and published scores are in
 [Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md).
 
+### Recommended vs used settings for Qwen3.8 27B
+
+Sources are not measured on this B60. Our used values are in the
+[presets](../scripts/model--switch/presets.json) and the Strata config.
+
+| Setting | Recommended | Used here | Notes |
+|---|---|---|---|
+| Sampling (thinking) | temperature 1.0, top_p 0.95, top_k 20, min_p 0, presence_penalty 0 | Same, except Strata uses `repeat_penalty` 1.05 | Official [model card](https://huggingface.co/unsloth/Qwen3.8-27B). |
+| Loop fix | presence_penalty between 0 and 2 | Not set | Official card; higher values can mix languages and lower quality. Needs a Strata config change. |
+| Reasoning effort | xhigh default; medium balanced; low fast | Low on Strata (kept on purpose) | [Unsloth docs](https://unsloth.ai/docs/models/qwen3.8.md). A guide warns low effort can add retries in agent work. |
+| Quantization | Q8 or IQ4_XS to avoid loops (community thread) | IQ1_M on Strata; Q4_K_M, IQ3_M, and IQ4_XS on llama | Thread on RTX 3090/4090; unverified here. |
+| Context | 128K+ with q8_0 KV (thread); 64K–96K on 24 GB with Q4_K_M (blog) | 32K–65K tested; 128K presets untested | [Blog](https://www.orcarouter.ai/blog/qwen-3-8-27b-gguf) says KV cache is about 2 GB at 32K and 16 GB at 262K. Scaling gives about 8 GB at 128K, which plus Q4_K_M weights is over 24 GB. |
+| Runtime | llama.cpp or vLLM with MTP | llama.cpp with MTP where the GGUF has a draft head | Thread suggests MoE models for speed; this guide keeps A3B models separate. |
+
+The thread's suggestions conflict with some of our choices, so we are testing them
+with the [quality harness](../scripts/model--quality/README.md) before changing presets.
+
 ## Fit and quantization
 
 ### Weight-size estimates (int4)
@@ -134,7 +151,7 @@ guide](./Intel-Arc-B60-Server-Usage.md) covers download and selection on SYCL.
 | [Signal + Terse-Coder](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF) | i1-Q4_K_M GGUF (16.8 GB) | 57,344 served; 44,856-token prompt completed | Coding fine-tune with shorter reasoning; led local variants in one [469-question user comparison](https://www.reddit.com/r/LocalLLaMA/comments/1x0gaqv/comparing_qwen3827b_finetunes_and_baselining_vs/). | — | — | — | Not listed |
 | [Qwen3.8-27B-pi](https://huggingface.co/bytkim/Qwen3.8-27B-pi-GGUF) | Q4_K_M GGUF (~16.5 GB); optional MTP draft ~2.0 GB | Start at 4K without draft; B60 untested | Fine-tuned on Pi coding-agent sessions; publisher reports fewer output tokens at matched task success. | — | — | — | Not listed |
 | [ThinkingCap Qwen3.8-27B](https://huggingface.co/bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF) | IQ4_XS GGUF (~15.5 GB) | Start at 4K; B60 untested | Publisher reports 37% fewer reasoning tokens with a small accuracy loss; [commercial use is restricted](https://huggingface.co/bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF#license). | — | — | — | Not listed |
-| [Greatjedi Qwen3.8 Intel Arc tuned](https://huggingface.co/Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF) (IQ3_S MTP Q4_K) | GGUF IQ3_S + MTP draft; `switch:qwen38-27b-intel-tuned` script, 57,344 context | Measured: 27.8 tok/s generation, TTFT ~0.47 s **Verdict: rejected.** Fast per token, but too weak for simple tasks: it failed the "make conventional commits" request. Removed from the VS Code endpoint. If you need a fast local coder, [Signal + Terse-Coder](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF) measured 28.5 tok/s here. | — | — | — | Not listed |
+| [Greatjedi Qwen3.8 Intel Arc tuned](https://huggingface.co/Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF) (IQ3_S MTP Q4_K) | GGUF IQ3_S + MTP draft; 57,344 context; switch script and server file removed | Measured: 27.8 tok/s generation, TTFT ~0.47 s **Verdict: rejected.** Fast per token, but too weak for simple tasks: it failed the "make conventional commits" request. Removed from the VS Code endpoint. If you need a fast local coder, [Signal + Terse-Coder](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF) measured 28.5 tok/s here. | — | — | — | Not listed |
 | **[Qwen3.8-27B imatrix IQ3_M](https://huggingface.co/pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF)** | IQ3_M GGUF (~12.1 GiB) + Q8_0 projector (629 MB) | Previously served at 65,536; synthetic 42K input fit | Good coding quality, but slow responses (user report). Publisher rates this quant 2/5; no controlled local quality comparison. | — | — | — | [Base-model rating](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
 | **[Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)** | GGUF Q4_K_M (~19 GB) | 4K load check; 49K context untested on this B60 | Strong coding/agent model in this size class; published coding results are in the [benchmark table](./Intel-Arc-B60-Speed-Test-Results.md#published-coding-benchmark-scores). | **5** | **3** | **4** | [See results](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
 | [JEV-27B](https://huggingface.co/autotrust/JEV-27B) (text path) | [GGUF Q4_K_M](https://huggingface.co/prithivMLmods/JEV-27B-GGUF/tree/main) (~16.5 GB) | Start at 4K; 49K context untested on this B60 | Frozen Qwen3.8 backbone, so no published coding advantage over Qwen3.8; the decision adapter/head is absent from this GGUF path. | **5** | **3** | **4** | Not listed |

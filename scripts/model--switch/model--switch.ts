@@ -151,12 +151,36 @@ async function checkModel(url: string, modelId: string, service: string) {
   console.log(`Health and response checks passed: ${modelId}`);
 }
 
+type Preset = { service: string; model: string; context: number; mtp: boolean; tested: boolean };
+const presetsFile = path.join(import.meta.dir, "presets.json");
+
+async function loadPresets(): Promise<Record<string, Preset>> {
+  const data = JSON.parse(await readFile(presetsFile, "utf8")) as Record<string, Preset | string>;
+  return Object.fromEntries(Object.entries(data).filter((entry): entry is [string, Preset] => typeof entry[1] !== "string"));
+}
+
 async function main() {
   const options = process.argv.slice(2);
-  const service = options.find((arg) => arg.startsWith("--service="))?.slice(10) ?? "llama";
-  const modelArg = options.find((arg) => arg.startsWith("--model="))?.slice(8);
-  if (options.some((arg) => !arg.startsWith("--service=") && !arg.startsWith("--model=")) || !["llama", "strata", "openvino"].includes(service) || (modelArg !== undefined && !modelArg)) {
-    throw new Error("Usage: --service=llama|strata|openvino [--model=MODEL]");
+  if (options.includes("--list-presets")) {
+    for (const [name, preset] of Object.entries(await loadPresets())) {
+      console.log(`${name.padEnd(28)} ${preset.service.padEnd(6)} ctx ${String(preset.context).padStart(6)}  MTP ${preset.mtp ? "on " : "off"}  ${preset.tested ? "tested" : "untested"}  ${preset.model.split("/").pop()}`);
+    }
+    return;
+  }
+  const presetName = options.find((arg) => arg.startsWith("--preset="))?.slice(9);
+  const preset = presetName ? (await loadPresets())[presetName] : undefined;
+  if (presetName && !preset) throw new Error(`Unknown preset ${presetName}; run bun run switch -- --list-presets`);
+  if (preset) {
+    // A preset sets service, model and llama settings; the env values below are read by the llama branch.
+    Bun.env.MODEL_CONTEXT_TOKENS = String(preset.context);
+    Bun.env.MODEL_MTP = preset.mtp ? "1" : "0";
+    console.log(`Preset ${presetName}: ${preset.service} ${preset.model} ctx=${preset.context} MTP=${preset.mtp ? 1 : 0} (${preset.tested ? "tested" : "untested"})`);
+  }
+  const service = preset?.service ?? options.find((arg) => arg.startsWith("--service="))?.slice(10) ?? "llama";
+  const modelArg = preset?.model ?? options.find((arg) => arg.startsWith("--model="))?.slice(8);
+  const allowed = (arg: string) => arg.startsWith("--service=") || arg.startsWith("--model=") || arg.startsWith("--preset=");
+  if (options.some((arg) => !allowed(arg)) || !["llama", "strata", "openvino"].includes(service) || (modelArg !== undefined && !modelArg)) {
+    throw new Error("Usage: --preset=NAME | --service=llama|strata|openvino [--model=MODEL] | --list-presets");
   }
   const sshHost = required("AI_SSH_HOST");
   if (!/^[A-Za-z0-9._-]+$/.test(sshHost)) throw new Error("AI_SSH_HOST must be an SSH config alias");

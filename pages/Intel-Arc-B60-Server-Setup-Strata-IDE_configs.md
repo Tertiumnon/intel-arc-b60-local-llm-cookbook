@@ -5,7 +5,7 @@ Strata's loaded model ID is `qwen3.8-flash-next-coder-iq1_m` (`/v1/models`). It 
 ```json
 [
   {
-    "name": "Arc B60 (Strata)",
+    "name": "Arc B60 (strata)",
     "vendor": "customendpoint",
     "apiKey": "local",
     "apiType": "chat-completions",
@@ -27,4 +27,4 @@ Strata's loaded model ID is `qwen3.8-flash-next-coder-iq1_m` (`/v1/models`). It 
 
 `local` is only a placeholder for VS Code's key field. The input and output caps total 53,248 tokens, below Strata's configured 131,072-token context. Tool calling was verified with a function-call request; image input is disabled.
 
-The Windows `chatLanguageModels.json` keeps Strata and the saved llama.cpp model as separate providers. Do not put Markdown link syntax in the JSON URL. See [Strata setup](./Intel-Arc-B60-Server-Setup-Strata.md) and the [general VS Code client guide](./Intel-Arc-B60-Clients.md) for the Custom Endpoint steps.
+The Windows `chatLanguageModels.json` keeps Strata and the llama.cpp model as separate providers. `bun run switch:strata` writes the `Arc B60 (strata)` provider itself, so this JSON is only needed for a manual setup. Do not put Markdown link syntax in the JSON URL. See [Strata setup](./Intel-Arc-B60-Server-Setup-Strata.md) and the [general VS Code client guide](./Intel-Arc-B60-Clients.md) for the Custom Endpoint steps.

@@ -11,17 +11,20 @@ first. Then run model changes from the repository root on your computer.
 
 ## Download and switch
 
-For llama.cpp, set `HF_MODEL_REPO`, `HF_MODEL_FILE`, and `MODEL_CONTEXT_TOKENS` in local
-`.env` (see [.env.example](./.env.example)). Set `MODEL_MTP=1` only if the
-GGUF contains an MTP draft head. For images, also set `HF_MMPROJ_REPO` and
-`HF_MMPROJ_FILE` to a matching projector.
+For llama.cpp, pick a preset from [presets.json](../scripts/model--switch/presets.json).
+A preset sets the GGUF, context, and MTP setting. List them with `bun run switch:list`
+and run one with a script such as `bun run switch:qwen38-27b-iq3m:ctx64k`
+(or `bun run switch -- --preset=NAME`). Each preset is marked tested or untested.
+Set `MODEL_MTP=1` only if the GGUF contains an MTP draft head. Vision projectors are
+not in presets; set `HF_MMPROJ_REPO` and `HF_MMPROJ_FILE` in `.env` for images.
 
 ```bash
-bun scripts/model--switch/model--switch.ts
+bun run switch:list
+bun run switch:terse
 ```
 
-`bun run switch` is the shorter equivalent after the one-time `bun install`.
-Use `bun run switch --service=strata --model=coder:IQ1_M` for Strata or
+`bun run switch` without a preset uses `HF_MODEL_REPO`, `HF_MODEL_FILE`, and
+`MODEL_CONTEXT_TOKENS` from `.env`. Use `bun run switch --service=strata --model=coder:IQ1_M` for Strata or
 `bun run switch --service=openvino --model=OpenVINO/Qwen3-Coder-30B-A3B-Instruct-int4-ov`
 for OVMS. The helper stops and disables the other services before starting the
 selected model. See the [command options](./scripts/model--switch/README.md)

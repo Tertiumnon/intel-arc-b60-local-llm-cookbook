@@ -34,13 +34,15 @@ updates the local endpoint automatically. Use the steps below for manual setup.
 1. In the Chat view open the model picker → **Manage Language Models** (gear icon), or
    run **Chat: Manage Language Models** from the Command Palette.
 2. Select **Add Models** → **Custom Endpoint**. VS Code opens `chatLanguageModels.json`.
-3. Add the provider below. Copy the model ID from `/v1/models` and set limits
-   for the loaded server context.
+3. Add the provider below, or let `bun run switch` write it. The switch keeps one
+   provider per service, named `Arc B60 (llama)`, `Arc B60 (strata)`, or
+   `Arc B60 (openvino)`. Copy the model ID from `/v1/models` and set limits for the
+   loaded server context.
 
 ```json
 [
   {
-    "name": "Arc B60 (llama.cpp)",
+    "name": "Arc B60 (llama)",
     "vendor": "customendpoint",
     "apiKey": "local",
     "apiType": "chat-completions",
