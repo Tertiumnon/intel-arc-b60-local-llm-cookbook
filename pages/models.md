@@ -5,10 +5,10 @@ This guide compares models for Intel Arc Pro B60 GPUs, with recommendations for 
 
 > **Last updated:** October 9, 2026
 
-For current serving steps, see the [Intel SYCL Usage guide](./Intel-Arc-B60-Server-Usage.md).
-For connecting clients, see the [Clients Guide](./Intel-Arc-B60-Clients.md).
+For current serving steps, see the [Intel SYCL Usage guide](./setup.md).
+For connecting clients, see the [Clients Guide](./clients.md).
 Local speed measurements and published scores are in
-[Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md).
+[Speed Test Results](./results.md).
 
 ### Recommended vs used settings for Qwen3.8 27B
 
@@ -25,7 +25,7 @@ Sources are not measured on this B60. Our used values are in the
 | Runtime | llama.cpp or vLLM with MTP | llama.cpp with MTP where the GGUF has a draft head | Thread suggests MoE models for speed; this guide keeps A3B models separate. |
 
 The thread's suggestions conflict with some of our choices, so we are testing them
-with the [quality harness](../scripts/model--quality/README.md) before changing presets.
+with the [quality harness](../scripts/README.md) before changing presets.
 
 ## Fit and quantization
 
@@ -85,8 +85,7 @@ The optional `mmproj-F16.gguf` is another **928 MB** for image input. Quantizati
 does not change the model's published **262,144-token native context**. For a
 genuine Unsloth fine-tune, check that its model card identifies extra training
 or a fine-tuned parent; an `unsloth/` prefix alone does not establish that.
-The [Vulkan archive](./Intel-Arc-B60-Server-Setup-Vulkan.md#qwen38-27b-unsloth-dynamic-gguf)
-records an earlier download recipe; use the SYCL service for current trials.
+An earlier Vulkan download recipe is in git history (`pages/Intel-Arc-B60-Server-Setup-Vulkan.md` at commit `e74fedf`); use the SYCL service for current trials.
 
 ## Base Model: Qwen3.8-27B
 Qwen3.8-27B is the base of the previously served Swift 1.5 coding fine-tune. Its OpenVINO
@@ -99,7 +98,7 @@ measurements below describe the base model and a different runtime.
 | Context | 262,144 tokens native (extensible to 1M) |
 | Thinking | On by default; depth via `reasoning_effort` (`xhigh` default / `medium` / `low`) |
 | License | Apache-2.0 |
-| B60 measurements | [OpenVINO speed results](./Intel-Arc-B60-Speed-Test-Results.md#local-openvino-model-server-qwen38-27b-int4) |
+| B60 measurements | [OpenVINO speed results](./results.md#local-openvino-model-server-qwen38-27b-int4) |
 
 ### Recommended Settings for Large JS/Node Refactors
 | Setting | Value | Why |
@@ -126,7 +125,7 @@ weight size, and available local results. Every model in these shortlists has a 
 configuration; use the conservative starting context shown in each row.
 
 **Arena user rating** links to the published leaderboard snapshot in the
-[Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings)
+[Speed Test Results](./results.md#published-arena-user-ratings)
 when an exact entry was found. “Not listed” is not a zero score.
 
 ### Better for chatting
@@ -134,26 +133,26 @@ when an exact entry was found. “Not listed” is not a zero score.
 | Model | B60 option | Fit and starting point | Chat profile | Quality /5 | Speed /5 | Balance /5 | Arena user rating* |
 |---|---|---|---|---:|---:|---:|---|
 | **[Qwen3.5 9B](https://huggingface.co/Qwen/Qwen3.5-9B)** | GGUF Q4_K_M (~5.63 GB); add the vision projector only if using images | Comfortable fit; start at 16K | Lightweight everyday assistant with multimodal support and room for a longer context. | **3** | **5** | **5** | Not listed |
-| **[Gemma 4 26B-A4B Instruct](https://huggingface.co/google/gemma-4-26B-A4B-it)** | GGUF Q4_0 (~14.6 GB) | Start at 8K | Well-rounded assistant with image input and practical B60 fit. | **4** | **4** | **4** | [See results](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
-| **[Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)** | GGUF Q4_K_M (~19 GB) | 4K load check; 49K context is an untested target | Deliberate responses and broad image/video support; measure B60 context headroom before setting VS Code limits. | **5** | **3** | **4** | [See results](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
+| **[Gemma 4 26B-A4B Instruct](https://huggingface.co/google/gemma-4-26B-A4B-it)** | GGUF Q4_0 (~14.6 GB) | Start at 8K | Well-rounded assistant with image input and practical B60 fit. | **4** | **4** | **4** | [See results](./results.md#published-arena-user-ratings) |
+| **[Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)** | GGUF Q4_K_M (~19 GB) | 4K load check; 49K context is an untested target | Deliberate responses and broad image/video support; measure B60 context headroom before setting VS Code limits. | **5** | **3** | **4** | [See results](./results.md#published-arena-user-ratings) |
 | [JEV-27B](https://huggingface.co/autotrust/JEV-27B) (text path) | [GGUF Q4_K_M](https://huggingface.co/prithivMLmods/JEV-27B-GGUF/tree/main) (~16.5 GB) | Start at 4K; 49K context is an untested target | Same Qwen3.8 text-generation backbone; its specialized typed-decision mode is unavailable in the GGUF chat API. | **5** | **3** | **4** | Not listed |
 | **GLM-4.7-Flash** | GGUF Q4_K (~18.2 GB) | Tight; start at 4K; not tested on this B60 | Reasoning-oriented chat alternative; compare tone and answer quality on your own prompts. | **4** | **4** | **4** | Not listed |
 
 For a quick personal comparison, send the same ordinary chat prompt to each model and
 compare answer quality, latency, and how much context you need. The [Usage
-guide](./Intel-Arc-B60-Server-Usage.md) covers download and selection on SYCL.
+guide](./setup.md) covers download and selection on SYCL.
 
 ### Better for coding
 
 | Model | B60 option | Fit and starting point | Assessment | Quality /5 | Speed /5 | Balance /5 | Arena user rating* |
 |---|---|---|---|---:|---:|---:|---|
-| [Swift 1.5 Qwen3.8-27B](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GGUF) | Q4_K_M GGUF (~17.4 GB) | Previously served at 49,152 context; long input verified ([results](./Intel-Arc-B60-Speed-Test-Results.md#long-input-and-prefill)) | Coding fine-tune of Qwen3.8-27B. Publisher coding scores are in the [results](./Intel-Arc-B60-Speed-Test-Results.md#published-coding-benchmark-scores); local GGUF coding quality is unmeasured. | **5** | **2** | **3** | Not listed |
+| [Swift 1.5 Qwen3.8-27B](https://huggingface.co/ukisai/Swift-1.5-Qwen3.8-27B-GGUF) | Q4_K_M GGUF (~17.4 GB) | Previously served at 49,152 context; long input verified ([results](./results.md#long-input-and-prefill)) | Coding fine-tune of Qwen3.8-27B. Publisher coding scores are in the [results](./results.md#published-coding-benchmark-scores); local GGUF coding quality is unmeasured. | **5** | **2** | **3** | Not listed |
 | [Signal + Terse-Coder](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF) | i1-Q4_K_M GGUF (16.8 GB) | 57,344 served; 44,856-token prompt completed | Coding fine-tune with shorter reasoning; led local variants in one [469-question user comparison](https://www.reddit.com/r/LocalLLaMA/comments/1x0gaqv/comparing_qwen3827b_finetunes_and_baselining_vs/). | — | — | — | Not listed |
 | [Qwen3.8-27B-pi](https://huggingface.co/bytkim/Qwen3.8-27B-pi-GGUF) | Q4_K_M GGUF (~16.5 GB); optional MTP draft ~2.0 GB | Start at 4K without draft; B60 untested | Fine-tuned on Pi coding-agent sessions; publisher reports fewer output tokens at matched task success. | — | — | — | Not listed |
 | [ThinkingCap Qwen3.8-27B](https://huggingface.co/bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF) | IQ4_XS GGUF (~15.5 GB) | Start at 4K; B60 untested | Publisher reports 37% fewer reasoning tokens with a small accuracy loss; [commercial use is restricted](https://huggingface.co/bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF#license). | — | — | — | Not listed |
 | [Greatjedi Qwen3.8 Intel Arc tuned](https://huggingface.co/Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF) (IQ3_S MTP Q4_K) | GGUF IQ3_S + MTP draft; 57,344 context; switch script and server file removed | Measured: 27.8 tok/s generation, TTFT ~0.47 s **Verdict: rejected.** Fast per token, but too weak for simple tasks: it failed the "make conventional commits" request. Removed from the VS Code endpoint. If you need a fast local coder, [Signal + Terse-Coder](https://huggingface.co/mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF) measured 28.5 tok/s here. | — | — | — | Not listed |
-| **[Qwen3.8-27B imatrix IQ3_M](https://huggingface.co/pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF)** | IQ3_M GGUF (~12.1 GiB) + Q8_0 projector (629 MB) | Previously served at 65,536; synthetic 42K input fit | Good coding quality, but slow responses (user report). Publisher rates this quant 2/5; no controlled local quality comparison. | — | — | — | [Base-model rating](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
-| **[Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)** | GGUF Q4_K_M (~19 GB) | 4K load check; 49K context untested on this B60 | Strong coding/agent model in this size class; published coding results are in the [benchmark table](./Intel-Arc-B60-Speed-Test-Results.md#published-coding-benchmark-scores). | **5** | **3** | **4** | [See results](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
+| **[Qwen3.8-27B imatrix IQ3_M](https://huggingface.co/pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF)** | IQ3_M GGUF (~12.1 GiB) + Q8_0 projector (629 MB) | Previously served at 65,536; synthetic 42K input fit | Good coding quality, but slow responses (user report). Publisher rates this quant 2/5; no controlled local quality comparison. | — | — | — | [Base-model rating](./results.md#published-arena-user-ratings) |
+| **[Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)** | GGUF Q4_K_M (~19 GB) | 4K load check; 49K context untested on this B60 | Strong coding/agent model in this size class; published coding results are in the [benchmark table](./results.md#published-coding-benchmark-scores). | **5** | **3** | **4** | [See results](./results.md#published-arena-user-ratings) |
 | [JEV-27B](https://huggingface.co/autotrust/JEV-27B) (text path) | [GGUF Q4_K_M](https://huggingface.co/prithivMLmods/JEV-27B-GGUF/tree/main) (~16.5 GB) | Start at 4K; 49K context untested on this B60 | Frozen Qwen3.8 backbone, so no published coding advantage over Qwen3.8; the decision adapter/head is absent from this GGUF path. | **5** | **3** | **4** | Not listed |
 | [KAT-Coder-V2.5-Dev](https://huggingface.co/Kwaipilot/KAT-Coder-V2.5-Dev) | GGUF Q3_K_L (~18.1 GB) | Start at 4K; larger context untested on this B60 | Coding-focused MoE fallback. | **4** | **5** | **4** | Not listed |
 | **GLM-4.7-Flash** | GGUF Q4_K (~18.2 GB) | Tight; start at 4K, not tested on this B60 | Practical GLM-family alternative; compare on your coding tasks. | **4** | **4** | **4** | Not listed |
@@ -168,8 +167,8 @@ See the [publisher model card](https://huggingface.co/autotrust/JEV-27B).
 
 | Model | Format and weight size | Image/video use | B60 starting point | Quality /5 | Speed /5 | Balance /5 | Arena user rating* |
 |---|---|---|---|---:|---:|---:|---|
-| **[Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)** | GGUF Q4_K_M ~19 GB + Q8_0 mmproj ~629 MB | Native image and video understanding; strong all-round choice | 4K load check; test higher context separately with image tokens included | **5** | **3** | **4** | [See results](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
-| **[Gemma 4 26B-A4B Instruct](https://huggingface.co/google/gemma-4-26B-A4B-it)** | GGUF Q4_0 ~14.6 GB + BF16 mmproj ~1.19 GB | Vision-language chat | Better headroom than the 27–30B Q4 models; start at 8K | **4** | **4** | **4** | [See results](./Intel-Arc-B60-Speed-Test-Results.md#published-arena-user-ratings) |
+| **[Qwen3.8-27B](https://huggingface.co/Qwen/Qwen3.8-27B)** | GGUF Q4_K_M ~19 GB + Q8_0 mmproj ~629 MB | Native image and video understanding; strong all-round choice | 4K load check; test higher context separately with image tokens included | **5** | **3** | **4** | [See results](./results.md#published-arena-user-ratings) |
+| **[Gemma 4 26B-A4B Instruct](https://huggingface.co/google/gemma-4-26B-A4B-it)** | GGUF Q4_0 ~14.6 GB + BF16 mmproj ~1.19 GB | Vision-language chat | Better headroom than the 27–30B Q4 models; start at 8K | **4** | **4** | **4** | [See results](./results.md#published-arena-user-ratings) |
 | **Qwen3.5 9B** | GGUF Q4_K_M ~5.63 GB + BF16 mmproj ~922 MB | Smaller vision-language model, more context headroom | Start at 16K | **4** | **5** | **5** | Not listed |
 
 ### A3B MoE models: fast, but often not smart enough
@@ -185,7 +184,7 @@ moved here from the chat, coding, and image shortlists above.
 | **Qwen3-VL 30B-A3B Instruct** | GGUF Q4_K_M ~18.6 GB + Q8_0 mmproj ~712 MB | Tight; start at 4K | Vision specialist; the image shortlist rates it 5/3/4. | **4** | **3** | **3** | Not listed |
 | [Kimi-VL-A3B-Thinking-2506](https://huggingface.co/moonshotai/Kimi-VL-A3B-Thinking-2506) | [GGUF Q4_K_M](https://huggingface.co/ggml-org/Kimi-VL-A3B-Thinking-2506-GGUF/tree/main) ~10.5 GB + Q8_0 mmproj ~0.62 GB | Start at 16K; increase only after a B60 image request succeeds | Image reasoning; its thinking markers need a client check before use as a VS Code agent. The text config specifies 131,072 positions; the processor's `in_token_limit=16384` only limits image preprocessing. Not tested on this B60. | **3** | **4** | **4** | Not listed |
 | [Kimi-Linear-48B-A3B-Instruct](https://huggingface.co/moonshotai/Kimi-Linear-48B-A3B-Instruct) | [IQ3_XS imatrix GGUF](https://huggingface.co/mradermacher/Kimi-Linear-48B-A3B-Instruct-i1-GGUF/tree/main) ~20.2 GB | Tight; start at 4K; B60 Vulkan untested | Long-context linear-attention MoE experiment; lower-bit weights make quality checks essential. | **4** | **4** | **3** | Not listed |
-| **Qwen3.6-35B-A3B** | GGUF Q4_K_M (~20.4 GB) | Previously verified on this B60 at 49,152 context | Fast MoE; long-input result is in the [results](./Intel-Arc-B60-Speed-Test-Results.md#long-input-and-prefill). | **4** | **5** | **4** | Not listed |
+| **Qwen3.6-35B-A3B** | GGUF Q4_K_M (~20.4 GB) | Previously verified on this B60 at 49,152 context | Fast MoE; long-input result is in the [results](./results.md#long-input-and-prefill). | **4** | **5** | **4** | Not listed |
 | [Qwen3-Coder-30B-A3B Instruct](https://huggingface.co/Qwen/Qwen3-Coder-30B-A3B-Instruct) | INT4 OpenVINO export (~16.3 GB) | 49K context target; OVMS not running now | Older coding MoE option. | **3** | **4** | **3** | Not listed |
 | [NVIDIA Nemotron 3.5 Lightning 30B-A3B](https://huggingface.co/nvidia/NVIDIA-Nemotron-3.5-Lightning-30B-A3B-NVFP4) | GGUF Q4_0 (~18.9 GB) | Tight; start at 4K; not tested on this B60 | Review its OpenMDW license before use. | **4** | **4** | **4** | Not listed |
 
@@ -206,7 +205,7 @@ a tested B60 maximum. llama.cpp evaluates a Clef request in one batch, so its
 `--ubatch-size` must cover the complete encoded input. See the
 [model config](https://huggingface.co/Cloudflare/clef-flash/blob/main/config.json),
 [llama.cpp decision API](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md#post-v1systemone-typesafe-compatible-system-one-api),
-and [launch recipe](./Intel-Arc-B60-Server-Setup-Vulkan.md#cloudflareclef-flash-decision-model).
+and launch recipe (in git history at commit `e74fedf`).
 
 ### Recommended B60 input and output limits
 
@@ -225,11 +224,11 @@ chat-template and tokenizer differences. See the
 [llama.cpp server reference](https://github.com/ggml-org/llama.cpp/blob/master/tools/server/README.md).
 This example used one server slot. Check a new model on SYCL before reusing
 these limits. Historical context tests are in
-[Speed Test Results](./Intel-Arc-B60-Speed-Test-Results.md).
+[Speed Test Results](./results.md).
 
 ### llama.cpp model launch settings
 
-Use the [Usage guide](./Intel-Arc-B60-Server-Usage.md) to download and select a GGUF
+Use the [Usage guide](./setup.md) to download and select a GGUF
 on the current Intel SYCL service. Model cards publish native context lengths;
 those are not verified B60 server settings.
 ### Why other famous families are absent

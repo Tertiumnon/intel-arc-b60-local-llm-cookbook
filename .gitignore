@@ -1,5 +1,5 @@
 .env
 node_modules/
 __pycache__/
-pages/Intel-Arc-B60-Models-Log.md
+local-notes.md
 test-results/

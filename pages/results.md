@@ -3,7 +3,7 @@
 One Intel Arc Pro B60, 24 GB VRAM. Local rows are October 2026 measurements;
 published model and community rows use other machines or test methods. Values
 from different prompts, caches, and runtimes are not head-to-head rankings.
-For current commands and saved results, see the [model test README](./scripts/model--test/README.md).
+For current commands and saved results, see the [model test README](../scripts/README.md).
 
 ## Local Strata: Qwen3.8-Flash-Next Coder IQ1_M
 
@@ -46,7 +46,7 @@ excluding GPU memory.
 Unsloth and Pearson used all 256 output tokens. Signal stopped after 74–202;
 compare generation speed more readily than total request time. Raw output is
 in the gitignored
-[`Intel-Arc-B60-Models-Log.md`](./Intel-Arc-B60-Models-Log.md).
+`local-notes.md` (private, not in git).
 
 ## Local llama.cpp profiles
 
@@ -149,8 +149,7 @@ JEV coding benchmark was reported for that path.
 The [community report by u/AmericanRiskCouncil](https://www.reddit.com/r/IntelArc/comments/1veyi1z/dual_intel_arc_b60_lm_studio_best_drivers_settings/)
 used Windows, LM Studio with Vulkan llama.cpp, Qwen3.6-35B-A3B, and one or two
 Arc Pro B60 cards. These are another user's observations on an i9-14900K,
-not measurements from the Ubuntu server in this repository. Windows runtime
-and driver settings are in the [Windows LM Studio guide](./Intel-Arc-B60-Windows-LM-Studio.md).
+not measurements from the Ubuntu server in this repository.
 
 | Workload | Single B60 | Dual B60 |
 |---|---:|---:|
@@ -178,5 +177,5 @@ October 6, 2026 text-leaderboard snapshot; crowd ratings, not B60 tests:
 - Strata, Bun, AIPerf, and direct API checks used different prompts and runtime
   settings. Compare runs within the same test first.
 - Model quality and the 1–5 practical ratings remain in the
-  [Models Guide](./Intel-Arc-B60-Models.md); the tables there are recommendations,
+  [Models Guide](./models.md); the tables there are recommendations,
   not controlled B60 benchmarks.

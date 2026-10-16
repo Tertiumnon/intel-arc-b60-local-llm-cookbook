@@ -4,11 +4,11 @@
 This guide covers connecting AI clients to the Intel Arc B60 inference server. The
 selected service listens on port `8080`. Strata and llama.cpp use `/v1`;
 OpenVINO Model Server uses `/v3`. The llama.cpp service is documented in the
-[Intel SYCL setup guide](./Intel-Arc-B60-Server-Setup-Intel_SYCL.md).
+[Intel SYCL setup guide](./setup.md).
 
 ## Connection Details
-Set your server host and the SYCL API URL in local [.env](./.env) from
-[.env.example](./.env.example). Use `AI_API_URL` and `AI_API_KEY` for API clients.
+Set your server host and the SYCL API URL in local [.env](../.env) from
+[.env.example](../.env.example). Use `AI_API_URL` and `AI_API_KEY` for API clients.
 
 Load them into your shell with:
 ```bash
@@ -27,7 +27,7 @@ This setup works with:
 ## VS Code AI Configuration
 
 VS Code Chat (including agent mode) connects to the SYCL API as a **Custom Endpoint**.
-The [model command](./Intel-Arc-B60-Server-Usage.md#download-switch-and-test)
+The [model command](./setup.md)
 updates the local endpoint automatically. Use the steps below for manual setup.
 
 ### Configure Custom Endpoint
@@ -75,7 +75,7 @@ Notes:
   `toolCalling`, `vision`, and `thinking` to match capabilities you tested.
 - Don't commit `chatLanguageModels.json` to a repository.
 
-### Choosing `maxInputTokens` / `maxOutputTokens`
+## Input and output limits
 
 VS Code defines `contextWindow` as the total input plus output budget
 ([Custom Endpoint configuration](https://code.visualstudio.com/docs/agent-customization/language-models#custom-endpoint-configuration-reference)).
