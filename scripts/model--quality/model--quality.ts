@@ -79,6 +79,7 @@ async function longPrompt(task: Task): Promise<string> {
 }
 
 async function ask(prompt: string, effort: string) {
+  // Streamed, so bytes keep arriving during long replies (Bun drops idle non-streamed requests after 5 minutes).
   const started = performance.now();
   const response = await fetch(`${base}/chat/completions`, {
     method: "POST",
@@ -88,21 +89,47 @@ async function ask(prompt: string, effort: string) {
       messages: [{ role: "user", content: prompt }],
       max_tokens: maxTokens,
       reasoning_effort: effort,
-      stream: false,
+      stream: true,
+      stream_options: { include_usage: true },
     }),
-    signal: AbortSignal.timeout(900000),
+    signal: AbortSignal.timeout(3600000),
   });
-  const json = await response.json() as {
-    choices: Array<{ finish_reason: string; message: { content?: string; reasoning_content?: string; reasoning?: string } }>;
-    usage?: { completion_tokens?: number; prompt_tokens?: number };
-  };
-  const choice = json.choices[0];
+  if (!response.body) throw new Error(`no body (HTTP ${response.status})`);
+  let text = "";
+  let reasoning = "";
+  let finish = "";
+  let completionTokens: number | null = null;
+  let promptTokens: number | null = null;
+  let buffer = "";
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  for (let read = await reader.read(); !read.done; read = await reader.read()) {
+    buffer += decoder.decode(read.value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? "";
+    for (const line of lines) {
+      if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
+      const data = JSON.parse(line.slice(6)) as {
+        choices?: Array<{ finish_reason?: string | null; delta?: { content?: string; reasoning_content?: string; reasoning?: string } }>;
+        usage?: { completion_tokens?: number; prompt_tokens?: number };
+      };
+      const choice = data.choices?.[0];
+      if (choice?.delta?.content) text += choice.delta.content;
+      const thought = choice?.delta?.reasoning_content ?? choice?.delta?.reasoning;
+      if (thought) reasoning += thought;
+      if (choice?.finish_reason) finish = choice.finish_reason;
+      if (data.usage) {
+        completionTokens = data.usage.completion_tokens ?? completionTokens;
+        promptTokens = data.usage.prompt_tokens ?? promptTokens;
+      }
+    }
+  }
   return {
-    text: choice.message.content ?? "",
-    reasoning: choice.message.reasoning_content ?? choice.message.reasoning ?? "",
-    finish: choice.finish_reason,
-    completionTokens: json.usage?.completion_tokens ?? null,
-    promptTokens: json.usage?.prompt_tokens ?? null,
+    text,
+    reasoning,
+    finish,
+    completionTokens,
+    promptTokens,
     seconds: (performance.now() - started) / 1000,
   };
 }
@@ -126,8 +153,14 @@ const results: Result[] = [];
 for (const effort of efforts) {
   for (const [index, task] of tasks.entries()) {
     const isLong = (task.group ?? "basic") === "long";
-    const reply = await ask(isLong ? await longPrompt(task) : task.prompt, effort);
-    const verdict = await check(task, reply.text, index, effort);
+    const started = performance.now();
+    let requestError = "";
+    // A failed request (for example a client timeout) counts as a failed test; the run continues.
+    const reply = await ask(isLong ? await longPrompt(task) : task.prompt, effort).catch((error: Error) => {
+      requestError = error.name;
+      return { text: "", reasoning: "", finish: "error", completionTokens: null, promptTokens: null, seconds: (performance.now() - started) / 1000 };
+    });
+    const verdict = requestError ? { pass: false, note: requestError } : await check(task, reply.text, index, effort);
     const result: Result = {
       task: task.id,
       effort,
