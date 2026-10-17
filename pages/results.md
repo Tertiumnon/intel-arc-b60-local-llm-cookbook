@@ -5,6 +5,124 @@ published model and community rows use other machines or test methods. Values
 from different prompts, caches, and runtimes are not head-to-head rankings.
 For current commands and saved results, see the [model test README](../scripts/README.md).
 
+## Hard tasks: Strata IQ1_M vs Qwen3.8 UD-Q4_K_M
+
+October 17, 2026. Five hard tasks (TTL cache, expression parser, merge intervals, topological
+sort, nested get), one run each, output cap 8,192 tokens. Qwen3.8 Unsloth UD-Q4_K_M ran on llama.cpp
+at 131,072 context (loaded without problems), no MTP. Rows in `runs.jsonl` (`group` complex).
+
+| Test | Strata IQ1_M | Qwen3.8 Q4_K_M |
+|---|---:|---:|
+| Hard tasks, low reasoning | 4/5 | 5/5 |
+| Hard tasks, medium reasoning | 4/5 | not run (first request timed out after ~5 min) |
+| Basic 10 tasks, low | 10/10 (24 s avg) | 10/10 (49 s avg) |
+| Long 27K tokens, depth 0.5, low | 4/4 (2 repeats; ~39 s per request) | 1/2 (174–212 s per request) |
+
+Findings:
+- The TTL cache task failed on Strata at every level and in every run (0 of 5 across runs), and passed
+  on Qwen3.8 Q4_K_M once. This is the only task that separated the two models.
+- Both models failed the long discount task by using `CURRENT_PRICING` without defining it.
+- Qwen was about twice as slow on short tasks and about five times slower on a 27K prompt.
+- One run per task. The TTL cache result needs repeats before it counts as a quant effect.
+- The harness stops at the first client-side timeout (about 5 minutes), so the Qwen medium pass has no results.
+
+## Long-context matrix: prompt size, depth, and model
+
+October 16, 2026. Two long tasks (discount, shipping), low reasoning, planted files at depth
+0.1, 0.5, or 0.9 of the prompt. Strata: 2 repeats at 3 sizes. Signal Q4_K_M at 131K context:
+1 repeat at 2 sizes. Prompt sizes are real tokens from the server. Per-run rows are in
+`runs.jsonl` (`group` long, with `contextTokens`, `depth`, `rep`, `promptTokens`).
+
+| Model | Prompt tokens | Pass | Avg seconds per request |
+|---|---:|---:|---:|
+| Strata IQ1_M | ~27K | 10/12 | 39 |
+| Strata IQ1_M | ~55K | 10/12 | 59 |
+| Strata IQ1_M | ~110K | 10/12 | 113 |
+| Signal Q4_K_M | ~27K | 4/6 | 139 |
+| Signal Q4_K_M | ~55K | 2/3 | 289 |
+
+Strata by depth: 0.1 gave 9/12, 0.5 gave 11/12, and 0.9 gave 10/12. By task: shipping 18/18, discount 12/18.
+All six Strata failures were the discount task: four were a `ReferenceError` (the reply used
+`CURRENT_PRICING` without defining it) and two were logic errors.
+
+Findings:
+- Prompt size did not change accuracy on Strata from 27K to 110K tokens. Depth did not matter much.
+- Signal needs about five times longer than Strata for the same prompt. At 55K tokens a
+  request took about 290 s, and the second request (shipping) timed out after about 5 minutes in all three depth runs. The script allows 15 minutes, so the 5-minute limit comes from the client library.
+  The 110K size was not run on Signal.
+- Accuracy on the shared sizes was similar (Strata 5/6 at each size; Signal 4/6 and 2/3), but
+  Signal's sample is small and incomplete.
+- For large VS Code requests, Strata's prefill speed matters more than model differences here.
+
+## Complex and long-context tasks: Strata Coder IQ1_M
+
+October 16, 2026. Two complex tasks (no context) and two long tasks. Each long task asks
+for code that must follow the current rules in a file, with deprecated rules in other
+files. The file is buried in filler code at about 40% depth. Tasks are in
+[tasks.json](../scripts/model--quality/tasks.json), files in
+[context/](../scripts/model--quality/context/). Sampling and context as in the Strata
+config. Runs in `runs.jsonl` have `group`, `contextTokens`, and `promptTokens`.
+
+| Group | Context (target) | Actual prompt tokens | Low | Medium | High |
+|---|---|---:|---:|---:|---:|
+| complex (TTL cache, expression parser) | none | ~120 | 1/2 | 1/2 | 1/2 |
+| long | 30K | ~54K | 3/4 (2/2 rerun) | 2/4 (2/2 rerun) | 2/4 (1/2 rerun) |
+| long | 60K | ~110K | 2/2 | 2/2 | 0/2 |
+
+Findings:
+- **Expression parser** passed at every level. **TTL cache** failed at every level: wrong
+  logic, or the reply hit the 4,096-token cap.
+- **Long tasks:** the 30K results differ between the first run and the rerun. The same
+  settings gave 1/2 and then 2/2 at low reasoning. Use the rerun for the table; treat one
+  run per level as a rough guide.
+- **High reasoning at 60K:** the reply used the context's constant (`CURRENT_PRICING`,
+  `CURRENT_SHIPPING`) without defining it, so the code failed with `ReferenceError`. At
+  30K the same mistake happened once.
+- **Looping flag:** the detector marks any line repeated 8 times as a loop. Several
+  correct answers were flagged, so the flag is noisy.
+
+Context size question: at 60K, low and medium passed both tasks. This is too small a
+sample to say that bigger context helps, but it does not show that it hurts.
+
+## Signal + Terse-Coder Q4_K_M: 32K vs 128K context
+
+October 16, 2026. llama.cpp SYCL, Q8 KV cache, one slot, MTP on (one draft token),
+no vision projector. Presets `terse:ctx32k` and `terse` (131,072) in
+[presets.json](../scripts/model--switch/presets.json). Both switched and passed their health checks.
+
+| Context | Speed: TTFT | Speed: gen tok/s | Speed: prefill tok/s | Quality (low) | Avg tokens | Avg seconds |
+|---|---:|---:|---:|---|---:|---:|
+| 32,768 | 484 ms | 28.6 | 186 | 10/10 | 551 | 19.5 |
+| 131,072 | 483 ms | 28.7 | 186 | 9/10 | 529 | 18.8 |
+
+The 128K failure was `parse-query`: the reply built an invalid regular expression
+(`nothing to repeat`). Single runs vary, so one failure is not a context effect on its own.
+
+Caveats:
+- Reasoning level was sent as `low`, but llama.cpp may ignore it. These rows do not
+  show a reasoning effect.
+- Only one run per task. Speed numbers are from a single warm-up and three measured runs.
+- The 128K load was not checked for VRAM headroom beyond the health check.
+
+## Quality: Strata Coder IQ1_M by reasoning level
+
+October 16, 2026. 10 tasks, one run each, run alone on the server. Server settings:
+Strata, 131,072 context, sampling from its config (temperature 1.0, top_p 0.95,
+top_k 20, repeat penalty 1.05), reasoning effort set per request, 4,096 output cap.
+Tasks and tests are in [scripts/model--quality/tasks.json](../scripts/model--quality/tasks.json).
+
+| Reasoning | Pass | Loops | Avg tokens | Avg seconds |
+|---|---:|---:|---:|---:|
+| low (server default) | 10/10 | 0 | 724 | 24 |
+| medium | 10/10 | 0 | 1,154 | 39 |
+| high | 10/10 | 0 | 1,792 | 70 |
+
+Recommended vs used: the model card suggests medium as the balance point; Strata's
+default is high, and this server uses low on purpose. All three levels passed,
+so low is the fastest with no measured quality loss on these tasks. One earlier
+run had a high-reasoning failure (`deep-clone`, shared nested objects); the clean
+rerun passed. Single runs can vary, so treat this as a first pass.
+
 ## Local Strata: Qwen3.8-Flash-Next Coder IQ1_M
 
 October 11, 2026; Strata 0.1.43, SYCL on one Arc Pro B60, 30.2 GiB host RAM,

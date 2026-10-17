@@ -95,6 +95,8 @@ async function updateVsCode(modelId: string, context: number, vision: boolean, s
     providers.push(provider);
   }
   provider.name = providerName;
+  // Only the selected service appears in VS Code; other providers are re-added by their own switch.
+  providers = providers.filter((entry) => entry === provider || !String(entry.name ?? "").startsWith("Arc B60 ("));
   // Keep exactly one model per service so stale entries cannot pile up.
   const model: VsModel = {};
   provider.models = [model];
@@ -107,7 +109,7 @@ async function updateVsCode(modelId: string, context: number, vision: boolean, s
     toolCalling: true,
     vision,
     streaming: true,
-    maxInputTokens: service === "strata" ? Math.min(45056, context - output - headroom) : context - output - headroom,
+    maxInputTokens: service === "strata" ? Math.min(110000, context - output - headroom) : context - output - headroom,
     maxOutputTokens: output,
   });
   delete model.thinking;
@@ -115,6 +117,22 @@ async function updateVsCode(modelId: string, context: number, vision: boolean, s
   await mkdir(path.dirname(file), { recursive: true });
   if (original) await copyFile(file, `${file}.previous`);
   await writeFile(file, `${JSON.stringify(providers, null, 2)}\n`);
+  // Copies for the repo. The API key is replaced with a placeholder; the server does not check it.
+  const current = providers.filter((entry) => String(entry.name ?? "").startsWith("Arc B60 (")).map((entry) => ({ ...entry, apiKey: "local" }));
+  await writeFile(path.join(root, "pages", "vscode.json"), `${JSON.stringify(current, null, 2)}\n`);
+  const baseUrl = url.replace(/\/chat\/completions$/, "");
+  const piConfig = {
+    $schema: "https://pi.dev/schemas/models.schema.json",
+    providers: {
+      [`arc-b60-${service}`]: {
+        baseUrl,
+        api: "openai-completions",
+        apiKey: "local",
+        models: [{ id: modelId, reasoning: true, input: vision ? ["text", "image"] : ["text"] }],
+      },
+    },
+  };
+  await writeFile(path.join(root, "pages", "pi.json"), `${JSON.stringify(piConfig, null, 2)}\n`);
   console.log(`VS Code: ${file}`);
   console.log(JSON.stringify(model, null, 2));
 }
@@ -207,6 +225,8 @@ async function main() {
     if (!Number.isInteger(context) || context < 512 || context > 262144) throw new Error("MODEL_CONTEXT_TOKENS must be 512–262144");
     const mtp = Bun.env.MODEL_MTP || "0";
     if (mtp !== "0" && mtp !== "1") throw new Error("MODEL_MTP must be 0 or 1");
+    // Keep .env in step with the served settings, so a later plain switch uses the same values.
+    extraEnv = { ...extraEnv, MODEL_CONTEXT_TOKENS: String(context), MODEL_MTP: mtp };
     const projectorRepo = Bun.env.HF_MMPROJ_REPO?.trim() ?? "";
     const projectorFile = Bun.env.HF_MMPROJ_FILE?.trim() ?? "";
     if (Boolean(projectorRepo) !== Boolean(projectorFile)) throw new Error("Set both HF_MMPROJ_REPO and HF_MMPROJ_FILE, or neither");

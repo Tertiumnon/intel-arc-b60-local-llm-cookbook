@@ -36,4 +36,5 @@ Other scripts:
 - [Server setup and daily use](./pages/setup.md)
 - [VS Code and other clients](./pages/clients.md)
 - [Scripts](./scripts/README.md)
+- [Recommendations](./pages/recommendations.md)
 - [Results](./pages/results.md)

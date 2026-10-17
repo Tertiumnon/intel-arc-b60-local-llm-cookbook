@@ -21,7 +21,7 @@ Sources are not measured on this B60. Our used values are in the
 | Loop fix | presence_penalty between 0 and 2 | Not set | Official card; higher values can mix languages and lower quality. Needs a Strata config change. |
 | Reasoning effort | xhigh default; medium balanced; low fast | Low on Strata (kept on purpose) | [Unsloth docs](https://unsloth.ai/docs/models/qwen3.8.md). A guide warns low effort can add retries in agent work. |
 | Quantization | Q8 or IQ4_XS to avoid loops (community thread) | IQ1_M on Strata; Q4_K_M, IQ3_M, and IQ4_XS on llama | Thread on RTX 3090/4090; unverified here. |
-| Context | 128K+ with q8_0 KV (thread); 64K–96K on 24 GB with Q4_K_M (blog) | 32K–65K tested; 128K presets untested | [Blog](https://www.orcarouter.ai/blog/qwen-3-8-27b-gguf) says KV cache is about 2 GB at 32K and 16 GB at 262K. Scaling gives about 8 GB at 128K, which plus Q4_K_M weights is over 24 GB. |
+| Context | 128K+ with q8_0 KV (thread); 64K–96K on 24 GB with Q4_K_M (blog) | 131,072 is the default in every llama preset; loaded and ran for Signal Q4_K_M only | [Blog](https://www.orcarouter.ai/blog/qwen-3-8-27b-gguf) estimates about 8 GB of KV cache at 128K, which would not fit with Q4_K_M weights. Signal (16.8 GB) loaded and ran at 128K, so the estimate looks too high. Other models are untested; a failed load restores the previous service. |
 | Runtime | llama.cpp or vLLM with MTP | llama.cpp with MTP where the GGUF has a draft head | Thread suggests MoE models for speed; this guide keeps A3B models separate. |
 
 The thread's suggestions conflict with some of our choices, so we are testing them

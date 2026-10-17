@@ -58,5 +58,62 @@
     "kind": "commit",
     "prompt": "Write a git commit message for these changes: renamed getUser to fetchUser across src and removed an unused import in api.js. Reply with only the commit message, nothing else. Use Conventional Commits.",
     "pattern": "^(feat|fix|docs|chore|refactor|test|style|perf|build|ci)(\\([^)]+\\))?!?: \\S.*$"
+  },
+  {
+    "id": "complex-ttl-cache",
+    "kind": "code",
+    "group": "complex",
+    "prompt": "Write a JavaScript class `TtlCache` with constructor({ maxSize, ttlMs, now = Date.now }), methods get(key), set(key, value), has(key), and a getter `size`. get and set run in O(1). An entry expires ttlMs after it was set; expired entries are never returned and do not count toward size. When the cache is full, evict the least recently used live entry. A successful get counts as a use. Reply with only one code block.",
+    "tests": "let t = 0; const c = new TtlCache({ maxSize: 2, ttlMs: 100, now: () => t }); c.set('a', 1); c.set('b', 2); c.get('a'); c.set('c', 3); if (c.has('b')) throw new Error('lru'); if (c.get('a') !== 1 || c.get('c') !== 3) throw new Error('keep'); t = 150; if (c.get('a') !== undefined) throw new Error('ttl'); if (c.size !== 0) throw new Error('size ' + c.size);"
+  },
+  {
+    "id": "complex-expression",
+    "kind": "code",
+    "group": "complex",
+    "prompt": "Write a JavaScript function `evaluate(expr)` that evaluates an arithmetic string with + - * /, parentheses, unary minus, and normal precedence (* and / before + and -). Numbers may have decimals, and spaces are allowed. Throw an Error for invalid input such as '2+' or '(1'. Do not use eval or Function. Reply with only one code block.",
+    "tests": "if (evaluate('2+3*4') !== 14) throw new Error('precedence'); if (evaluate('(2+3)*4') !== 20) throw new Error('parens'); if (evaluate('-3+5') !== 2) throw new Error('unary'); if (evaluate('10/4') !== 2.5) throw new Error('divide'); if (evaluate(' 1.5 * 2 ') !== 3) throw new Error('spaces'); let bad = false; try { evaluate('2+'); } catch (e) { bad = e instanceof Error; } if (!bad) throw new Error('invalid 2+'); bad = false; try { evaluate('(1'); } catch (e) { bad = true; } if (!bad) throw new Error('invalid (1');"
+  },
+  {
+    "id": "long-discount",
+    "kind": "code",
+    "group": "long",
+    "planted": [
+      "context/pricing-current.js",
+      "context/pricing-legacy.js"
+    ],
+    "prompt": "Using the CURRENT pricing rules in the code base above (ignore the deprecated ones), write a JavaScript function `discountFor(subtotal, isVip)` that returns the discount amount. Reply with only one code block.",
+    "tests": "const near = (a, b) => Math.abs(a - b) < 1e-9; if (discountFor(99, false) !== 0) throw new Error('below minimum'); if (!near(discountFor(100, false), 15)) throw new Error('15 percent: ' + discountFor(100, false)); if (!near(discountFor(1000, false), 30)) throw new Error('cap'); if (!near(discountFor(100, true), 20)) throw new Error('vip: ' + discountFor(100, true)); if (!near(discountFor(200, true), 30)) throw new Error('vip cap');"
+  },
+  {
+    "id": "long-shipping",
+    "kind": "code",
+    "group": "long",
+    "planted": [
+      "context/shipping-current.js",
+      "context/shipping-legacy.js"
+    ],
+    "prompt": "Using the CURRENT shipping table in the code base above (ignore the deprecated tables), write a JavaScript function `shippingFor(weightKg, zone)`. Cost = base + perKg * ceil(weightKg). Throw a RangeError if weightKg is greater than 20. Reply with only one code block.",
+    "tests": "const near = (a, b) => Math.abs(a - b) < 1e-9; if (!near(shippingFor(1.5, 'A'), 7.4)) throw new Error('A 1.5: ' + shippingFor(1.5, 'A')); if (!near(shippingFor(3, 'B'), 15)) throw new Error('B 3'); if (!near(shippingFor(20, 'A'), 29)) throw new Error('A 20'); let bad = false; try { shippingFor(21, 'A'); } catch (e) { bad = e instanceof RangeError; } if (!bad) throw new Error('no RangeError above 20');"
+  },
+  {
+    "id": "complex-merge-intervals",
+    "kind": "code",
+    "group": "complex",
+    "prompt": "Write a JavaScript function `mergeIntervals(intervals)` that takes an array of [start, end] pairs (in any order) and returns the merged, sorted list. Intervals that overlap or touch (one ends exactly where the next starts) are merged. Do not mutate the input. Reply with only one code block.",
+    "tests": "const input = [[8, 10], [1, 3], [2, 6], [15, 18]]; const copy = JSON.stringify(input); if (JSON.stringify(mergeIntervals(input)) !== '[[1,6],[8,10],[15,18]]') throw new Error('basic'); if (JSON.stringify(input) !== copy) throw new Error('mutated'); if (JSON.stringify(mergeIntervals([[1, 4], [4, 5]])) !== '[[1,5]]') throw new Error('touching'); if (JSON.stringify(mergeIntervals([])) !== '[]') throw new Error('empty'); if (JSON.stringify(mergeIntervals([[1, 10], [2, 3]])) !== '[[1,10]]') throw new Error('contained');"
+  },
+  {
+    "id": "complex-topo-sort",
+    "kind": "code",
+    "group": "complex",
+    "prompt": "Write a JavaScript function `topoSort(deps)` where deps maps each task name to the array of task names it depends on, for example { a: ['b'], b: [], c: ['a'] }. Return an array of all task names (including names that appear only as dependencies) ordered so every task comes after its dependencies. Throw an Error if there is a dependency cycle. Reply with only one code block.",
+    "tests": "const order = topoSort({ a: ['b'], b: [], c: ['a', 'd'] }); const pos = (n) => order.indexOf(n); if (order.length !== 4) throw new Error('length ' + order.length); if (!(pos('b') < pos('a') && pos('a') < pos('c') && pos('d') < pos('c'))) throw new Error('order ' + order); let bad = false; try { topoSort({ a: ['b'], b: ['a'] }); } catch (e) { bad = e instanceof Error; } if (!bad) throw new Error('cycle'); bad = false; try { topoSort({ a: ['a'] }); } catch (e) { bad = true; } if (!bad) throw new Error('self cycle');"
+  },
+  {
+    "id": "complex-get-path",
+    "kind": "code",
+    "group": "complex",
+    "prompt": "Write a JavaScript function `getPath(obj, path, defaultValue)` that reads a nested value using a path string such as 'a.b[0].c'. Dots separate keys and [n] indexes arrays. If any step is missing, null, or undefined, return defaultValue. A value that exists and is falsy (0, '', false) is returned as it is. Reply with only one code block.",
+    "tests": "if (getPath({ a: { b: [{ c: 5 }] } }, 'a.b[0].c') !== 5) throw new Error('basic'); if (getPath({ a: 1 }, 'a.b.c', 'x') !== 'x') throw new Error('missing'); if (getPath({ a: null }, 'a.b', 7) !== 7) throw new Error('null'); if (getPath({ a: { b: 0 } }, 'a.b', 9) !== 0) throw new Error('falsy zero'); if (getPath({ a: [10, 20] }, 'a[1]') !== 20) throw new Error('index'); if (getPath({ a: { b: '' } }, 'a.b', 'd') !== '') throw new Error('falsy string');"
   }
 ]

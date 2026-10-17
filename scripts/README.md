@@ -59,6 +59,9 @@ bun run switch --service=openvino --model=OpenVINO/Qwen3-Coder-30B-A3B-Instruct-
 A preset sets only context, MTP, and the model. KV cache type and sampling stay
 as the server's unit file has them. For a new model, add an entry to `presets.json`.
 
+Each switch also writes `pages/vscode.json` (the VS Code provider) and `pages/pi.json`
+(for the Pi coding agent, copy it to `~/.pi/agent/models.json`). Both have a placeholder key.
+
 The switch also writes one VS Code provider per service (`Arc B60 (llama)`,
 `Arc B60 (strata)`, `Arc B60 (openvino)`), so entries do not build up.
 

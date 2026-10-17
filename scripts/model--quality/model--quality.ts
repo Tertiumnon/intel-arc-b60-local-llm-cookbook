@@ -7,7 +7,8 @@ import path from "node:path";
 // writes results to test-results/quality/. Reasoning level is sent per request;
 // sampling and context are whatever the server is configured with.
 
-type Task = { id: string; kind: "code" | "commit"; prompt: string; tests?: string; pattern?: string };
+// group: basic (default), complex, or long. long tasks get planted files plus filler code.
+type Task = { id: string; kind: "code" | "commit"; group?: string; prompt: string; tests?: string; pattern?: string; planted?: string[] };
 type Result = {
   task: string;
   effort: string;
@@ -24,11 +25,18 @@ const root = path.resolve(import.meta.dir, "../..");
 const options = process.argv.slice(2);
 const efforts = (options.find((a) => a.startsWith("--efforts="))?.slice(10) ?? "low,medium,high").split(",");
 const maxTokens = Number(options.find((a) => a.startsWith("--max-tokens="))?.slice(13) ?? 4096);
+const group = options.find((a) => a.startsWith("--group="))?.slice(8);
+// Approximate prompt size in tokens for long tasks (about 4 characters per token).
+const contextTokens = Number(options.find((a) => a.startsWith("--context="))?.slice(10) ?? 30000);
+// Where the planted files sit in the context (0 = start, 1 = end), and a label for repeated runs.
+const depth = Number(options.find((a) => a.startsWith("--depth="))?.slice(8) ?? 0.4);
+const rep = options.find((a) => a.startsWith("--rep="))?.slice(6) ?? "1";
 const base = Bun.env.AI_API_URL;
 const key = Bun.env.AI_API_KEY ?? "";
 if (!base) throw new Error("Set AI_API_URL in the root .env");
 
-const tasks = JSON.parse(await Bun.file(path.join(import.meta.dir, "tasks.json")).text()) as Task[];
+const tasks = (JSON.parse(await Bun.file(path.join(import.meta.dir, "tasks.json")).text()) as Task[])
+  .filter((task) => !group || (task.group ?? "basic") === group);
 const work = path.join(root, "test-results", "quality", "work");
 await mkdir(work, { recursive: true });
 
@@ -52,6 +60,24 @@ function looping(text: string): boolean {
   return false;
 }
 
+// Filler is unrelated utility code, so the planted files are the only relevant part.
+function filler(chars: number): string {
+  let out = "";
+  for (let i = 0; out.length < chars; i++) {
+    out += `// util/helper${i}.js\nexport function scale${i}(x, n) {\n  return (x * ${(i % 97) + 3} + n) % ${(i % 13) + 5};\n}\n\n`;
+  }
+  return out.slice(0, chars);
+}
+
+// Planted files sit at about 40% of the context, with filler before and after.
+async function longPrompt(task: Task): Promise<string> {
+  const planted = (await Promise.all((task.planted ?? []).map((file) => Bun.file(path.join(import.meta.dir, file)).text()))).join("\n");
+  const fillerChars = Math.max(0, contextTokens * 4 - planted.length);
+  const before = filler(Math.floor(fillerChars * depth));
+  const after = filler(fillerChars - before.length);
+  return `Code base:\n\n${before}${planted}\n${after}\n\nTask:\n${task.prompt}`;
+}
+
 async function ask(prompt: string, effort: string) {
   const started = performance.now();
   const response = await fetch(`${base}/chat/completions`, {
@@ -68,7 +94,7 @@ async function ask(prompt: string, effort: string) {
   });
   const json = await response.json() as {
     choices: Array<{ finish_reason: string; message: { content?: string; reasoning_content?: string; reasoning?: string } }>;
-    usage?: { completion_tokens?: number };
+    usage?: { completion_tokens?: number; prompt_tokens?: number };
   };
   const choice = json.choices[0];
   return {
@@ -76,6 +102,7 @@ async function ask(prompt: string, effort: string) {
     reasoning: choice.message.reasoning_content ?? choice.message.reasoning ?? "",
     finish: choice.finish_reason,
     completionTokens: json.usage?.completion_tokens ?? null,
+    promptTokens: json.usage?.prompt_tokens ?? null,
     seconds: (performance.now() - started) / 1000,
   };
 }
@@ -85,7 +112,7 @@ async function check(task: Task, text: string, index: number, effort: string): P
     const subject = text.trim().split("\n").find((l) => l.trim())?.replace(/^`+|`+$/g, "").trim() ?? "";
     return { pass: new RegExp(task.pattern!).test(subject), note: subject.slice(0, 80) };
   }
-  const file = path.join(work, `${task.id}-${effort}-${index}.mjs`);
+  const file = path.join(work, `${task.id}-${effort}-${contextTokens}-${depth}-r${rep}-${index}.mjs`);
   await writeFile(file, `${extractCode(text)}\n${task.tests}\n`);
   const proc = Bun.spawn(["bun", file], { stdout: "pipe", stderr: "pipe", timeout: 15000 });
   const code = await proc.exited;
@@ -98,7 +125,8 @@ const outFile = path.join(root, "test-results", "quality", `${stamp}.json`);
 const results: Result[] = [];
 for (const effort of efforts) {
   for (const [index, task] of tasks.entries()) {
-    const reply = await ask(task.prompt, effort);
+    const isLong = (task.group ?? "basic") === "long";
+    const reply = await ask(isLong ? await longPrompt(task) : task.prompt, effort);
     const verdict = await check(task, reply.text, index, effort);
     const result: Result = {
       task: task.id,
@@ -113,7 +141,7 @@ for (const effort of efforts) {
     };
     results.push(result);
     // One line per test, with the parameters needed to reproduce it.
-    await appendFile(runsFile, JSON.stringify({ time: new Date().toISOString(), test: "quality", endpoint: base, model, serverContext, maxTokens, reasoningEffort: effort, temperature: "server default", ...result }) + "\n");
+    await appendFile(runsFile, JSON.stringify({ time: new Date().toISOString(), test: "quality", endpoint: base, model, serverContext, maxTokens, group: task.group ?? "basic", contextTokens: isLong ? contextTokens : null, depth: isLong ? depth : null, rep, promptTokens: reply.promptTokens, reasoningEffort: effort, temperature: "server default", ...result }) + "\n");
     await writeFile(outFile, JSON.stringify({ model, maxTokens, efforts, results }, null, 2));
     console.log(`${effort.padEnd(6)} ${task.id.padEnd(14)} ${result.pass ? "PASS" : "FAIL"} tokens=${result.completionTokens} secs=${result.seconds} finish=${result.finish}${result.loop ? " LOOP" : ""} ${result.note}`);
   }
