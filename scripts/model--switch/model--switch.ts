@@ -119,7 +119,8 @@ async function updateVsCode(modelId: string, context: number, vision: boolean, s
   await writeFile(file, `${JSON.stringify(providers, null, 2)}\n`);
   // Copies for the repo. The API key is replaced with a placeholder; the server does not check it.
   const current = providers.filter((entry) => String(entry.name ?? "").startsWith("Arc B60 (")).map((entry) => ({ ...entry, apiKey: "local" }));
-  await writeFile(path.join(root, "pages", "vscode.json"), `${JSON.stringify(current, null, 2)}\n`);
+  await mkdir(path.join(root, "data"), { recursive: true });
+  await writeFile(path.join(root, "data", "vscode.json"), `${JSON.stringify(current, null, 2)}\n`);
   const baseUrl = url.replace(/\/chat\/completions$/, "");
   const piConfig = {
     $schema: "https://pi.dev/schemas/models.schema.json",
@@ -132,7 +133,7 @@ async function updateVsCode(modelId: string, context: number, vision: boolean, s
       },
     },
   };
-  await writeFile(path.join(root, "pages", "pi.json"), `${JSON.stringify(piConfig, null, 2)}\n`);
+  await writeFile(path.join(root, "data", "pi.json"), `${JSON.stringify(piConfig, null, 2)}\n`);
   console.log(`VS Code: ${file}`);
   console.log(JSON.stringify(model, null, 2));
 }

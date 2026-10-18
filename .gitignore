@@ -3,5 +3,5 @@ node_modules/
 __pycache__/
 local-notes.md
 test-results/
-pages/vscode.json
-pages/pi.json
+data/vscode.json
+data/pi.json

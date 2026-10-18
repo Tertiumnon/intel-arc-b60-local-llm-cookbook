@@ -5,7 +5,7 @@ port `8080` on the local network, with one service active at a time.
 
 ## Use a model
 
-1. Follow the [server setup](./pages/setup.md) and the
+1. Follow the [server setup](./content/setup.md) and the
    [one-time SSH setup](./scripts/README.md).
 2. Copy `.env.example` to `.env` and set `AI_SSH_HOST` to your SSH alias.
 3. From the repository root, run:
@@ -32,12 +32,12 @@ Other scripts:
 
 ## Guides
 
-- [Models and fit](./pages/models.md)
-- [Server setup and daily use](./pages/setup.md)
-- [VS Code and other clients](./pages/clients.md)
+- [Models and fit](./content/models.md)
+- [Server setup and daily use](./content/setup.md)
+- [VS Code and other clients](./content/clients.md)
 - [Scripts](./scripts/README.md)
-- [Recommendations](./pages/recommendations.md)
-- [Results](./pages/results.md)
+- [Recommendations](./content/recommendations.md)
+- [Results](./content/results.md)
 
 ## Support
 

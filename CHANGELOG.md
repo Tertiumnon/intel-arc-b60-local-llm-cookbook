@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed
+
+- Documentation moved from `pages/` to `content/`; generated config files are written to `data/`.
+
 ## 1.0.0 - 2026-10-18
 
 - chore(release): add changelog and release scripts

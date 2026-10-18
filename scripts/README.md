@@ -59,7 +59,7 @@ bun run switch --service=openvino --model=OpenVINO/Qwen3-Coder-30B-A3B-Instruct-
 A preset sets only context, MTP, and the model. KV cache type and sampling stay
 as the server's unit file has them. For a new model, add an entry to `presets.json`.
 
-Each switch also writes `pages/vscode.json` (the VS Code provider) and `pages/pi.json`
+Each switch also writes `data/vscode.json` (the VS Code provider) and `data/pi.json`
 (for the Pi coding agent, copy it to `~/.pi/agent/models.json`). Both have a placeholder key.
 
 The switch also writes one VS Code provider per service (`Arc B60 (llama)`,
@@ -114,9 +114,9 @@ Hugging Face cache blob and its symlinks are removed with it.
 | Kind | Where | Git |
 |---|---|---|
 | Code, presets, quality tasks | `scripts/`, `presets.json`, `tasks.json` | Yes |
-| Results summary and conclusions | `pages/results.md`, `pages/models.md` | Yes |
+| Results summary and conclusions | `content/results.md`, `content/models.md` | Yes |
 | Raw run logs and replies | `test-results/` (`runs.jsonl`, JSON per run, `work/`) | No, ignored |
 | Server secrets and private notes | `.env`, `local-notes.md` | No, ignored |
 
 Scripts log everything to `test-results/`. Copy the numbers you want to keep into
-`pages/results.md` by hand, with the settings used.
+`content/results.md` by hand, with the settings used.
