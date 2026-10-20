@@ -1,5 +1,7 @@
 # Intel Arc B60 Local LLM Cookbook
 
+Running local LLMs on a 24 GB Intel Arc B60 with Llama.cpp, Strata, and OpenVINO.
+
 Run local models on a 24 GB Intel Arc B60. Llama.cpp, Strata, and OpenVINO use
 port `8080` on the local network, with one service active at a time.
 
