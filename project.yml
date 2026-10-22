@@ -1,3 +1,20 @@
 type: cookbook
-publish_on:
+slug: intel-arc-b60-local-llm-cookbook
+listed_on:
   - https://tertiumnon.github.io
+display_name:
+  en: "Intel Arc B60 Local LLM Cookbook"
+summary:
+  en: "Running local LLMs on a 24 GB Intel Arc B60 with Llama.cpp, Strata, and OpenVINO."
+languages:
+  - en
+default_language: en
+audience:
+  - developers
+entry_point: content/setup.md
+team:
+  - name: Vitalii Balabanov
+    roles:
+      - owner
+      - maintainer
+    github: Tertiumnon
