@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- `bun run pi` writes the Pi coding agent provider for the served model.
+
 ### Changed
 
 - Documentation moved from `pages/` to `content/`; generated config files are written to `data/`.

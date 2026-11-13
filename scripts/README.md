@@ -60,7 +60,17 @@ A preset sets only context, MTP, and the model. KV cache type and sampling stay
 as the server's unit file has them. For a new model, add an entry to `presets.json`.
 
 Each switch also writes `data/vscode.json` (the VS Code provider) and `data/pi.json`
-(for the Pi coding agent, copy it to `~/.pi/agent/models.json`). Both have a placeholder key.
+(for the Pi coding agent). Both have a placeholder key.
+
+## pi
+
+```bash
+bun run pi                               # writes ~/.pi/agent/models.json from the live server
+pi --provider arc-b60
+```
+
+Reads `AI_API_URL` and `AI_API_KEY` from `.env`, takes the loaded model and context
+from `/models`, and keeps the previous file as `models.json.previous`.
 
 The switch also writes one VS Code provider per service (`Arc B60 (llama)`,
 `Arc B60 (strata)`, `Arc B60 (openvino)`), so entries do not build up.
