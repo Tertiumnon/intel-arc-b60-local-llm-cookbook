@@ -1,0 +1,26 @@
+[Unit]
+Description=ComfyUI image generation on Intel XPU (Arc B60)
+After=docker.service network-online.target
+Requires=docker.service
+Conflicts=llama-cpp.service strata.service openvino-model-server.service
+
+[Service]
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=0
+ExecStartPre=-/usr/bin/docker rm -f comfyui
+ExecStart=/usr/bin/docker run --rm --name comfyui \
+  --device /dev/dri --group-add=109 --shm-size=64g \
+  -p 8080:8188 --workdir /llm/ComfyUI \
+  -v /models/comfyui/models:/models/host:ro \
+  -v /models/comfyui/input:/data/input \
+  -v /models/comfyui/output:/data/output \
+  -v /models/comfyui/user:/data/user \
+  intel/llm-scaler-omni:0.2.0-b2 \
+  python main.py --listen 0.0.0.0 --port 8188 \
+  --extra-model-paths-config /llm/configs/comfyui_host_models.yaml \
+  --input-directory /data/input --output-directory /data/output --user-directory /data/user
+ExecStop=/usr/bin/docker stop comfyui
+
+[Install]
+WantedBy=multi-user.target

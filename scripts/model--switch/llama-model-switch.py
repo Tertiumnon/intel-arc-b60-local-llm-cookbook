@@ -15,7 +15,7 @@ from urllib.request import urlopen
 UNIT = Path("/etc/systemd/system/llama-cpp.service")
 MODELS = Path("/models/gguf")
 NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\.gguf\Z")
-SERVICES = {"llama": "llama-cpp.service", "strata": "strata.service", "openvino": "openvino-model-server.service"}
+SERVICES = {"llama": "llama-cpp.service", "strata": "strata.service", "openvino": "openvino-model-server.service", "comfyui": "comfyui.service"}
 REPO = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 TAG = re.compile(r"(?:swift-|coder-)?(?:q2_0|iq2_xs|iq3_xxs|iq3_s|iq1_m)\Z")
 
@@ -116,6 +116,10 @@ def main(args: list[str]) -> None:
         raise
 
 
+def units() -> list[str]:
+    return [name for name in SERVICES.values() if (Path("/etc/systemd/system") / name).exists()]
+
+
 def unit_state(action: str, unit: str) -> bool:
     return subprocess.run(("systemctl", action, unit), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL).returncode == 0
 
@@ -132,7 +136,22 @@ def install_unit(unit: Path, content: str) -> None:
         temp.unlink(missing_ok=True)
 
 
+def wait_comfyui(seconds: int) -> str:
+    deadline = time.monotonic() + seconds
+    while time.monotonic() < deadline:
+        if not unit_state("is-active", SERVICES["comfyui"]):
+            raise RuntimeError("comfyui.service stopped during startup")
+        try:
+            with urlopen("http://127.0.0.1:8080/system_stats", timeout=5):
+                return "comfyui"
+        except OSError:
+            time.sleep(5)
+    raise TimeoutError(f"comfyui did not become ready in {seconds}s")
+
+
 def wait_service(kind: str, model_id: str, seconds: int) -> str:
+    if kind == "comfyui":
+        return wait_comfyui(seconds)
     port, version = 8080, "v1" if kind == "strata" else "v3"
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
@@ -156,7 +175,7 @@ def wait_service(kind: str, model_id: str, seconds: int) -> str:
 
 def select(kind: str, args: list[str]) -> None:
     if kind not in SERVICES:
-        raise ValueError("service must be llama, strata, or openvino")
+        raise ValueError("service must be llama, strata, openvino, or comfyui")
     unit = Path("/etc/systemd/system") / SERVICES[kind]
     before = unit.read_text()
     updated = before
@@ -188,6 +207,9 @@ def select(kind: str, args: list[str]) -> None:
         updated, count = re.subn(r"(?m)^ExecStart=/models/Strata/run-[a-z0-9_-]+\.sh$", f"ExecStart={runner}", before)
         if count != 1:
             raise ValueError("strata.service has no runner ExecStart")
+    elif kind == "comfyui":
+        if args:
+            raise ValueError("comfyui takes no arguments")
     else:
         if len(args) != 1 or not args[0].startswith("OpenVINO/") or not REPO.fullmatch(args[0]):
             raise ValueError("openvino requires an OpenVINO/REPO Hugging Face model")
@@ -199,13 +221,13 @@ def select(kind: str, args: list[str]) -> None:
         if count != 1:
             raise ValueError("openvino-model-server.service has no Docker port mapping")
 
-    active = {name: unit_state("is-active", name) for name in SERVICES.values()}
-    enabled = {name: unit_state("is-enabled", name) for name in SERVICES.values()}
+    active = {name: unit_state("is-active", name) for name in units()}
+    enabled = {name: unit_state("is-enabled", name) for name in units()}
     target = SERVICES[kind]
     try:
         if updated != before:
             install_unit(unit, updated)
-        for name in SERVICES.values():
+        for name in units():
             if name != target:
                 service("disable", "--now", name)
         service("enable", target)
@@ -214,7 +236,7 @@ def select(kind: str, args: list[str]) -> None:
         else:
             if updated != before or not active[target]:
                 service("restart", target)
-            wait_service(kind, model_id, 600 if kind == "strata" else 1800)
+            wait_service(kind, model_id, 1800 if kind == "openvino" else 600)
             print(f"MODEL_ID={model_id}", flush=True)
             if context:
                 print(f"CONTEXT={context}", flush=True)
@@ -222,7 +244,7 @@ def select(kind: str, args: list[str]) -> None:
         service("disable", "--now", target)
         if updated != before:
             install_unit(unit, before)
-        for name in SERVICES.values():
+        for name in units():
             if enabled[name]:
                 service("enable", name)
             if active[name]:

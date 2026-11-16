@@ -10,6 +10,11 @@ the root `.env` (copy `.env.example`).
 | `switch:strata` | Switch to Strata |
 | `test` | Speed test on the served model |
 | `quality` | Quality tasks at low, medium, high reasoning |
+| `image:download:qwen`, `image:download:z-image` | Download image models to the server |
+| `image:start` | Start ComfyUI for image generation (stops the language model) |
+| `image "prompt"` | Generate an image into `images/` |
+| `image:test` | One timed image per fantasy prompt, logged to `test-results/image-runs.jsonl` |
+| `pi` | Point the Pi coding agent at the served model |
 | `delete` | List or delete model files on the server (dry run by default) |
 
 Every run logs to `test-results/runs.jsonl`, one line per test, with the endpoint,
@@ -130,3 +135,7 @@ Hugging Face cache blob and its symlinks are removed with it.
 
 Scripts log everything to `test-results/`. Copy the numbers you want to keep into
 `content/results.md` by hand, with the settings used.
+
+## image
+
+Setup and models are in [content/images.md](../content/images.md).

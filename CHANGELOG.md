@@ -4,6 +4,8 @@
 
 ### Added
 
+- Image generation with ComfyUI on Intel XPU: `image:download:*`, `image:start`, `image` (untested on the server), plus `image:test` for timed fantasy prompts.
+- `AGENTS.md` describing the project for agents.
 - `bun run pi` writes the Pi coding agent provider for the served model.
 
 ### Changed
