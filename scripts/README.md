@@ -12,6 +12,8 @@ the root `.env` (copy `.env.example`).
 | `quality` | Quality tasks at low, medium, high reasoning |
 | `image:download:qwen`, `image:download:z-image` | Download image models to the server |
 | `image:start` | Start ComfyUI for image generation (stops the language model) |
+| `3d:download`, `3d:start` | Download Hunyuan3D 2.1 and start its ComfyUI |
+| `switch:tts`, `tts "text"` | Serve the Qwen3-TTS speech model, then speak text into `audio/` |
 | `image "prompt"` | Generate an image into `images/` |
 | `image:test` | One timed image per fantasy prompt, logged to `test-results/image-runs.jsonl` |
 | `pi` | Point the Pi coding agent at the served model |
@@ -138,4 +140,4 @@ Scripts log everything to `test-results/`. Copy the numbers you want to keep int
 
 ## image
 
-Setup and models are in [content/images.md](../content/images.md).
+Setup, models and tests are in [content/image_generation](../content/image_generation/INSTALL.md); 3D and speech are in [3d_generation](../content/3d_generation/INSTALL.md) and [text_to_speech](../content/text_to_speech/INSTALL.md).

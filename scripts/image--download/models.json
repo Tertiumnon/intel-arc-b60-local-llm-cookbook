@@ -2,17 +2,70 @@
   "qwen-image-2.1-turbo": {
     "note": "Qwen-Image 2.1 Turbo, 7B, 8 steps, best open-weight prompt adherence (Qwen research license, non-commercial). ~32 GB.",
     "files": [
-      { "repo": "Comfy-Org/Qwen-Image-2.1", "file": "diffusion_models/qwen_image_2.1_turbo_bf16.safetensors" },
-      { "repo": "Comfy-Org/Qwen-Image-2.1", "file": "text_encoders/qwen3vl_8b_bf16.safetensors" },
-      { "repo": "Comfy-Org/Qwen-Image-2.1", "file": "vae/qwen_image_2.1_vae_bf16.safetensors" }
+      {
+        "repo": "Comfy-Org/Qwen-Image-2.1",
+        "file": "diffusion_models/qwen_image_2.1_turbo_bf16.safetensors"
+      },
+      {
+        "repo": "Comfy-Org/Qwen-Image-2.1",
+        "file": "text_encoders/qwen3vl_8b_bf16.safetensors"
+      },
+      {
+        "repo": "Comfy-Org/Qwen-Image-2.1",
+        "file": "vae/qwen_image_2.1_vae_bf16.safetensors"
+      }
     ]
   },
   "z-image-turbo": {
     "note": "Z-Image Turbo, 6B, 8 steps, fast (Apache-2.0). ~21 GB.",
     "files": [
-      { "repo": "Comfy-Org/Z-Image-Turbo", "file": "split_files/diffusion_models/z_image_turbo_bf16.safetensors" },
-      { "repo": "Comfy-Org/Z-Image-Turbo", "file": "split_files/text_encoders/qwen_3_4b.safetensors" },
-      { "repo": "Comfy-Org/Z-Image-Turbo", "file": "split_files/vae/ae.safetensors" }
+      {
+        "repo": "Comfy-Org/Z-Image-Turbo",
+        "file": "split_files/diffusion_models/z_image_turbo_bf16.safetensors"
+      },
+      {
+        "repo": "Comfy-Org/Z-Image-Turbo",
+        "file": "split_files/text_encoders/qwen_3_4b.safetensors"
+      },
+      {
+        "repo": "Comfy-Org/Z-Image-Turbo",
+        "file": "split_files/vae/ae.safetensors"
+      }
+    ]
+  },
+  "hunyuan3d-2.1": {
+    "note": "Hunyuan3D 2.1 image-to-3D: shape model, PBR texture model and VAE (Hunyuan 3D 2.1 Community License). ~15 GB.",
+    "files": [
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-dit-v2-1/model.fp16.ckpt",
+        "dir": "hunyuan3d/hunyuan3d-dit-v2-1/model.fp16.ckpt"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-vae-v2-1/model.fp16.ckpt",
+        "dir": "hunyuan3d/hunyuan3d-vae-v2-1/model.fp16.ckpt"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/image_encoder/model.safetensors",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/image_encoder/model.safetensors"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/text_encoder/pytorch_model.bin",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/text_encoder/pytorch_model.bin"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/unet/diffusion_pytorch_model.bin",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/unet/diffusion_pytorch_model.bin"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/vae/diffusion_pytorch_model.bin",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/vae/diffusion_pytorch_model.bin"
+      }
     ]
   }
 }

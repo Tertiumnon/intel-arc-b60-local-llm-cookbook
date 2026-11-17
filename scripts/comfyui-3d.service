@@ -1,0 +1,20 @@
+[Unit]
+Description=ComfyUI 3D generation, Hunyuan3D 2.1 on Intel XPU (Arc B60)
+After=docker.service network-online.target
+Requires=docker.service
+Conflicts=llama-cpp.service strata.service openvino-model-server.service comfyui.service
+
+[Service]
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=0
+ExecStartPre=/bin/sh -c '/usr/bin/docker inspect comfyui-3d >/dev/null 2>&1 || /usr/bin/docker create --name comfyui-3d \
+  --device /dev/dri --group-add=109 --shm-size=64g -p 8080:8188 --workdir /llm/ComfyUI \
+  -v /models/comfyui/models:/llm/ComfyUI/models \
+  -v /models/comfyui/output:/llm/ComfyUI/output \
+  intel/llm-scaler-omni:0.1.0-b8 python3 main.py --listen 0.0.0.0'
+ExecStart=/usr/bin/docker start -a comfyui-3d
+ExecStop=/usr/bin/docker stop comfyui-3d
+
+[Install]
+WantedBy=multi-user.target

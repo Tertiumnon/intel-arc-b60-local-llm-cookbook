@@ -167,5 +167,14 @@
     "context": 32768,
     "mtp": false,
     "tested": false
+  },
+  "tts-qwen3": {
+    "service": "llama",
+    "model": "ggml-org/Qwen3-TTS-12Hz-1.7B-Base-GGUF/Qwen3-TTS-12Hz-1.7B-Base-Q8_0.gguf",
+    "mmproj": "ggml-org/Qwen3-TTS-12Hz-1.7B-Base-GGUF/mmproj-Qwen3-TTS-12Hz-1.7B-Base-Q8_0.gguf",
+    "context": 4096,
+    "mtp": false,
+    "tested": false,
+    "tts": true
   }
 }

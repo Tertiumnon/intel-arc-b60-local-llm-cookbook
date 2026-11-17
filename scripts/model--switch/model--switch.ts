@@ -148,6 +148,17 @@ async function updateEnv(modelId: string, port: number, version: string, extra: 
   await writeFile(envFile, content);
 }
 
+async function checkTts(url: string, modelId: string) {
+  const headers = { Authorization: `Bearer ${required("AI_API_KEY")}` };
+  const health = await fetch(`${url.slice(0, -3)}/health`, { headers, signal: AbortSignal.timeout(10000) });
+  if (!health.ok) throw new Error("speech model health check failed");
+  const models = await fetch(`${url}/models`, { headers, signal: AbortSignal.timeout(10000) });
+  if (!models.ok || !(await models.json() as { data?: Array<{ id?: string }> }).data?.some((model) => model.id === modelId)) {
+    throw new Error(`${modelId} is missing from /models`);
+  }
+  console.log(`Health check passed: ${modelId}. Try: bun run tts "Hello"`);
+}
+
 async function checkModel(url: string, modelId: string, service: string) {
   const headers = { Authorization: `Bearer ${required("AI_API_KEY")}` };
   if (service !== "openvino") {
@@ -170,7 +181,7 @@ async function checkModel(url: string, modelId: string, service: string) {
   console.log(`Health and response checks passed: ${modelId}`);
 }
 
-type Preset = { service: string; model: string; context: number; mtp: boolean; tested: boolean };
+type Preset = { service: string; model: string; context: number; mtp: boolean; tested: boolean; mmproj?: string; tts?: boolean };
 const presetsFile = path.join(import.meta.dir, "presets.json");
 
 async function loadPresets(): Promise<Record<string, Preset>> {
@@ -193,6 +204,12 @@ async function main() {
     // A preset sets service, model and llama settings; the env values below are read by the llama branch.
     Bun.env.MODEL_CONTEXT_TOKENS = String(preset.context);
     Bun.env.MODEL_MTP = preset.mtp ? "1" : "0";
+    if (preset.mmproj) {
+      const projector = /^([A-Za-z0-9._-]+\/[A-Za-z0-9._-]+)\/([A-Za-z0-9._-]+\.gguf)$/i.exec(preset.mmproj);
+      if (!projector) throw new Error("preset mmproj must be owner/repo/file.gguf");
+      Bun.env.HF_MMPROJ_REPO = projector[1];
+      Bun.env.HF_MMPROJ_FILE = projector[2];
+    }
     console.log(`Preset ${presetName}: ${preset.service} ${preset.model} ctx=${preset.context} MTP=${preset.mtp ? 1 : 0} (${preset.tested ? "tested" : "untested"})`);
   }
   const service = preset?.service ?? options.find((arg) => arg.startsWith("--service="))?.slice(10) ?? "llama";
@@ -274,6 +291,11 @@ fi
     id = result.match(/MODEL_ID=(.+)/)?.[1]?.trim() ?? selected;
     context = Number(Bun.env.MODEL_CONTEXT_TOKENS || 16384);
     description = selected;
+  }
+  if (preset?.tts) {
+    await checkTts(url, id);
+    console.log(`Selected ${service}: ${description}${details}; .env and VS Code left unchanged (speech model)`);
+    return;
   }
   await checkModel(url, id, service);
   await updateEnv(id, port, version, extraEnv);

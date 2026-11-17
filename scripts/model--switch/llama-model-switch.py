@@ -15,7 +15,7 @@ from urllib.request import urlopen
 UNIT = Path("/etc/systemd/system/llama-cpp.service")
 MODELS = Path("/models/gguf")
 NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\.gguf\Z")
-SERVICES = {"llama": "llama-cpp.service", "strata": "strata.service", "openvino": "openvino-model-server.service", "comfyui": "comfyui.service"}
+SERVICES = {"llama": "llama-cpp.service", "strata": "strata.service", "openvino": "openvino-model-server.service", "comfyui": "comfyui.service", "comfyui3d": "comfyui-3d.service"}
 REPO = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 TAG = re.compile(r"(?:swift-|coder-)?(?:q2_0|iq2_xs|iq3_xxs|iq3_s|iq1_m)\Z")
 
@@ -136,22 +136,22 @@ def install_unit(unit: Path, content: str) -> None:
         temp.unlink(missing_ok=True)
 
 
-def wait_comfyui(seconds: int) -> str:
+def wait_comfyui(kind: str, seconds: int) -> str:
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
-        if not unit_state("is-active", SERVICES["comfyui"]):
-            raise RuntimeError("comfyui.service stopped during startup")
+        if not unit_state("is-active", SERVICES[kind]):
+            raise RuntimeError(f"{SERVICES[kind]} stopped during startup")
         try:
             with urlopen("http://127.0.0.1:8080/system_stats", timeout=5):
-                return "comfyui"
+                return kind
         except OSError:
             time.sleep(5)
-    raise TimeoutError(f"comfyui did not become ready in {seconds}s")
+    raise TimeoutError(f"{kind} did not become ready in {seconds}s")
 
 
 def wait_service(kind: str, model_id: str, seconds: int) -> str:
-    if kind == "comfyui":
-        return wait_comfyui(seconds)
+    if kind in ("comfyui", "comfyui3d"):
+        return wait_comfyui(kind, seconds)
     port, version = 8080, "v1" if kind == "strata" else "v3"
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
@@ -175,7 +175,7 @@ def wait_service(kind: str, model_id: str, seconds: int) -> str:
 
 def select(kind: str, args: list[str]) -> None:
     if kind not in SERVICES:
-        raise ValueError("service must be llama, strata, openvino, or comfyui")
+        raise ValueError("service must be llama, strata, openvino, comfyui, or comfyui3d")
     unit = Path("/etc/systemd/system") / SERVICES[kind]
     before = unit.read_text()
     updated = before
@@ -207,9 +207,9 @@ def select(kind: str, args: list[str]) -> None:
         updated, count = re.subn(r"(?m)^ExecStart=/models/Strata/run-[a-z0-9_-]+\.sh$", f"ExecStart={runner}", before)
         if count != 1:
             raise ValueError("strata.service has no runner ExecStart")
-    elif kind == "comfyui":
+    elif kind in ("comfyui", "comfyui3d"):
         if args:
-            raise ValueError("comfyui takes no arguments")
+            raise ValueError(f"{kind} takes no arguments")
     else:
         if len(args) != 1 or not args[0].startswith("OpenVINO/") or not REPO.fullmatch(args[0]):
             raise ValueError("openvino requires an OpenVINO/REPO Hugging Face model")
