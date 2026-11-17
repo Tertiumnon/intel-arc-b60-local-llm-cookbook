@@ -31,7 +31,7 @@ For timing tests and saved results, run `bun run test`. Results go under
 ## Generate images
 
 Fantasy art (goblins, elves, dragons) runs through ComfyUI on Intel XPU, one service at a time
-like the language models. Setup and models are in [Image generation](./content/images.md).
+like the language models. Setup and models are in [Image generation](./content/image_generation/INSTALL.md).
 
 ```bash
 bun run image:download:qwen         # Qwen-Image 2.1 Turbo files to the server
@@ -52,7 +52,12 @@ Other scripts:
 - [Models and fit](./content/models.md)
 - [Server setup and daily use](./content/setup.md)
 - [VS Code and other clients](./content/clients.md)
-- [Image generation](./content/images.md)
+- By task, each with INSTALL, TEST and USAGE:
+  [text generation](./content/text_generation/INSTALL.md),
+  [code generation](./content/code_generation/INSTALL.md),
+  [image generation](./content/image_generation/INSTALL.md),
+  [3D generation](./content/3d_generation/INSTALL.md),
+  [text to speech](./content/text_to_speech/INSTALL.md)
 - [Scripts](./scripts/README.md)
 - [Recommendations](./content/recommendations.md)
 - [Results](./content/results.md)

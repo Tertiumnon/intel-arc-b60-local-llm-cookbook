@@ -6,6 +6,8 @@
 
 - Image generation with ComfyUI on Intel XPU: `image:download:*`, `image:start`, `image` (untested on the server), plus `image:test` for timed fantasy prompts.
 - `AGENTS.md` describing the project for agents.
+- Manuals per task in `content/{text,code,image,3d}_generation` and `content/text_to_speech` (INSTALL, TEST, USAGE).
+- Hunyuan3D 2.1 image-to-3D service (`3d:download`, `3d:start`) and Qwen3-TTS speech through llama.cpp (`switch:tts`, `tts`), both untested on the server.
 - `bun run pi` writes the Pi coding agent provider for the served model.
 
 ### Changed

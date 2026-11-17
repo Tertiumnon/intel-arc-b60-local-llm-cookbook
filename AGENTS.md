@@ -6,8 +6,9 @@ drive the server over SSH and call its API on port `8080`.
 
 ## Layout
 
-- `content/` — the published docs (`setup.md` is the entry point, then `models`, `clients`,
-  `recommendations`, `results`, `images`). Change docs together with the code they describe.
+- `content/` — the published docs. `setup.md` is the entry point, then `models`, `clients`,
+  `recommendations`, `results`. Per task: `text_generation/`, `code_generation/`, `image_generation/`,
+  `3d_generation/`, `text_to_speech/`, each with `INSTALL.md`, `TEST.md`, `USAGE.md`. Change docs together with the code they describe.
 - `scripts/` — Bun + TypeScript commands, one directory each, named `area--action/area--action.ts`
   (`model--switch`, `model--test`, `image--start`, ...). Run them through `package.json` scripts.
 - `scripts/model--switch/llama-model-switch.py` — the only root helper on the server. It is
@@ -20,7 +21,7 @@ drive the server over SSH and call its API on port `8080`.
 ## Server model
 
 One service owns port `8080` at a time: `llama-cpp` (`/v1`), `strata` (`/v1`),
-`openvino-model-server` (`/v3`, archived), `comfyui` (images, ComfyUI API). Starting one
+`openvino-model-server` (`/v3`, archived), `comfyui` (images), `comfyui3d` (Hunyuan3D). Speech (Qwen3-TTS) is a llama preset. Starting one
 disables the others, so image generation and the language models are mutually exclusive.
 Run a `switch:*` command to get a language model back after `image:start`.
 Models live in `/models` on the server (`/models/gguf`, `/models/comfyui/models`).
@@ -36,7 +37,9 @@ Copy `.env.example` to `.env` first (`AI_SSH_HOST`, `AI_SERVER_HOST`, `AI_API_KE
 | `bun run delete` | List or remove model files on the server (dry run by default) |
 | `bun run pi` | Point the Pi coding agent at the served model |
 | `bun run image:download:qwen` / `image:download:z-image` | Download image models to the server |
-| `bun run image:start` | Start ComfyUI (Intel `llm-scaler-omni`) on port 8080 |
+| `bun run image:start` / `3d:start` | Start ComfyUI for images (`0.2.0-b2`) or Hunyuan3D (`0.1.0-b8`) on port 8080 |
+| `bun run 3d:download` | Download Hunyuan3D 2.1 files to the server |
+| `bun run switch:tts` / `tts "text"` | Serve Qwen3-TTS via llama.cpp, speak text into `audio/` |
 | `bun run image "prompt" [--size=WxH]` | Generate a fantasy image into `images/` |
 | `bun run image:test [--only=a,b] [--size=WxH]` | One timed image per fantasy prompt (`scripts/image--test/prompts.json`) into `test-results/` |
 | `bun run typecheck` | `tsc --noEmit` (run `bun install` first) |
@@ -52,4 +55,5 @@ Copy `.env.example` to `.env` first (`AI_SSH_HOST`, `AI_SERVER_HOST`, `AI_API_KE
   tokens; the API key in `data/*.json` is a placeholder.
 - Mark anything not run on the real server as untested in the docs.
 - Use Conventional Commits. Stay on the checked-out branch; do not push unless asked.
+- Prefer llama.cpp for every model type it supports (text, code, vision, speech); use ComfyUI only where it does not (images, 3D).
 - Update `CHANGELOG.md` (`[Unreleased]`) for user-visible changes.

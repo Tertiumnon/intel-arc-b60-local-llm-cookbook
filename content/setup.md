@@ -7,7 +7,7 @@ The Ubuntu 26.04 host runs one model service at a time on port `8080`:
 | llama.cpp (Intel SYCL) | `/v1` | Main service |
 | Strata | `/v1` | Experimental |
 | OpenVINO (OVMS) | `/v3` | Archived, disabled |
-| ComfyUI (Intel XPU) | ComfyUI API | Image generation, see [images.md](./images.md) |
+| ComfyUI (Intel XPU) | ComfyUI API | Image generation, see [image_generation](./image_generation/INSTALL.md) |
 
 Models are in [models.md](./models.md). Measurements are in [results.md](./results.md).
 VS Code and other clients are in [clients.md](./clients.md).
