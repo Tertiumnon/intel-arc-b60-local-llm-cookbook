@@ -34,12 +34,11 @@ Images land in `test-results/images/<run>/`; each run adds a line to `test-resul
 - Anatomy: hands, faces, ears of the elf and goblin.
 - Text on the sign is spelled correctly.
 - Style matches the prompt (oil painting, concept art).
-- Time per 1024x1024 image: record it here once measured. Not yet measured on this server.
+- First 1024x1024 goblin image: 85.1 seconds on the server, including initial model loading (17 November 2026).
 
 ## Pass criteria
 
 All eight images are produced without errors, and at least the goblin, elf and text prompts look right.
 The 24 GB card must not run out of memory; if it does, use the int8 files or a smaller `--size`.
 
-Status: the download, unit and workflow are validated up to the model files; a full generation has not
-been run yet.
+Status: the goblin image generated successfully and was inspected; the other seven prompts and full pass criteria have not yet been tested.

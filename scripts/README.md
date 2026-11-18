@@ -6,8 +6,8 @@ the root `.env` (copy `.env.example`).
 | Command | What it does |
 |---|---|
 | `switch:list` | List llama presets |
-| `switch:<preset>` | Switch the server to a preset, e.g. `switch:terse` |
-| `switch:strata` | Switch to Strata |
+| `switch:coding:<backend>-<model>` | Switch the server to a coding model, e.g. `switch:coding:llama-terse` |
+| `switch:coding:strata-qwen38-flash-next-coder-iq1m` | Switch to Strata |
 | `test` | Speed test on the served model |
 | `quality` | Quality tasks at low, medium, high reasoning |
 | `image:download:qwen`, `image:download:z-image` | Download image models to the server |
@@ -58,7 +58,7 @@ Presets are in [model--switch/presets.json](./model--switch/presets.json): model
 context, MTP on or off, and whether the exact setting was tested.
 
 ```bash
-bun run switch -- --preset=NAME          # same as bun run switch:NAME
+bun run switch --preset=NAME             # run a llama preset by name
 bun run switch --service=strata --model=coder:IQ1_M
 bun run switch --service=openvino --model=OpenVINO/Qwen3-Coder-30B-A3B-Instruct-int4-ov
 ```

@@ -3,11 +3,17 @@
 A dated history. Add a new entry at the top when a decision changes. Data is in
 [results.md](./results.md); model details are in [models.md](./models.md).
 
+## November 18, 2026
+
+**Keep Strata Flash-Next Coder IQ1_M for everyday complex JavaScript work.** In one matched run it passed 5/5 existing complex-task checks and both 27K-input context checks, and the context requests took 40–52 seconds. Qwen3.8-27B-pi also passed 5/5 complex and both context checks, but failed three added edge cases and took about 146–148 seconds per context request. The base Qwen3.8-27B passed 4/5 complex and both context checks, taking about three minutes per context request; Flash-Next IQ2_XS passed 3/5 complex and both context checks.
+
+All three made mistakes in additional checks or requirement review, including Coder's cache violating strict worst-case O(1) and its path parser mishandling hyphenated keys. The small single-run comparison does not establish a universal quality ranking. See [results](./results.md#complex-javascript-comparison-november-18-2026) for the exact checks and the context-test fixture caveat.
+
 ## October 17, 2026
 
 **Keep Strata IQ1_M as the default. Use Qwen3.8 UD-Q4_K_M for hard algorithmic tasks with short prompts.**
 
-- Qwen3.8 UD-Q4_K_M loads and runs at 131K context on the B60 (`bun run switch:qwen38-27b-unsloth`).
+- Qwen3.8 UD-Q4_K_M loads and runs at 131K context on the B60 (`bun run switch:coding:llama-qwen38-27b-unsloth`).
 - It passed 5/5 hard tasks, including the TTL cache that Strata failed in all 5 runs. Strata passed 4/5.
 - It is about twice as slow on short tasks and about five times slower on a 27K prompt (174–212 s vs about 39 s).
 - Both models failed the long discount task the same way (used a constant without defining it).
@@ -22,11 +28,11 @@ Details: [Hard tasks in results.md](./results.md#hard-tasks-strata-iq1_m-vs-qwen
 
 | Setting | Value |
 |---|---|
-| Model | Strata Qwen3.8-Flash-Next Coder IQ1_M (`bun run switch:strata`) |
+| Model | Strata Qwen3.8-Flash-Next Coder IQ1_M (`bun run switch:coding:strata-qwen38-flash-next-coder-iq1m`) |
 | Reasoning | low (server default); medium is fine; avoid high on long prompts |
 | Server context | 131,072 |
 | VS Code limits | 110,000 input, 8,192 output |
-| Backup | Signal Q4_K_M, 32K context (`bun run switch:terse:ctx32k`), for short prompts only |
+| Backup | Signal Q4_K_M, 32K context (`bun run switch:coding:llama-terse:ctx32k`), for short prompts only |
 
 Why:
 - Accuracy did not change from 27K to 110K prompt tokens (10/12 at each size).

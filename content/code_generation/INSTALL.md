@@ -17,7 +17,7 @@ ssh -t ai-b60 'sudo install -m 644 /tmp/strata.service /etc/systemd/system/strat
 ## 2. Install the model
 
 ```bash
-bun run switch:strata
+bun run switch:coding:strata-qwen38-flash-next-coder-iq1m
 ```
 
 The first run clones and builds [Strata](https://github.com/Niko1221/Strata) in `/models/Strata`

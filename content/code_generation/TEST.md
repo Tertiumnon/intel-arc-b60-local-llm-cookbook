@@ -3,7 +3,7 @@
 ## 1. Switch and check
 
 ```bash
-bun run switch:strata
+bun run switch:coding:strata-qwen38-flash-next-coder-iq1m
 bun run list                    # expect qwen3.8-flash-next-coder-iq1_m, n_ctx 131072
 ```
 

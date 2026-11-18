@@ -4,14 +4,18 @@
 
 ### Added
 
-- Image generation with ComfyUI on Intel XPU: `image:download:*`, `image:start`, `image` (untested on the server), plus `image:test` for timed fantasy prompts.
+- Image generation with ComfyUI on Intel XPU: `image:download:*`, `image:start`, `image`, plus `image:test` for timed fantasy prompts (one image tested on the server).
 - `AGENTS.md` describing the project for agents.
 - Manuals per task in `content/{text,code,image,3d}_generation` and `content/text_to_speech` (INSTALL, TEST, USAGE).
-- Hunyuan3D 2.1 image-to-3D service (`3d:download`, `3d:start`) and Qwen3-TTS speech through llama.cpp (`switch:tts`, `tts`), both untested on the server.
+- Hunyuan3D 2.1 image-to-3D service (`3d:download`, `3d:start`), tested for shape generation, and Qwen3-TTS speech through llama.cpp (`switch:tts`, `tts`), untested on the server.
 - `bun run pi` writes the Pi coding agent provider for the served model.
 
 ### Changed
 
+- Tested Qwen3.8-27B-pi on the B60, renamed its coding command to include `27b`, and recorded its JavaScript and context results.
+- Compared three installed coding models on complex JavaScript and repository-context tasks, and recorded the results and limitations.
+- Renamed coding switch commands to `switch:coding:<backend>-<model>`, added commands for both installed Strata models and the downloaded Qwen Q4_K_XL and Tiel-Coder models, and set larger context defaults based on B60 results where available.
+- Tested Strata's Qwen3.8-Flash-Next IQ2_XS on the B60 and recorded the first speed and basic quality results.
 - Documentation moved from `pages/` to `content/`; generated config files are written to `data/`.
 
 ## 1.0.0 - 2026-10-18

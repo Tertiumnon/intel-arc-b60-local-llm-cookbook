@@ -1,6 +1,8 @@
 # 3D generation: test
 
-There is no automated 3D test yet; use this checklist. Nothing here has been run on the server.
+There is no automated 3D test yet; use this checklist.
+
+On 18 November 2026, a 30-step shape-only test of a background-removed golem image produced a watertight GLB with 108,534 vertices and 217,064 faces in 70.61 seconds. The first run with an opaque background produced a non-watertight mesh. The output was checked programmatically, not visually; texture generation and the full pass criteria remain untested.
 
 ## 1. Service and files
 
@@ -15,8 +17,7 @@ Expect the six files from [INSTALL.md](./INSTALL.md). Opening `http://<server>:8
 ## 2. First mesh
 
 1. Make an input: `bun run image:start`, then `bun run image "a stout dwarf warrior, full body, plain background"`
-   (see [USAGE.md](./USAGE.md) for a transparent cut-out). Copy it into `/models/comfyui/input/` on the server
-   or upload it in ComfyUI.
+   (see [USAGE.md](./USAGE.md) for a transparent cut-out). Upload it in the 3D ComfyUI interface; the 3D container does not mount `/models/comfyui/input/`.
 2. `bun run 3d:start`, load `3d_hunyuan3d.json`, pick the image in the `Hy3D21LoadImageWithTransparency` node.
 3. Run. The workflow writes a GLB (`Hy21_Mesh.glb`) to `/models/comfyui/output/3D/Hy3D/` and shows it in `Preview3D`.
 

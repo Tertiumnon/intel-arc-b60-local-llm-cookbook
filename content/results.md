@@ -1,9 +1,34 @@
 # Intel Arc B60 Speed Test and Benchmark Results
 
-One Intel Arc Pro B60, 24 GB VRAM. Local rows are October 2026 measurements;
+One Intel Arc Pro B60, 24 GB VRAM. Local rows are October–November 2026 measurements;
 published model and community rows use other machines or test methods. Values
 from different prompts, caches, and runtimes are not head-to-head rankings.
 For current commands and saved results, see the [model test README](../scripts/README.md).
+
+## Complex JavaScript comparison: November 18, 2026
+
+One run per task on each model at 131,072 server context, except Pi at 65,536. Each received the same five complex tasks, an 8,192-token output cap, low reasoning effort and the same requested sampling parameters. Strata's two configs used the same 4,096-token reasoning budget; llama.cpp may handle reasoning effort and sampling differently. Generated code was reviewed before its existing behavioral checks were run.
+
+| Model | Complex task checks | 27K-input context checks | Context task times |
+|---|---:|---:|---|
+| Strata Flash-Next Coder IQ1_M | 5/5 | 2/2 | 52.2 s, 40.0 s |
+| Qwen3.8-27B-pi Q4_K_M, llama.cpp | 5/5 | 2/2 | 148.2 s, 146.4 s |
+| Qwen3.8-27B UD-Q4_K_M, llama.cpp | 4/5 | 2/2 | 184.0 s, 197.6 s |
+| Strata Flash-Next IQ2_XS | 3/5 | 2/2 | 46.9 s, 44.5 s |
+
+The Coder cache passed its functional checks but purges multiple expired entries in `get` or `set`, violating the prompt's strict worst-case O(1) requirement. Its nested-path solution failed an added hyphenated-key case. Pi's cache evicted a live entry while an expired one remained; its parser accepted `.` as a number, and its dependency sort failed an added `toString` dependency case. The base 27B cache counted expired entries and failed the expired-entry eviction case, and its dependency sort failed the `toString` case. IQ2_XS's cache tried to construct an arrow function and contained undefined helper references; its nested-path function failed the original bracket-notation check, and its dependency sort failed the `toString` case. These edge checks were not included in the 5-task scores.
+
+Pi's single short speed sample at 65,536 context, reasoning off, measured 2.42 s to first token and 21.3 generated tokens/s; its 1,332-token prefill measured 209 tokens/s. This is one run, not a stable throughput benchmark.
+
+For the two context tasks, the test supplied the current pricing and shipping files at the paths named in the input comments. The base 27B and IQ2_XS answers imported those files and passed with those fixtures present; a standalone-only checker would incorrectly flag those imports as missing. Earlier long-task results used the standalone checker and are not directly comparable.
+
+These are small synthetic tasks and single samples, not proof of general coding quality. The two context tasks share a repeated filler pattern; they do not measure large-repository editing, tool use or multi-step debugging. Per-response code and timing are saved under the git-ignored `test-results/quality/` directory.
+
+## Strata Qwen3.8-Flash-Next IQ2_XS
+
+November 18, 2026. The full-expert Qwen IQ2_XS model started on the B60 with 131,072 context. One short coding request with reasoning off measured 0.56 s to first token and 50.7 generated tokens/s; a separate 1,334-token prefill measured 551 tokens/s. These are single measurements, not a head-to-head comparison.
+
+The ten basic quality tasks at low reasoning and a 1,024-token output cap passed 9/10 assertions. `parse-query` failed after hitting the cap and was flagged for repetition; `deep-clone` passed its assertions but also hit the cap and was flagged for repetition. Hard tasks and long-context behavior were not tested in this run.
 
 ## Hard tasks: Strata IQ1_M vs Qwen3.8 UD-Q4_K_M
 

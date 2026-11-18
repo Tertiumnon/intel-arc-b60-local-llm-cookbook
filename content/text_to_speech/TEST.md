@@ -36,4 +36,4 @@ curl http://<server>:8080/v1/audio/speech -H "Content-Type: application/json" \
 ## Pass criteria
 
 One English and one other-language sentence play back correctly, and the service returns to the language model
-with `bun run switch:strata`.
+with `bun run switch:coding:strata-qwen38-flash-next-coder-iq1m`.

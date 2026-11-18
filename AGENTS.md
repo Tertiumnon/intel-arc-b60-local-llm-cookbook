@@ -32,7 +32,7 @@ Copy `.env.example` to `.env` first (`AI_SSH_HOST`, `AI_SERVER_HOST`, `AI_API_KE
 
 | Command | What it does |
 |---|---|
-| `bun run switch:<preset>` / `switch:strata` / `switch:list` | Serve a language model |
+| `bun run switch:coding:<model>` / `switch:list` | Serve a language model or list llama presets |
 | `bun run test`, `list`, `quality` | Speed test, list served model, quality tasks |
 | `bun run delete` | List or remove model files on the server (dry run by default) |
 | `bun run pi` | Point the Pi coding agent at the served model |

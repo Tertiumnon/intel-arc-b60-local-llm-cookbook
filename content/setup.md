@@ -79,8 +79,8 @@ in [scripts/README.md](../scripts/README.md#switch-setup-once).
 
 ```bash
 bun run switch:list               # all llama presets, tested or not
-bun run switch:terse              # run a preset
-bun run switch:strata             # switch to Strata
+bun run switch:coding:llama-terse              # run a preset
+bun run switch:coding:strata-qwen38-flash-next-coder-iq1m             # switch to Strata
 ```
 
 The switch stops the other services, starts the chosen one, waits for the model,
@@ -119,7 +119,7 @@ IQ1_M with an OpenAI-compatible API. Source is in `/models/Strata`, model data i
 - Defaults: sampling `temperature` 1.0, `top_p` 0.95, `top_k` 20, `repeat_penalty` 1.05;
   `reasoning_effort` **low**; thinking budget 4,096 tokens; loop recovery on.
 - A request's own values override the defaults.
-- `bun run switch:strata` enables `strata.service` and disables llama.cpp.
+- `bun run switch:coding:strata-qwen38-flash-next-coder-iq1m` enables `strata.service` and disables llama.cpp.
 
 Strata's [Intel Arc notes](https://github.com/Niko1221/Strata/blob/main/docs/INTEL_ARC.md)
 cover build details.

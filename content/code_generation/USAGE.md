@@ -4,10 +4,11 @@
 
 | Task | Model | Command |
 |---|---|---|
-| Everyday coding, long repos (default) | Strata Coder IQ1_M, 131K | `bun run switch:strata` |
-| Hard algorithmic task, short prompt | Qwen3.8-27B UD-Q4_K_M, 49K | `bun run switch:qwen38-27b-unsloth:ctx49k` |
-| Backup, short prompts | Signal + Terse-Coder Q4_K_M, 32K | `bun run switch:terse:ctx32k` |
-| Pi coding agent tuned | Qwen3.8-27B-pi (untested on B60) | `bun run switch:qwen38-pi:ctx32k` |
+| Everyday coding, long repos (default) | Strata Coder IQ1_M, 131K | `bun run switch:coding:strata-qwen38-flash-next-coder-iq1m` |
+| Full-expert Flash-Next | Strata Qwen IQ2_XS, 131K | `bun run switch:coding:strata-qwen38-flash-next-iq2xs` |
+| Hard algorithmic task | Qwen3.8-27B UD-Q4_K_M, 131K | `bun run switch:coding:llama-qwen38-27b-unsloth` |
+| Backup | Signal + Terse-Coder Q4_K_M, 131K | `bun run switch:coding:llama-terse` |
+| Pi coding agent tuned | Qwen3.8-27B-pi, 64K | `bun run switch:coding:llama-qwen38-27b-pi` |
 
 Qwen3.8 UD-Q4_K_M is about twice as slow on short tasks and about five times slower on a 27K prompt,
 so switch to it for one hard task and back. See [models.md](../models.md) for the other candidates.
@@ -16,9 +17,17 @@ so switch to it for one hard task and back. See [models.md](../models.md) for th
 
 ```bash
 bun run switch:list             # all presets
-bun run switch:strata
-bun run switch:qwen38-27b-unsloth:ctx49k
+bun run switch:coding:strata-qwen38-flash-next-coder-iq1m
+bun run switch:coding:llama-qwen38-27b-unsloth
 ```
+
+The default contexts are 131,072 tokens for both Strata models, Signal and Qwen3.8 UD-Q4_K_M;
+65,536 for Qwen3.8 IQ3_M, Q4_K_XL, Dirk, Pi and ThinkingCap; 57,344 for Qwen3.6 27B
+and Tiel-Coder; and 49,152 for Swift 1.5. `bun run switch:list` shows which exact llama
+settings were tested. Q4_K_XL, Dirk and ThinkingCap are untested at 64K. IQ2_XS has
+started at 131K and passed two ~27K-input checks. Context includes input and output;
+the VS Code input limit reserves room for output and headroom. Signal was slow on long prompts.
+The `:ctx32k`, `:ctx49k` and `:ctx57k` commands remain available for smaller contexts.
 
 After a switch the VS Code provider and `data/pi.json` match the served model. Run `bun run pi` to
 copy the Pi config. Reload the VS Code model picker if it still shows the old one.
