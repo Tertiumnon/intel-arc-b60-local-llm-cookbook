@@ -132,7 +132,7 @@ function stats(values: number[]) {
 function monitorServerMemory(): MemoryMonitor {
   const host = Bun.env.AI_SSH_HOST?.trim();
   if (!host) return { stop: async () => ({ peakMiB: null, highWaterMiB: null }) };
-  const script = `while :; do p=$(pgrep -x llama-server | head -1); if [ -n "$p" ]; then sed -n 's/^VmRSS:[[:space:]]*\\([0-9]*\\).*/rss \\1/p; s/^VmHWM:[[:space:]]*\\([0-9]*\\).*/hwm \\1/p' /proc/$p/status; fi; sleep 0.5; done`;
+  const script = `while [ "$(ps -o ppid= -p $$ | tr -d ' ')" != 1 ]; do p=$(pgrep -x llama-server | head -1); if [ -n "$p" ]; then sed -n 's/^VmRSS:[[:space:]]*\\([0-9]*\\).*/rss \\1/p; s/^VmHWM:[[:space:]]*\\([0-9]*\\).*/hwm \\1/p' /proc/$p/status; fi; sleep 0.5; done`;
   const child = spawn("ssh", ["-o", "BatchMode=yes", host, script], { stdio: ["ignore", "pipe", "ignore"] });
   let output = "";
   child.on("error", () => {});
