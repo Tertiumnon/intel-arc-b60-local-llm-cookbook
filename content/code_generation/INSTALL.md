@@ -40,6 +40,7 @@ A request's own values override these defaults. Avoid `high` on long prompts.
 
 - **VS Code Chat:** the switch writes the `Arc B60 (strata)` provider; manual steps are in [clients.md](../clients.md).
 - **Pi agent:** `bun run pi`, then `pi --provider arc-b60`.
+- **Pi on the AI server:** the `ai` user's Pi profile points to the local Strata Coder model. Its model ID and context are a snapshot; update `~/.pi/agent/models.json` and `settings.json` after changing the served model. This interactive profile is separate from the planned unprivileged Kyra worker account.
 - **Other:** `AI_API_URL` and `AI_API_KEY` from `.env`.
 
 Next: [TEST.md](./TEST.md), [USAGE.md](./USAGE.md).

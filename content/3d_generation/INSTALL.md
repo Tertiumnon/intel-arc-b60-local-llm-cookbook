@@ -3,7 +3,7 @@
 Image to 3D mesh with **Hunyuan3D 2.1** (Tencent), the newest open-weight Hunyuan3D release (June 2025;
 shape model 3.3B, PBR texture model 2B). Newer 3.x versions are hosted by Tencent only; no weights found.
 It runs in ComfyUI inside Intel's `llm-scaler-omni:0.1.0-b8` image, which includes the Hunyuan3D 2.1 nodes
-and a workflow. A shape-only run has been tested on this server; texture generation has not.
+and a workflow. Shape generation works on this server; the paint workflow currently fails during model loading.
 
 Files total about 15 GB. Reports say about 29 GB of memory for shape plus texture together, so run the
 shape step first and the texture step after it; the card has 24 GB.
@@ -35,10 +35,17 @@ restarts. Remove it with `docker rm comfyui-3d` to start clean.
 
 ```bash
 bun run 3d:download
+bun run 3d:download:trellis2
 ```
+
+The TRELLIS.2 command downloads the official ComfyUI BF16 and INT8 checkpoints, image encoder,
+and shape and texture VAEs (MIT). The installed `0.1.0-b8` 3D container does not have TRELLIS.2
+nodes; `0.2.0-b2` contains the native nodes but its end-to-end 3D workflow has not been tested
+on this B60. TRELLIS.2 is not yet available in Kyra.
 
 Files from `tencent/Hunyuan3D-2.1` go to `/models/comfyui/models/hunyuan3d/`:
 `hunyuan3d-dit-v2-1` (shape, 7.4 GB), `hunyuan3d-vae-v2-1` (0.7 GB) and `hunyuan3d-paintpbr-v2-1` (texture, ~6.9 GB).
+The paint directory also contains its model configuration, tokenizer and upstream custom-code files.
 The workflow also loads `RealESRGAN_x4plus.pth`; put it in `/models/comfyui/models/upscale_models/`.
 
 The Hunyuan nodes discover the shape and VAE files in ComfyUI's standard folders. After downloading, link them:

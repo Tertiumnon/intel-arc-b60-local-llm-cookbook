@@ -8,6 +8,8 @@
 
 ### Added
 
+- Added a TRELLIS.2 model download command; its 3D workflow is not yet integrated or tested on the B60.
+- Configured Pi on the AI server for the current local Strata Coder model.
 - Image generation with ComfyUI on Intel XPU: `image:download:*`, `image:start`, `image`, plus `image:test` for timed fantasy prompts (one image tested on the server).
 - `AGENTS.md` describing the project for agents.
 - Manuals per task in `content/{text,code,image,3d}_generation` and `content/text_to_speech` (INSTALL, TEST, USAGE).
@@ -16,6 +18,7 @@
 
 ### Changed
 
+- Download the Hunyuan3D paint configuration files alongside its weights, and record the current Intel paint-loader failures.
 - Tested Qwen3.8-27B-pi on the B60, renamed its coding command to include `27b`, and recorded its JavaScript and context results.
 - Compared three installed coding models on complex JavaScript and repository-context tasks, and recorded the results and limitations.
 - Renamed coding switch commands to `switch:coding:<backend>-<model>`, added commands for both installed Strata models and the downloaded Qwen Q4_K_XL and Tiel-Coder models, and set larger context defaults based on B60 results where available.

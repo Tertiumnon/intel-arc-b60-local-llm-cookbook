@@ -33,6 +33,36 @@
       }
     ]
   },
+  "trellis-2": {
+    "note": "TRELLIS.2 image-to-textured-3D (MIT): BF16 and INT8 diffusion models, image encoder, shape and texture VAEs. Requires a compatible ComfyUI runtime.",
+    "files": [
+      {
+        "repo": "Comfy-Org/TRELLIS.2",
+        "file": "clip_vision/dino_v3_vit_l.safetensors",
+        "dir": "clip_vision/dino_v3_vit_l.safetensors"
+      },
+      {
+        "repo": "Comfy-Org/TRELLIS.2",
+        "file": "diffusion_models/trellis_2_bf16.safetensors",
+        "dir": "diffusion_models/trellis_2_bf16.safetensors"
+      },
+      {
+        "repo": "Comfy-Org/TRELLIS.2",
+        "file": "diffusion_models/trellis_2_int8_convrot.safetensors",
+        "dir": "diffusion_models/trellis_2_int8_convrot.safetensors"
+      },
+      {
+        "repo": "Comfy-Org/TRELLIS.2",
+        "file": "vae/trellis_2_shape_vae_bf16.safetensors",
+        "dir": "vae/trellis_2_shape_vae_bf16.safetensors"
+      },
+      {
+        "repo": "Comfy-Org/TRELLIS.2",
+        "file": "vae/trellis_2_texture_vae_bf16.safetensors",
+        "dir": "vae/trellis_2_texture_vae_bf16.safetensors"
+      }
+    ]
+  },
   "hunyuan3d-2.1": {
     "note": "Hunyuan3D 2.1 image-to-3D: shape model, PBR texture model and VAE (Hunyuan 3D 2.1 Community License). ~15 GB.",
     "files": [
@@ -65,6 +95,76 @@
         "repo": "tencent/Hunyuan3D-2.1",
         "file": "hunyuan3d-paintpbr-v2-1/vae/diffusion_pytorch_model.bin",
         "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/vae/diffusion_pytorch_model.bin"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/feature_extractor/preprocessor_config.json",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/feature_extractor/preprocessor_config.json"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/image_encoder/config.json",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/image_encoder/config.json"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/model_index.json",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/model_index.json"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/scheduler/scheduler_config.json",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/scheduler/scheduler_config.json"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/text_encoder/config.json",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/text_encoder/config.json"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/tokenizer/merges.txt",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/tokenizer/merges.txt"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/tokenizer/special_tokens_map.json",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/tokenizer/special_tokens_map.json"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/tokenizer/tokenizer_config.json",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/tokenizer/tokenizer_config.json"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/tokenizer/vocab.json",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/tokenizer/vocab.json"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/unet/attn_processor.py",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/unet/attn_processor.py"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/unet/config.json",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/unet/config.json"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/unet/model.py",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/unet/model.py"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/unet/modules.py",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/unet/modules.py"
+      },
+      {
+        "repo": "tencent/Hunyuan3D-2.1",
+        "file": "hunyuan3d-paintpbr-v2-1/vae/config.json",
+        "dir": "hunyuan3d/hunyuan3d-paintpbr-v2-1/vae/config.json"
       }
     ]
   }

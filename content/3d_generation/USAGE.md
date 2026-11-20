@@ -15,7 +15,7 @@ scp "ai-b60:/models/comfyui/output/3D/Hy3D/*.glb" ./models-3d/
 
 ## Choose a model
 
-Hunyuan3D 2.1 is the only 3D model set up here. It is the newest Hunyuan3D with open weights; the hosted 3.x versions
+Hunyuan3D 2.1 shape generation is the only working 3D workflow set up here. TRELLIS.2 weights can be downloaded with `bun run 3d:download:trellis2`, but the workflow is not yet integrated or tested. Hunyuan3D 2.1 is the newest Hunyuan3D with open weights; the hosted 3.x versions
 cannot run locally. If you need a lighter shape-only run, the same repo family has smaller releases
 (`Hunyuan3D-2mini`); they need their own nodes and are not set up.
 

@@ -39,6 +39,7 @@
     "image": "bun scripts/image--generate/image--generate.ts",
     "image:test": "bun scripts/image--test/image--test.ts",
     "3d:download": "bun scripts/image--download/image--download.ts hunyuan3d-2.1",
+    "3d:download:trellis2": "bun scripts/image--download/image--download.ts trellis-2",
     "3d:start": "bun scripts/image--start/image--start.ts comfyui3d",
     "tts": "bun scripts/tts--speak/tts--speak.ts",
     "image:start": "bun scripts/image--start/image--start.ts comfyui",

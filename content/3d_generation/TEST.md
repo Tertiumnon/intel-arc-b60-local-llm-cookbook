@@ -4,6 +4,12 @@ There is no automated 3D test yet; use this checklist.
 
 On 18 November 2026, a 30-step shape-only test of a background-removed golem image produced a watertight GLB with 108,534 vertices and 217,064 faces in 70.61 seconds. The first run with an opaque background produced a non-watertight mesh. The output was checked programmatically, not visually; texture generation and the full pass criteria remain untested.
 
+On 19 November 2026, a paint test with the MAM-4 reference and GLB failed before generating
+textures: the supplied Diffusers loader requires approval to execute the model package's custom
+code. An isolated test using the node pack's XPU implementation instead failed because
+`UNet2DConditionModel` has no `enable_model_cpu_offload` method. The experimental loader change
+was reverted. TRELLIS.2 has not yet been tested on this server.
+
 ## 1. Service and files
 
 ```bash
@@ -11,7 +17,7 @@ bun run 3d:start
 ssh ai-b60 'find /models/comfyui/models/hunyuan3d -type f | sort'
 ```
 
-Expect the six files from [INSTALL.md](./INSTALL.md). Opening `http://<server>:8080` should show the
+Expect the weights and paint configuration from [INSTALL.md](./INSTALL.md). Opening `http://<server>:8080` should show the
 `Hy3D21*` nodes in the node search after you enabled them in Manager.
 
 ## 2. First mesh
