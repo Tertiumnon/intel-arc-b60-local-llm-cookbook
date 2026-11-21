@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 import { existsSync } from "node:fs";
-import { copyFile, mkdir, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import path from "node:path";
 
@@ -8,10 +8,10 @@ import path from "node:path";
  * pi--setup.ts
  * Point the Pi coding agent at the model the Arc B60 server is serving now.
  * Reads AI_API_URL and AI_API_KEY from .env, asks the server for its model and
- * context, and writes ~/.pi/agent/models.json (the old file is kept as .previous).
+ * context, and updates Pi's model and default selection (old files are kept as .previous).
  *
  * Usage: bun run pi
- * Then:  pi --provider arc-b60
+ * Then:  pi
  */
 
 const required = (name: string): string => {
@@ -37,6 +37,11 @@ const contextWindow = model.meta?.n_ctx;
 if (!contextWindow) throw new Error(`Server did not report a context size for ${model.id} - Pi needs it for compaction`);
 
 const file = path.join(homedir(), ".pi", "agent", "models.json");
+const settingsFile = path.join(homedir(), ".pi", "agent", "settings.json");
+const settings: unknown = existsSync(settingsFile) ? JSON.parse(await readFile(settingsFile, "utf8")) : {};
+if (!settings || typeof settings !== "object" || Array.isArray(settings)) {
+  throw new Error(`Invalid Pi settings in ${settingsFile} - fix the JSON object before running setup`);
+}
 const config = {
   $schema: "https://pi.dev/schemas/models.schema.json",
   providers: {
@@ -60,5 +65,7 @@ const config = {
 
 await mkdir(path.dirname(file), { recursive: true });
 if (existsSync(file)) await copyFile(file, `${file}.previous`);
+if (existsSync(settingsFile)) await copyFile(settingsFile, `${settingsFile}.previous`);
 await writeFile(file, `${JSON.stringify(config, null, 2)}\n`);
-console.log(`Pi: ${file}\nRun: pi --provider arc-b60 --model ${model.id}`);
+await writeFile(settingsFile, `${JSON.stringify({ ...settings, defaultProvider: "arc-b60", defaultModel: model.id }, null, 2)}\n`);
+console.log(`Pi: ${file}\nDefault model: ${model.id}`);

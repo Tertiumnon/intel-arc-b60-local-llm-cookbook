@@ -4,7 +4,8 @@
 
 | Task | Model | Command |
 |---|---|---|
-| Everyday coding, long repos (default) | Strata Coder IQ1_M, 131K | `bun run switch:coding:strata-qwen38-flash-next-coder-iq1m` |
+| Kyra and interactive Pi coding (default) | Strata Flash-Next Coder IQ1_M, 131K | `bun run switch:coding:strata-qwen38-flash-next-coder-iq1m` |
+| Faster long-repository work | Strata Coder IQ1_M, 131K | `bun run switch:coding:strata-qwen38-flash-next-coder-iq1m` |
 | Full-expert Flash-Next | Strata Qwen IQ2_XS, 131K | `bun run switch:coding:strata-qwen38-flash-next-iq2xs` |
 | Hard algorithmic task | Qwen3.8-27B UD-Q4_K_M, 131K | `bun run switch:coding:llama-qwen38-27b-unsloth` |
 | Backup | Signal + Terse-Coder Q4_K_M, 131K | `bun run switch:coding:llama-terse` |
@@ -30,7 +31,8 @@ the VS Code input limit reserves room for output and headroom. Signal was slow o
 The `:ctx32k`, `:ctx49k` and `:ctx57k` commands remain available for smaller contexts.
 
 After a switch the VS Code provider and `data/pi.json` match the served model. Run `bun run pi` to
-copy the Pi config. Reload the VS Code model picker if it still shows the old one.
+update Pi's model and default selection while preserving its thinking level and other settings.
+Reload the VS Code model picker if it still shows the old one.
 
 ## Add a new coding model
 

@@ -5,6 +5,29 @@ published model and community rows use other machines or test methods. Values
 from different prompts, caches, and runtimes are not head-to-head rankings.
 For current commands and saved results, see the [model test README](../scripts/README.md).
 
+## Pi agent comparison: November 20, 2026
+
+One run per model on two isolated projects using Pi with medium thinking and an 8,192-token output cap. The first project implemented concurrent processing, retries and aggregation; it had six visible and seven independent checks. The second used a copy of Kyra's board TypeScript code and had two visible and three independent checks. Test files were read-only to Pi; independent checks ran in network-disabled sandboxes. The third task asked for a self-contained function using current rather than deprecated rules in a 45,371-token prompt. It used temperature 1, top-p 0.95, top-k 20, min-p 0 and requested medium reasoning; support for reasoning effort differs between runtimes. Strata, Signal and base Qwen used 131,072 context; Qwen-pi used 65,536. Times exclude model loading.
+
+| Model | First project | Kyra board | 45K input | Agent times: first / board | 45K time |
+|---|---:|---:|---:|---:|---:|
+| Signal 3.8 27B Terse Coder i1-Q4_K_M | 13/13 | 5/5 | pass | 107 s / 50 s | 237 s |
+| Qwen3.8-27B UD-Q4_K_M | 13/13 | 5/5 | pass | 193 s / 82 s | 327 s |
+| Strata Flash-Next Coder IQ1_M | 13/13 | 5/5 | pass | 823 s / 117 s | 71 s |
+| Qwen3.8-27B-pi Q4_K_M | 12/13 | 5/5 | pass | 145 s / 57 s | 247 s |
+
+Qwen-pi's first project had a reproducible race: a temporary failure from one worker could replace the permanent error from another. Strata's aggregation copied an expanding object for each distinct category, giving quadratic behavior. Signal and base Qwen both allowed other workers to continue processing after a permanent failure; stopping them was not specified, but matters for side-effecting jobs. The independent concurrency race check was added after code review and rerun against every candidate. Raw traces and generated code are in the ignored `test-results/model-comparison/` directory; long-input results are in `test-results/long-context-retest.jsonl`.
+
+Signal was the initial provisional choice: it passed the checks, avoided the identified race and quadratic aggregation, and was fastest on both project tasks. The user subsequently chose Strata as the default. The two project tasks are small and each result is a single sample; the 45K task checks rule retrieval, not a complete large-repository workflow. These results do not prove a universal model ranking.
+
+## Qwen3.8-27B retest: November 20, 2026
+
+The installed Unsloth UD-Q4_K_M ran on llama.cpp with a 131,072-token server context. Five short JavaScript tasks were sampled once each, requesting medium reasoning, an 8,192-token output cap, temperature 1.0, top-p 0.95, top-k 20 and min-p 0. The runtime may handle reasoning effort differently from Strata. Generated code ran in a network-disabled sandbox.
+
+It passed 4/5 original checks and 2/4 additional edge checks. The cache failed expiry and eviction checks and its eviction loop did not guarantee strict worst-case O(1); the topological sort missed a dependency named `toString`. Expression parsing and nested paths passed their additional checks. Total time per task ranged from 44 to 224 seconds. These are single short samples, not a representative repository or agent benchmark, and do not establish a quality ranking against other models.
+
+In a separate isolated Pi session using medium thinking, the same model inspected a small JavaScript project, implemented a bounded concurrent batch processor with retries, and ran its tests. Its implementation passed all four supplied tests; an additional independent check found that a processor throwing `undefined` was incorrectly treated as a success. Pi emitted thinking blocks, although token accounting reported zero reasoning tokens. This one small repository task is not sufficient to rank models on real projects.
+
 ## Complex JavaScript comparison: November 18, 2026
 
 One run per task on each model at 131,072 server context, except Pi at 65,536. Each received the same five complex tasks, an 8,192-token output cap, low reasoning effort and the same requested sampling parameters. Strata's two configs used the same 4,096-token reasoning budget; llama.cpp may handle reasoning effort and sampling differently. Generated code was reviewed before its existing behavioral checks were run.

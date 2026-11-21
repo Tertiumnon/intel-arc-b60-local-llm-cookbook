@@ -18,6 +18,8 @@
 
 ### Changed
 
+- Compared four models on two project tasks and a 45K-input check; selected Strata Flash-Next Coder as the Kyra and Pi default at the user's request.
+- `bun run pi` now updates Pi's default model as well as its provider configuration.
 - Download the Hunyuan3D paint configuration files alongside its weights, and record the current Intel paint-loader failures.
 - Tested Qwen3.8-27B-pi on the B60, renamed its coding command to include `27b`, and recorded its JavaScript and context results.
 - Compared three installed coding models on complex JavaScript and repository-context tasks, and recorded the results and limitations.

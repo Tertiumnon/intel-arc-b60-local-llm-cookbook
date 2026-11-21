@@ -3,6 +3,10 @@
 A dated history. Add a new entry at the top when a decision changes. Data is in
 [results.md](./results.md); model details are in [models.md](./models.md).
 
+## November 20, 2026
+
+**Use Strata Flash-Next Coder IQ1_M as the coding default for Kyra and Pi**, per the user's choice. In the small comparison below, Strata, Signal and base Qwen passed both project tasks and the 45K-input rule-retrieval check, with different code-review tradeoffs. This is a single-run comparison, not proof of general superiority. The models share one endpoint, so an image or 3D job can switch the served model. Restore Strata with `bun run switch:coding:strata-qwen38-flash-next-coder-iq1m` and `bun run pi`. Details: [results](./results.md#pi-agent-comparison-november-20-2026).
+
 ## November 18, 2026
 
 **Keep Strata Flash-Next Coder IQ1_M for everyday complex JavaScript work.** In one matched run it passed 5/5 existing complex-task checks and both 27K-input context checks, and the context requests took 40–52 seconds. Qwen3.8-27B-pi also passed 5/5 complex and both context checks, but failed three added edge cases and took about 146–148 seconds per context request. The base Qwen3.8-27B passed 4/5 complex and both context checks, taking about three minutes per context request; Flash-Next IQ2_XS passed 3/5 complex and both context checks.

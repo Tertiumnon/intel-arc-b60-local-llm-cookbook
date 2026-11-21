@@ -1,8 +1,8 @@
 # Code generation: install
 
 Coding assistant for VS Code, the Pi agent and other OpenAI-compatible clients. Default model:
-**Strata Qwen3.8-Flash-Next Coder IQ1_M** at 131K context. Use Qwen3.8-27B UD-Q4_K_M when a task
-needs more careful reasoning. Evidence: [recommendations.md](../recommendations.md).
+**Strata Flash-Next Coder IQ1_M** at 131K context. Evidence and limitations:
+[recommendations.md](../recommendations.md).
 
 ## 1. Base setup
 
@@ -18,11 +18,10 @@ ssh -t ai-b60 'sudo install -m 644 /tmp/strata.service /etc/systemd/system/strat
 
 ```bash
 bun run switch:coding:strata-qwen38-flash-next-coder-iq1m
+bun run pi
 ```
 
-The first run clones and builds [Strata](https://github.com/Niko1221/Strata) in `/models/Strata`
-(SYCL backend, 131K context, no vision) and writes its config. It takes a while. Later runs only
-switch the service.
+The first Strata switch clones and builds [Strata](https://github.com/Niko1221/Strata) in `/models/Strata` and writes its config.
 
 ## 3. Options after install
 
@@ -39,8 +38,8 @@ A request's own values override these defaults. Avoid `high` on long prompts.
 ## 4. Connect a client
 
 - **VS Code Chat:** the switch writes the `Arc B60 (strata)` provider; manual steps are in [clients.md](../clients.md).
-- **Pi agent:** `bun run pi`, then `pi --provider arc-b60`.
-- **Pi on the AI server:** the `ai` user's Pi profile points to the local Strata Coder model. Its model ID and context are a snapshot; update `~/.pi/agent/models.json` and `settings.json` after changing the served model. This interactive profile is separate from the planned unprivileged Kyra worker account.
+- **Pi agent:** `bun run pi`, then `pi`. Repeat setup after switching the served model.
+- **Pi on the AI server:** the `ai` user's Pi profile points to Strata Flash-Next Coder IQ1_M. Its model ID and context are a snapshot; update `~/.pi/agent/models.json` and `settings.json` after changing the served model. This interactive profile is separate from the unprivileged Kyra worker account.
 - **Other:** `AI_API_URL` and `AI_API_KEY` from `.env`.
 
 Next: [TEST.md](./TEST.md), [USAGE.md](./USAGE.md).
