@@ -13,6 +13,17 @@ A dated history. Add a new entry at the top when a decision changes. Data is in
 
 All three made mistakes in additional checks or requirement review, including Coder's cache violating strict worst-case O(1) and its path parser mishandling hyphenated keys. The small single-run comparison does not establish a universal quality ranking. See [results](./results.md#complex-javascript-comparison-november-18-2026) for the exact checks and the context-test fixture caveat.
 
+## October 17, 2026 (update: Q4_K_XL)
+
+**Keep Strata IQ1_M as the default. Qwen3.8 UD-Q4_K_XL at 64K context is the candidate for hard tasks, pending a repeat.**
+
+- Qwen3.8 UD-Q4_K_XL at 64K context ran every basic and complex task without a crash. Basic: 10/10. Complex: 5/5, with the TTL cache passing at low reasoning, which Strata never did.
+- At 131K context the same model crashed during the basic tasks, so do not use 131K for it. The 131K default in the presets is untested for this model.
+- Long 15K: 1/2. The shipping task failed; not yet diagnosed.
+- Evidence is one run per task. Repeat the TTL cache and the shipping task before choosing it.
+
+Details: [Qwen3.8 Q4_K_XL in results.md](./results.md#qwen38-ud-q4_k_xl-at-64k-and-131k).
+
 ## October 17, 2026
 
 **Keep Strata IQ1_M as the default. Use Qwen3.8 UD-Q4_K_M for hard algorithmic tasks with short prompts.**

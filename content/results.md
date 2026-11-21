@@ -53,6 +53,21 @@ November 18, 2026. The full-expert Qwen IQ2_XS model started on the B60 with 131
 
 The ten basic quality tasks at low reasoning and a 1,024-token output cap passed 9/10 assertions. `parse-query` failed after hitting the cap and was flagged for repetition; `deep-clone` passed its assertions but also hit the cap and was flagged for repetition. Hard tasks and long-context behavior were not tested in this run.
 
+## Qwen3.8 UD-Q4_K_XL at 64K and 131K
+
+October 17, 2026. llama.cpp, no MTP, streamed requests, one slot. Preset `qwen38-27b-q4xl:ctx64k`.
+
+| Context | Basic 10 (low) | Long 15K (low) | Complex 5 (low) | Notes |
+|---|---:|---:|---:|---|
+| 131,072 | 5/10, then server stopped | not run | 4/5 (medium 5/5) | Server stopped mid-run; no error in logs |
+| 65,536 | 10/10 (46 s avg) | 1/2 (167 s avg) | 5/5 (161 s avg) | Ran to completion |
+
+- At 131K the server crashed during the basic tasks. The 65K run finished every task, so the
+  crash looks memory related. This is still a hypothesis.
+- The TTL cache passed at low reasoning at 65K (the only Qwen run where it did at low). Both
+  passes flagged a loop, so the loop detector and the pass may be measuring different things.
+- The long-shipping task failed, and the failure needs looking at before drawing conclusions.
+
 ## Hard tasks: Strata IQ1_M vs Qwen3.8 UD-Q4_K_M
 
 October 17, 2026. Five hard tasks (TTL cache, expression parser, merge intervals, topological
@@ -151,6 +166,28 @@ Caveats:
   show a reasoning effect.
 - Only one run per task. Speed numbers are from a single warm-up and three measured runs.
 - The 128K load was not checked for VRAM headroom beyond the health check.
+
+## Rating
+
+October 17, 2026. Scores 1–5 from the runs in this file. Non-A3B models only.
+
+| Model (context tested) | Stability | Quality | Speed | Avg |
+|---|---:|---:|---:|---:|
+| Strata Coder IQ1_M (131K, low) | 5 | 4 | 5 | 4.7 |
+| Qwen3.8 UD-Q4_K_XL (64K, low) | 3 | 4 | 2 | 3.0 |
+| Qwen3.8 UD-Q4_K_M (131K, low) | 4 | 4 | 2 | 3.3 |
+| Signal Q4_K_M (32K, low) | 4 | 4 | 2 | 3.3 |
+
+- **Stability:** 5 = no crashes or timeouts in the runs. Subtract 1 for each timeout or
+  crash. Qwen Q4_K_XL crashed at 131K, so 3 at 64K. Signal had timeouts at 55K prompts.
+- **Quality:** pass rate across basic, complex, and long tasks, with the hard tasks weighted.
+  Based on one run per task, so differences of one task are noise.
+- **Speed:** tokens per second and time per request on long prompts. Strata is the fastest
+  on long prompts (about 39 s at 27K); the Qwen and Signal runs took 139–290 s at similar sizes.
+- **Avg:** mean of the three scores.
+
+Qwen Q4_K_M and Q4_K_XL are not directly comparable: their long-task runs used different
+sizes. Use the scores to compare direction, not exact values.
 
 ## Quality: Strata Coder IQ1_M by reasoning level
 

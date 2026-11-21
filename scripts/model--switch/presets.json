@@ -105,6 +105,27 @@
     "mtp": false,
     "tested": false
   },
+  "qwen38-27b-q4xl": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 131072,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-q4xl:ctx64k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 65536,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-q4xl:ctx32k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
   "swift-1.5": {
     "service": "llama",
     "model": "ukisai/Swift-1.5-Qwen3.8-27B-GGUF/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",

@@ -46,6 +46,10 @@
     "image:download:qwen": "bun scripts/image--download/image--download.ts qwen-image-2.1-turbo",
     "image:download:z-image": "bun scripts/image--download/image--download.ts z-image-turbo",
     "pi": "bun scripts/pi--setup/pi--setup.ts",
+    "switch:coding:llama-qwen38-27b-q4xl": "bun run switch --preset=qwen38-27b-q4xl",
+    "switch:coding:llama-qwen38-27b-q4xl:ctx64k": "bun run switch --preset=qwen38-27b-q4xl:ctx64k",
+    "switch:coding:llama-qwen38-27b-q4xl:ctx32k": "bun run switch --preset=qwen38-27b-q4xl:ctx32k",
+
     "delete": "bun scripts/model--delete/model--delete.ts",
     "quality": "bun scripts/model--quality/model--quality.ts",
     "test": "bun scripts/model--test/model--test.ts",
