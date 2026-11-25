@@ -5,6 +5,78 @@ published model and community rows use other machines or test methods. Values
 from different prompts, caches, and runtimes are not head-to-head rankings.
 For current commands and saved results, see the [model test README](../scripts/README.md).
 
+## Cross-model comparison
+
+Rows pull from the dated sections below. Different contexts, output caps,
+runtimes, and prompt sizes are not head-to-head; most cells are single runs.
+
+### Basic 10 tasks
+
+| Model | Context | Output cap | Reasoning | Pass | Avg tokens | Avg seconds | Run |
+|---|---:|---:|---|---:|---:|---:|---|
+| Signal 3.8 Terse Coder i1-Q4_K_M | 32,768 | — | low | 10/10 | 551 | 19.5 | Oct 16 |
+| Signal 3.8 Terse Coder i1-Q4_K_M | 131,072 | — | low | 9/10 | 529 | 18.8 | Oct 16 |
+| Strata Flash-Next Coder IQ1_M | 131,072 | 4,096 | low | 10/10 | 724 | 24 | Oct 16 |
+| Strata Flash-Next Coder IQ1_M | 131,072 | 4,096 | medium | 10/10 | 1,154 | 39 | Oct 16 |
+| Strata Flash-Next Coder IQ1_M | 131,072 | 4,096 | high | 10/10 | 1,792 | 70 | Oct 16 |
+| Qwen3.8-27B UD-Q4_K_M | 131,072 | 8,192 | low | 10/10 | — | 49 | Oct 17 |
+| Strata Flash-Next IQ2_XS | 131,072 | 1,024 | low | 9/10 | — | — | Nov 18 |
+| Greatjedi Qwen3.8-27B-pi Arc-tuned Q4_K | 49,152 | 4,096 | low | 10/10 | 703 | 25.2 | Nov 25 |
+| Greatjedi Qwen3.8-27B-pi Arc-tuned Q4_K | 49,152 | 4,096 | medium | 10/10 | 844 | 29.8 | Nov 25 |
+
+All models pass the basic ten at low reasoning except IQ2_XS (1,024 cap), so
+this set separates models mainly on speed, not quality.
+
+### Complex 5 tasks
+
+| Model | Context | Output cap | Reasoning | Pass | Edge-check failures | Run |
+|---|---:|---:|---|---:|---|---|
+| Strata Flash-Next Coder IQ1_M | 131,072 | 8,192 | low | 4/5 | TTL cache failed | Oct 17 |
+| Strata Flash-Next Coder IQ1_M | 131,072 | 8,192 | low | 5/5 | cache O(1), nested path | Nov 18 |
+| Qwen3.8-27B-pi Q4_K_M | 65,536 | 8,192 | low | 5/5 | cache eviction, parser, topo sort | Nov 18 |
+| Qwen3.8-27B UD-Q4_K_M | 131,072 | 8,192 | low | 4/5 | cache eviction, topo sort | Nov 18 |
+| Qwen3.8-27B UD-Q4_K_M | 131,072 | 8,192 | medium | 4/5 | 2/4 edge checks (cache, topo sort) | Nov 20 |
+| Strata Flash-Next IQ2_XS | 131,072 | 8,192 | low | 3/5 | cache, nested path, topo sort | Nov 18 |
+| Greatjedi Qwen3.8-27B-pi Arc-tuned Q4_K | 49,152 | 4,096 | low | 4/5 | TTL cache looped, hit cap | Nov 25 |
+| Greatjedi Qwen3.8-27B-pi Arc-tuned Q4_K | 49,152 | 4,096 | medium | 4/5 | TTL cache looped, hit cap | Nov 25 |
+
+The TTL cache is the only task that has separated models so far: it failed on
+Strata Coder in the October 17 run and on the Arc-tuned Q4_K in both passes,
+and passed on Qwen3.8 UD-Q4_K_M once. The topo-sort `toString` case failed on
+Qwen-pi, base Qwen, and IQ2_XS. Edge checks are not included in the pass
+scores.
+
+## Quality: Greatjedi Qwen3.8-27B-pi Arc-tuned Q4_K by reasoning level
+
+November 25, 2026. llama.cpp, 49,152 context, 4,096 output cap, preset
+`qwen38-pi-arc-tuned`. Seventeen tasks: ten basic, five complex, two long at
+about 30K prompt tokens. Per-run rows are in `runs.jsonl`; the full run is in
+`test-results/quality/2026-11-25T19-39-33-470Z.json` (gitignored).
+
+| Reasoning | Pass | Loops | Avg tokens | Avg seconds |
+|---|---:|---:|---:|---:|
+| low | 14/17 | 2 | 985 | 34.7 |
+| medium | 14/17 | 3 | 1,159 | 40.6 |
+| high | 0/17 | 0 | — | — |
+
+Findings:
+- All ten basic tasks passed at low (avg 703 tokens, 25.2 s) and medium
+  (avg 844 tokens, 29.8 s).
+- `complex-ttl-cache` failed at both levels: it looped and hit the 4,096 cap
+  after about 145 s with roughly 15K reasoning characters. It is the same task
+  that failed on Strata Coder IQ1_M at every level; Qwen3.8 UD-Q4_K_M passed
+  it once on October 17.
+- The two long tasks (about 30K prompts) and every high-effort request
+  returned empty responses from the server (no tokens, no finish reason), so
+  those 22 results are request failures, not model failures. The high pass and
+  the long tasks need a rerun before this model gets a high-reasoning or
+  long-context verdict.
+- Loop flags on passing answers: `complex-expression` (low, medium) and
+  `complex-get-path` (medium); the detector is noisy (see October 16).
+
+See the [cross-model comparison](#cross-model-comparison) for this model
+against Strata Coder IQ1_M and Qwen3.8-27B-pi Q4_K_M on the same task sets.
+
 ## Pi agent comparison: November 20, 2026
 
 One run per model on two isolated projects using Pi with medium thinking and an 8,192-token output cap. The first project implemented concurrent processing, retries and aggregation; it had six visible and seven independent checks. The second used a copy of Kyra's board TypeScript code and had two visible and three independent checks. Test files were read-only to Pi; independent checks ran in network-disabled sandboxes. The third task asked for a self-contained function using current rather than deprecated rules in a 45,371-token prompt. It used temperature 1, top-p 0.95, top-k 20, min-p 0 and requested medium reasoning; support for reasoning effort differs between runtimes. Strata, Signal and base Qwen used 131,072 context; Qwen-pi used 65,536. Times exclude model loading.
@@ -24,9 +96,19 @@ Signal was the initial provisional choice: it passed the checks, avoided the ide
 
 The installed Unsloth UD-Q4_K_M ran on llama.cpp with a 131,072-token server context. Five short JavaScript tasks were sampled once each, requesting medium reasoning, an 8,192-token output cap, temperature 1.0, top-p 0.95, top-k 20 and min-p 0. The runtime may handle reasoning effort differently from Strata. Generated code ran in a network-disabled sandbox.
 
-It passed 4/5 original checks and 2/4 additional edge checks. The cache failed expiry and eviction checks and its eviction loop did not guarantee strict worst-case O(1); the topological sort missed a dependency named `toString`. Expression parsing and nested paths passed their additional checks. Total time per task ranged from 44 to 224 seconds. These are single short samples, not a representative repository or agent benchmark, and do not establish a quality ranking against other models.
+| Check | Result |
+|---|---|
+| Five complex tasks (medium reasoning) | 4/5 |
+| Additional edge checks | 2/4 (cache expiry/eviction and O(1) failed; topo sort missed `toString`; expression and nested paths passed) |
+| Time per task | 44–224 s |
+| Pi session: bounded batch processor | 4/4 supplied tests; an independent check found a processor throwing `undefined` treated as a success |
 
-In a separate isolated Pi session using medium thinking, the same model inspected a small JavaScript project, implemented a bounded concurrent batch processor with retries, and ran its tests. Its implementation passed all four supplied tests; an additional independent check found that a processor throwing `undefined` was incorrectly treated as a success. Pi emitted thinking blocks, although token accounting reported zero reasoning tokens. This one small repository task is not sufficient to rank models on real projects.
+Pi emitted thinking blocks, although token accounting reported zero reasoning
+tokens. These are single short samples, not a representative repository or
+agent benchmark, and do not establish a quality ranking against other models;
+see the [cross-model comparison](#cross-model-comparison).
+
+## Complex JavaScript comparison: November 18, 2026
 
 ## Complex JavaScript comparison: November 18, 2026
 
@@ -49,9 +131,19 @@ These are small synthetic tasks and single samples, not proof of general coding 
 
 ## Strata Qwen3.8-Flash-Next IQ2_XS
 
-November 18, 2026. The full-expert Qwen IQ2_XS model started on the B60 with 131,072 context. One short coding request with reasoning off measured 0.56 s to first token and 50.7 generated tokens/s; a separate 1,334-token prefill measured 551 tokens/s. These are single measurements, not a head-to-head comparison.
+November 18, 2026. The full-expert Qwen IQ2_XS model started on the B60 with
+131,072 context. Single measurements, not a head-to-head comparison.
 
-The ten basic quality tasks at low reasoning and a 1,024-token output cap passed 9/10 assertions. `parse-query` failed after hitting the cap and was flagged for repetition; `deep-clone` passed its assertions but also hit the cap and was flagged for repetition. Hard tasks and long-context behavior were not tested in this run.
+| Metric | Value |
+|---|---:|
+| TTFT, reasoning off | 0.56 s |
+| Generation | 50.7 tok/s |
+| 1,334-token prefill | 551 tok/s |
+| Basic 10 tasks (low, 1,024 cap) | 9/10 |
+
+`parse-query` failed after hitting the cap and was flagged for repetition;
+`deep-clone` passed its assertions but also hit the cap and was flagged for
+repetition. Hard tasks and long-context behavior were not tested in this run.
 
 ## Qwen3.8 UD-Q4_K_XL at 64K and 131K
 
@@ -92,8 +184,9 @@ Findings:
 ## Long-context matrix: prompt size, depth, and model
 
 October 16, 2026. Two long tasks (discount, shipping), low reasoning, planted files at depth
-0.1, 0.5, or 0.9 of the prompt. Strata: 2 repeats at 3 sizes. Signal Q4_K_M at 131K context:
-1 repeat at 2 sizes. Prompt sizes are real tokens from the server. Per-run rows are in
+0.1, 0.5, or 0.9 of the prompt. Strata: 2 repeats at 3 sizes. Qwen3.8
+UD-Q4_K_M: 1 repeat at 27K, depth 0.5 (October 17). Signal Q4_K_M at 131K
+context: 1 repeat at 2 sizes. Prompt sizes are real tokens from the server. Per-run rows are in
 `runs.jsonl` (`group` long, with `contextTokens`, `depth`, `rep`, `promptTokens`).
 
 | Model | Prompt tokens | Pass | Avg seconds per request |
@@ -101,6 +194,7 @@ October 16, 2026. Two long tasks (discount, shipping), low reasoning, planted fi
 | Strata IQ1_M | ~27K | 10/12 | 39 |
 | Strata IQ1_M | ~55K | 10/12 | 59 |
 | Strata IQ1_M | ~110K | 10/12 | 113 |
+| Qwen3.8 UD-Q4_K_M | ~27K | 1/2 | 174–212 |
 | Signal Q4_K_M | ~27K | 4/6 | 139 |
 | Signal Q4_K_M | ~55K | 2/3 | 289 |
 
