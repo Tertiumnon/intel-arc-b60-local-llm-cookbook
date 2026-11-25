@@ -175,6 +175,27 @@
     "mtp": false,
     "tested": false
   },
+  "qwen38-pi-arc-tuned": {
+    "service": "llama",
+    "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
+    "context": 49152,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen38-pi-arc-tuned:ctx32k": {
+    "service": "llama",
+    "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
+    "context": 32768,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen38-pi-arc-tuned:no-mtp": {
+    "service": "llama",
+    "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
+    "context": 49152,
+    "mtp": false,
+    "tested": false
+  },
   "thinkingcap": {
     "service": "llama",
     "model": "bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF/ThinkingCap-Qwen3.8-27B-IQ4_XS.gguf",

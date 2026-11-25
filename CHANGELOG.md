@@ -8,6 +8,7 @@
 
 ### Added
 
+- llama preset `qwen38-pi-arc-tuned` (plus `:ctx32k` and `:no-mtp`) and its `switch:coding:llama-qwen38-pi-arc-tuned*` commands for the Greatjedi Qwen3.8-27B-pi Intel Arc tuned MTP Q4_K GGUF; not run on the B60 yet.
 - Added a TRELLIS.2 model download command; its 3D workflow is not yet integrated or tested on the B60.
 - Configured Pi on the AI server for the current local Strata Coder model.
 - Image generation with ComfyUI on Intel XPU: `image:download:*`, `image:start`, `image`, plus `image:test` for timed fantasy prompts (one image tested on the server).
