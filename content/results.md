@@ -244,7 +244,7 @@ sample to say that bigger context helps, but it does not show that it hurts.
 ## Signal + Terse-Coder Q4_K_M: 32K vs 128K context
 
 October 16, 2026. llama.cpp SYCL, Q8 KV cache, one slot, MTP on (one draft token),
-no vision projector. Presets `terse:ctx32k` and `terse` (131,072) in
+no vision projector. Presets `terse:ctx49k` (the 32,768 run used the earlier `:ctx32k` preset) and `terse` (131,072) in
 [presets.json](../scripts/model--switch/presets.json). Both switched and passed their health checks.
 
 | Context | Speed: TTFT | Speed: gen tok/s | Speed: prefill tok/s | Quality (low) | Avg tokens | Avg seconds |

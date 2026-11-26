@@ -14,12 +14,12 @@
     "mtp": true,
     "tested": true
   },
-  "terse:ctx32k": {
+  "terse:ctx49k": {
     "service": "llama",
     "model": "mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
-    "context": 32768,
+    "context": 49152,
     "mtp": true,
-    "tested": true
+    "tested": false
   },
   "terse:no-mtp": {
     "service": "llama",
@@ -42,10 +42,10 @@
     "mtp": true,
     "tested": true
   },
-  "qwen36-27b-mtp:ctx32k": {
+  "qwen36-27b-mtp:ctx49k": {
     "service": "llama",
     "model": "unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
-    "context": 32768,
+    "context": 49152,
     "mtp": true,
     "tested": false
   },
@@ -70,10 +70,10 @@
     "mtp": true,
     "tested": true
   },
-  "qwen38-27b-iq3m:ctx32k": {
+  "qwen38-27b-iq3m:ctx49k": {
     "service": "llama",
     "model": "pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF/Qwen3.8-27B-IQ3_M.gguf",
-    "context": 32768,
+    "context": 49152,
     "mtp": true,
     "tested": true
   },
@@ -98,13 +98,6 @@
     "mtp": false,
     "tested": true
   },
-  "qwen38-27b-unsloth:ctx32k": {
-    "service": "llama",
-    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_M.gguf",
-    "context": 32768,
-    "mtp": false,
-    "tested": false
-  },
   "qwen38-27b-q4xl": {
     "service": "llama",
     "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
@@ -119,10 +112,10 @@
     "mtp": false,
     "tested": false
   },
-  "qwen38-27b-q4xl:ctx32k": {
+  "qwen38-27b-q4xl:ctx49k": {
     "service": "llama",
     "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
-    "context": 32768,
+    "context": 49152,
     "mtp": false,
     "tested": false
   },
@@ -140,13 +133,6 @@
     "mtp": false,
     "tested": true
   },
-  "swift-1.5:ctx32k": {
-    "service": "llama",
-    "model": "ukisai/Swift-1.5-Qwen3.8-27B-GGUF/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",
-    "context": 32768,
-    "mtp": false,
-    "tested": false
-  },
   "dirk": {
     "service": "llama",
     "model": "peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF/Dirk-Qwen3.8-27B-UD-Q4_K_XL.gguf",
@@ -154,10 +140,10 @@
     "mtp": true,
     "tested": false
   },
-  "dirk:ctx32k": {
+  "dirk:ctx49k": {
     "service": "llama",
     "model": "peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF/Dirk-Qwen3.8-27B-UD-Q4_K_XL.gguf",
-    "context": 32768,
+    "context": 49152,
     "mtp": true,
     "tested": false
   },
@@ -168,10 +154,10 @@
     "mtp": false,
     "tested": true
   },
-  "qwen38-pi:ctx32k": {
+  "qwen38-pi:ctx49k": {
     "service": "llama",
     "model": "bytkim/Qwen3.8-27B-pi-GGUF/Qwen3.8-27B-pi-Q4_K_M.gguf",
-    "context": 32768,
+    "context": 49152,
     "mtp": false,
     "tested": false
   },
@@ -182,10 +168,10 @@
     "mtp": true,
     "tested": false
   },
-  "qwen38-pi-arc-tuned:ctx32k": {
+  "qwen38-pi-arc-tuned:ctx49k": {
     "service": "llama",
     "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
-    "context": 32768,
+    "context": 49152,
     "mtp": true,
     "tested": false
   },
@@ -203,10 +189,10 @@
     "mtp": false,
     "tested": false
   },
-  "thinkingcap:ctx32k": {
+  "thinkingcap:ctx49k": {
     "service": "llama",
     "model": "bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF/ThinkingCap-Qwen3.8-27B-IQ4_XS.gguf",
-    "context": 32768,
+    "context": 49152,
     "mtp": false,
     "tested": false
   },

@@ -28,7 +28,7 @@ and Tiel-Coder; and 49,152 for Swift 1.5. `bun run switch:list` shows which exac
 settings were tested. Q4_K_XL, Dirk and ThinkingCap are untested at 64K. IQ2_XS has
 started at 131K and passed two ~27K-input checks. Context includes input and output;
 the VS Code input limit reserves room for output and headroom. Signal was slow on long prompts.
-The `:ctx32k`, `:ctx49k` and `:ctx57k` commands remain available for smaller contexts.
+The `:ctx49k` and `:ctx57k` commands remain available for smaller contexts.
 
 After a switch the VS Code provider and `data/pi.json` match the served model. Run `bun run pi` to
 update Pi's model and default selection while preserving its thinking level and other settings.
@@ -37,7 +37,7 @@ Reload the VS Code model picker if it still shows the old one.
 ## Add a new coding model
 
 1. Read its Hugging Face card, license and file list; do not guess file names.
-2. Try it: `MODEL_CONTEXT_TOKENS=32768 bun run switch --service=llama --model=OWNER/REPO/FILE.gguf`.
+2. Try it: `MODEL_CONTEXT_TOKENS=49152 bun run switch --service=llama --model=OWNER/REPO/FILE.gguf`.
 3. Run `bun run test` and `bun run quality`.
 4. Add a preset to [presets.json](../../scripts/model--switch/presets.json) and a package script, mark `"tested": true`
    only for the exact context you ran, and record the decision at the top of [recommendations.md](../recommendations.md).

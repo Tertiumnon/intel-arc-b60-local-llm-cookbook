@@ -47,7 +47,7 @@ Details: [Hard tasks in results.md](./results.md#hard-tasks-strata-iq1_m-vs-qwen
 | Reasoning | low (server default); medium is fine; avoid high on long prompts |
 | Server context | 131,072 |
 | VS Code limits | 110,000 input, 8,192 output |
-| Backup | Signal Q4_K_M, 32K context (`bun run switch:coding:llama-terse:ctx32k`), for short prompts only |
+| Backup | Signal Q4_K_M, 49K context (`bun run switch:coding:llama-terse:ctx49k`), for short prompts only |
 
 Why:
 - Accuracy did not change from 27K to 110K prompt tokens (10/12 at each size).

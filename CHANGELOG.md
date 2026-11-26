@@ -8,7 +8,7 @@
 
 ### Added
 
-- llama preset `qwen38-pi-arc-tuned` (plus `:ctx32k` and `:no-mtp`) and its `switch:coding:llama-qwen38-pi-arc-tuned*` commands for the Greatjedi Qwen3.8-27B-pi Intel Arc tuned MTP Q4_K GGUF.
+- llama preset `qwen38-pi-arc-tuned` (plus `:ctx49k` and `:no-mtp`) and its `switch:coding:llama-qwen38-pi-arc-tuned*` commands for the Greatjedi Qwen3.8-27B-pi Intel Arc tuned MTP Q4_K GGUF.
 - Added a TRELLIS.2 model download command; its 3D workflow is not yet integrated or tested on the B60.
 - Configured Pi on the AI server for the current local Strata Coder model.
 - Image generation with ComfyUI on Intel XPU: `image:download:*`, `image:start`, `image`, plus `image:test` for timed fantasy prompts (one image tested on the server).
@@ -19,6 +19,7 @@
 
 ### Changed
 
+- The smallest coding-model context is now 49,152 tokens: `:ctx32k` presets became `:ctx49k` (duplicates of existing `:ctx49k` presets were removed).
 - Tested the Greatjedi Qwen3.8-27B-pi Arc-tuned Q4_K quality tasks on the B60 (basic and complex at low and medium; the high pass and long tasks returned empty server responses and need a rerun) and recorded the results.
 - `content/results.md` now opens with cross-model comparison tables (basic 10, complex 5, long context) and the Qwen3.8-27B retest and Strata IQ2_XS sections use tables instead of prose.
 - Compared four models on two project tasks and a 45K-input check; selected Strata Flash-Next Coder as the Kyra and Pi default at the user's request.
