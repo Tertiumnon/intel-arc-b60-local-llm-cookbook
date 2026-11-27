@@ -5,6 +5,20 @@ published model and community rows use other machines or test methods. Values
 from different prompts, caches, and runtimes are not head-to-head rankings.
 For current commands and saved results, see the [model test README](../scripts/README.md).
 
+## Signal Terse Coder at 57K: November 27, 2026
+
+The latest saved quality run used Signal 3.8 Terse Coder i1-Q4_K_M on llama.cpp SYCL with MTP, 57,344 allocated context and a 4,096-token output cap. The existing quality script ran ten basic, five complex and two long tasks at each requested reasoning level. One run per task; the raw run is `test-results/quality/2026-11-27T08-47-22-496Z.json` (gitignored).
+
+| Requested reasoning | Basic | Complex | Long | Result |
+|---|---:|---:|---:|---|
+| Low | 9/10 | 5/5 | 2/2 | 16/17 checks passed |
+| Medium | 10/10 | 4/5 | 2/2 | 16/17 checks passed |
+| High | — | — | — | All 17 requests were rejected by the server; not a quality score |
+
+At low reasoning, `parse-query` produced an invalid regular expression. At medium, the TTL cache failed the expiry-and-size check. The low TTL answer passed that check but can evict a live entry while an expired entry remains; its passing score does not establish full correctness. The loop detector flagged two passing low-reasoning complex answers and one passing medium answer; these flags alone do not prove a loop.
+
+The long tasks contained 54,458–54,538 actual input tokens and completed in 287–292 seconds each; their generated answers passed the standalone checks. The observed outputs were 276–374 tokens. A 4,096-token output is not guaranteed to fit after a 54.5K input in a 57K window. The high requests returned HTTP 500 because the model's chat template rejects `high` and reports `low`, `medium`, and `xhigh` as supported; `xhigh` was not tested. The script recorded the empty error responses as failed answers, so its 0/17 high score must not be compared with model quality. No new token-per-second speed test was part of this run.
+
 ## arc-llm-lab Qwen3.8 DFlash2: November 26, 2026
 
 The experimental `switch --service=arc-lab` service ran Qwen3.8-27B UD-Q4_K_M with a DFlash2 Q4_K_M draft, patched Vulkan llama.cpp, f16 KV cache, one slot, and 65,536 allocated context. Short speed measurements use `bun run test --no-reasoning`, three runs after warm-up, 256 output cap and temperature 0.7. The 15 basic and complex answers used the existing quality task prompts, low reasoning and an 8,192-token cap. They were **reviewed manually against the supplied examples; generated code was not executed**, so the review counts are not automated pass rates.
@@ -32,6 +46,8 @@ runtimes, and prompt sizes are not head-to-head; most cells are single runs.
 |---|---:|---:|---|---:|---:|---:|---|
 | Signal 3.8 Terse Coder i1-Q4_K_M | 32,768 | — | low | 10/10 | 551 | 19.5 | Oct 16 |
 | Signal 3.8 Terse Coder i1-Q4_K_M | 131,072 | — | low | 9/10 | 529 | 18.8 | Oct 16 |
+| Signal 3.8 Terse Coder i1-Q4_K_M | 57,344 | 4,096 | low | 9/10 | 503 | 18.0 | Nov 27 |
+| Signal 3.8 Terse Coder i1-Q4_K_M | 57,344 | 4,096 | medium | 10/10 | 727 | 25.2 | Nov 27 |
 | Strata Flash-Next Coder IQ1_M | 131,072 | 4,096 | low | 10/10 | 724 | 24 | Oct 16 |
 | Strata Flash-Next Coder IQ1_M | 131,072 | 4,096 | medium | 10/10 | 1,154 | 39 | Oct 16 |
 | Strata Flash-Next Coder IQ1_M | 131,072 | 4,096 | high | 10/10 | 1,792 | 70 | Oct 16 |
@@ -40,13 +56,15 @@ runtimes, and prompt sizes are not head-to-head; most cells are single runs.
 | Greatjedi Qwen3.8-27B-pi Arc-tuned Q4_K | 49,152 | 4,096 | low | 10/10 | 703 | 25.2 | Nov 25 |
 | Greatjedi Qwen3.8-27B-pi Arc-tuned Q4_K | 49,152 | 4,096 | medium | 10/10 | 844 | 29.8 | Nov 25 |
 
-All models pass the basic ten at low reasoning except IQ2_XS (1,024 cap), so
-this set separates models mainly on speed, not quality.
+The November 27 Signal run failed one low-reasoning basic task; IQ2_XS also
+failed one with a 1,024-token cap. Different runs and settings are not a ranking.
 
 ### Complex 5 tasks
 
 | Model | Context | Output cap | Reasoning | Pass | Edge-check failures | Run |
 |---|---:|---:|---|---:|---|---|
+| Signal 3.8 Terse Coder i1-Q4_K_M | 57,344 | 4,096 | low | 5/5 | TTL cache can evict live entries before expired entries | Nov 27 |
+| Signal 3.8 Terse Coder i1-Q4_K_M | 57,344 | 4,096 | medium | 4/5 | TTL cache expiry and size | Nov 27 |
 | Strata Flash-Next Coder IQ1_M | 131,072 | 8,192 | low | 4/5 | TTL cache failed | Oct 17 |
 | Strata Flash-Next Coder IQ1_M | 131,072 | 8,192 | low | 5/5 | cache O(1), nested path | Nov 18 |
 | Qwen3.8-27B-pi Q4_K_M | 65,536 | 8,192 | low | 5/5 | cache eviction, parser, topo sort | Nov 18 |

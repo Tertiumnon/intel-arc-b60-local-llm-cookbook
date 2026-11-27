@@ -3,6 +3,10 @@
 A dated history. Add a new entry at the top when a decision changes. Data is in
 [results.md](./results.md); model details are in [models.md](./models.md).
 
+## November 27, 2026
+
+**Keep Signal Terse Coder at 57K as an option, with checks on generated code.** Its latest run passed 16/17 supplied checks at both low and medium reasoning, including both approximately 54.5K-input tasks. Long tasks took about 288–292 seconds, and the TTL cache had an expiry error even in the low-reasoning answer that passed its supplied checks. The server rejected `high`; use `low` or `medium` for this model, and treat `xhigh` as untested. These single runs do not change the chosen Strata default. [Results](./results.md#signal-terse-coder-at-57k-november-27-2026).
+
 ## November 26, 2026
 
 **Keep Strata Flash-Next Coder IQ1_M as the chosen default; try arc-llm-lab Qwen3.8 for a faster long-input alternative when 64K context is enough.** On one identical 30K-token prompt it took 89 s versus 169 s for the existing Qwen SYCL configuration. A 54.5K-input shipping task produced a seemingly correct standalone answer in 211 s, while the pricing answer omitted a required definition. Manual review of five complex answers found the TTL cache failed and a path-parser edge case; these are not automated scores. The full 64K limit, agent workflows, and repeat reliability remain unverified. Use `bun run switch --service=arc-lab`; switch back with an existing `switch:*` command. [Results and test conditions](./results.md#arc-llm-lab-qwen38-dflash2-november-26-2026).

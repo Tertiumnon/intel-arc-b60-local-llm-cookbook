@@ -1,5 +1,7 @@
 # Code generation: test
 
+Signal Terse Coder at 57K was tested on November 27: low and medium completed the quality tasks, while its chat template rejected `high`. For this model use `bun run quality --efforts=low,medium`; `xhigh` is supported by the template but remains untested. See [results.md](../results.md#signal-terse-coder-at-57k-november-27-2026).
+
 On November 26, 2026, the 49,152-token switches for arc-lab Qwen3.8, Strata Flash-Next Coder IQ1_M, and llama Signal Terse Coder started on the B60 and passed their response checks. This is a startup check, not a quality benchmark. Other newly added context variants are untested unless listed in the presets or results.
 
 ## Experimental arc-llm-lab engine

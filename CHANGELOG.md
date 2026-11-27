@@ -21,6 +21,7 @@
 
 ### Changed
 
+- Recorded the latest Signal Terse Coder 57K quality run and its unsupported `high` reasoning requests.
 - Replaced the coding command list with `bun run switch:coding`, which selects the model, approach, and context interactively.
 - Recorded arc-llm-lab speed and manual coding-quality observations, including 54.5K-input tasks, and updated the coding recommendation.
 - The smallest coding-model context is now 49,152 tokens: `:ctx32k` presets became `:ctx49k` (duplicates of existing `:ctx49k` presets were removed).
