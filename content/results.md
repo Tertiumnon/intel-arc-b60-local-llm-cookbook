@@ -5,6 +5,77 @@ published model and community rows use other machines or test methods. Values
 from different prompts, caches, and runtimes are not head-to-head rankings.
 For current commands and saved results, see the [model test README](../scripts/README.md).
 
+The quality suite was corrected after these historical runs: version 2 strengthens
+edge cases, supplies the long-task fixtures, and distinguishes truncated answers
+and request errors from quality failures. Older scores do not measure the same
+checks and should not be compared directly with version 2.
+Version 3 additionally requests explicit sampling settings and can put each
+complex task in a long synthetic project context. See the
+[comparison protocol](../scripts/README.md#comparing-coding-models). No full
+version 3 model sweep was completed when the historical rows below were written.
+The latest automated comparison appears in the section below.
+
+<!-- quality-comparison:start -->
+## Latest automated complex-model comparison
+
+No completed automated comparison has been published yet. Run
+`bun run test:quality:ctx64k:complex:all-models` to update this section.
+<!-- quality-comparison:end -->
+
+## Historical complex sweep coverage
+
+The comparison includes every coding choice, including MTP on/off variants where
+available. At the time of the observations below, a full version 3 sweep was
+pending; these historical measurements are not substitutes for the latest run.
+
+| Approach | Models included | Version 3 sweep |
+|---|---|---|
+| Strata | Flash-Next Coder IQ1_M; Flash-Next IQ2_XS | Pending |
+| arc-lab DFlash2 | Qwen3.8-27B UD-Q4_K_M | One 49K-allocation task incomplete; see below |
+| llama.cpp | Signal Terse; Qwen3.6-27B; Qwen3.8 IQ3_M, UD-Q4_K_M and UD-Q4_K_XL; Swift; Dirk; Qwen3.8-pi; Arc-tuned pi; ThinkingCap; Tiel-Coder A3B | Pending |
+
+A version 3 single-task validation used arc-lab at 49,152 allocated context,
+32,807 actual input tokens, low effort, temperature 0.5, top-p 0.95, top-k 20,
+min-p 0, repetition penalty 1, presence/frequency penalties 0 and seed 42. The
+TTL response reached the 8,192-token output cap after 451.6 seconds, so it is
+**incomplete**, with no quality verdict. This is not a model comparison. Its
+raw result is `test-results/quality/2026-11-27T14-08-45-924Z-1dbea96d-cb49-4ec5-995d-2087519a0850.json`
+(gitignored).
+
+## arc-lab Qwen3.8 at 57K: November 27, 2026
+
+An earlier low-reasoning run with a 4,096-token output cap completed all 10 basic
+checks. The TTL response reached the cap after 165.3 s and was incomplete; the
+expression task passed in 78.1 s. The pricing answer referenced an undefined
+`CURRENT_PRICING`. The run stopped during shipping before the other three
+complex tasks were attempted. The server recorded a client cancellation; its
+cause was not recorded. Thus the missing complex results were not all model
+failures. The original checker also omitted the supplied fixtures for imports.
+
+A corrected suite version 2 rerun at low reasoning, 57,344 allocated context and
+an 8,192-token output cap completed all five complex tasks: **3 passed, 2 failed**.
+Expression parsing passed (2,176 tokens, 66.3 s), interval merging passed (593,
+17.4 s), and path lookup passed (1,227, 40.3 s). TTL cache failed because it
+evicted a live entry while an expired entry remained (7,415, 298.4 s); topological
+sort failed for the dependency name `toString` (1,257, 40.0 s). None was truncated
+or rejected by the server. One sample per task; the saved run is
+`test-results/quality/2026-11-27T13-40-12-017Z-0a9bc4e4-0c6b-4d4a-a0c2-163d046e7e35.json`
+(gitignored). This run did not repeat the basic or long tasks.
+
+## Dirk Qwen3.8-27B at 57K: November 27, 2026
+
+The latest saved run used `peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF` UD-Q4_K_XL on llama.cpp SYCL with one MTP draft token, Q8 KV cache, one slot, 57,344 allocated context and a 4,096-token output cap. The quality script used ten basic, five complex and two long tasks. The run stopped after 29 of the planned 51 requests; the reason is not recorded. Results are single samples, not a complete comparison. The saved file is `test-results/quality/2026-11-27T12-07-09-045Z.json` (gitignored).
+
+| Requested reasoning | Basic | Complex | Long | Status |
+|---|---:|---:|---:|---|
+| Low | 10/10 | 4/5 | 0/2 standalone checks | Completed |
+| Medium | 10/10 | 1/2 completed | — | Incomplete |
+| High | — | — | — | Not run |
+
+The TTL-cache answer hit the output cap at both low and medium, after 213.4 and 217.6 seconds. The loop detector flagged those answers and both passing expression-parser answers; a loop flag alone is not proof of a loop. Basic tasks averaged 30.1 s at low and 28.9 s at medium. The two low long inputs were 54,639 and 54,689 tokens and took 324.8 and 319.3 s. Those actual inputs plus the requested 4,096 output tokens exceeded the 57,344 window, although the returned answers were short.
+
+The long discount answer referenced `CURRENT_PRICING` without defining or importing it. The shipping answer imported `./shipping/table.js`, which the standalone checker did not supply; its failure is not evidence that its shipping logic is wrong when the current table is available. No new token-per-second benchmark, completed medium long tasks, or high-reasoning results were saved.
+
 ## Signal Terse Coder at 57K: November 27, 2026
 
 The latest saved quality run used Signal 3.8 Terse Coder i1-Q4_K_M on llama.cpp SYCL with MTP, 57,344 allocated context and a 4,096-token output cap. The existing quality script ran ten basic, five complex and two long tasks at each requested reasoning level. One run per task; the raw run is `test-results/quality/2026-11-27T08-47-22-496Z.json` (gitignored).
@@ -55,6 +126,8 @@ runtimes, and prompt sizes are not head-to-head; most cells are single runs.
 | Strata Flash-Next IQ2_XS | 131,072 | 1,024 | low | 9/10 | — | — | Nov 18 |
 | Greatjedi Qwen3.8-27B-pi Arc-tuned Q4_K | 49,152 | 4,096 | low | 10/10 | 703 | 25.2 | Nov 25 |
 | Greatjedi Qwen3.8-27B-pi Arc-tuned Q4_K | 49,152 | 4,096 | medium | 10/10 | 844 | 29.8 | Nov 25 |
+| Dirk Qwen3.8-27B UD-Q4_K_XL | 57,344 | 4,096 | low | 10/10 | 571 | 30.1 | Nov 27 |
+| Dirk Qwen3.8-27B UD-Q4_K_XL | 57,344 | 4,096 | medium | 10/10 | 537 | 28.9 | Nov 27 |
 
 The November 27 Signal run failed one low-reasoning basic task; IQ2_XS also
 failed one with a 1,024-token cap. Different runs and settings are not a ranking.
@@ -65,6 +138,7 @@ failed one with a 1,024-token cap. Different runs and settings are not a ranking
 |---|---:|---:|---|---:|---|---|
 | Signal 3.8 Terse Coder i1-Q4_K_M | 57,344 | 4,096 | low | 5/5 | TTL cache can evict live entries before expired entries | Nov 27 |
 | Signal 3.8 Terse Coder i1-Q4_K_M | 57,344 | 4,096 | medium | 4/5 | TTL cache expiry and size | Nov 27 |
+| Dirk Qwen3.8-27B UD-Q4_K_XL | 57,344 | 4,096 | low | 4/5 | TTL cache hit output cap | Nov 27 |
 | Strata Flash-Next Coder IQ1_M | 131,072 | 8,192 | low | 4/5 | TTL cache failed | Oct 17 |
 | Strata Flash-Next Coder IQ1_M | 131,072 | 8,192 | low | 5/5 | cache O(1), nested path | Nov 18 |
 | Qwen3.8-27B-pi Q4_K_M | 65,536 | 8,192 | low | 5/5 | cache eviction, parser, topo sort | Nov 18 |

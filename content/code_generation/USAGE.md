@@ -27,7 +27,7 @@ bun run switch:list             # all llama presets and their test status
 The default contexts are 131,072 tokens for both Strata models, Signal and Qwen3.8 UD-Q4_K_M;
 65,536 for Qwen3.8 IQ3_M, Q4_K_XL, Dirk, Pi and ThinkingCap; 57,344 for Qwen3.6 27B
 and Tiel-Coder; and 49,152 for Swift 1.5. `bun run switch:list` shows which exact llama
-settings were tested. Q4_K_XL, Dirk and ThinkingCap are untested at 64K. IQ2_XS has
+settings were tested. Dirk and ThinkingCap are untested at 64K. IQ2_XS has
 started at 131K and passed two ~27K-input checks. Context includes input and output;
 the VS Code input limit reserves room for output and headroom. Signal was slow on long prompts.
 The menu offers 32,768, 49,152, 57,344, and 65,536 tokens, plus the existing default where different. Strata context variants use separate config and runner files. Except for previously recorded settings and the 49K service checks, context variants are untested on the B60 and may not fit in VRAM. For coding evaluation, use at least 49K allocated context.

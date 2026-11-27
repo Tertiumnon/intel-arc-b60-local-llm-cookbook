@@ -4,9 +4,13 @@
 
 ### Fixed
 
+- Corrected and strengthened local-model quality tasks, isolated generated code on the AI server, supplied long-context fixtures, and distinguished truncated responses and server errors from failed answers.
+
 - Stop remote memory-monitor loops after a speed test disconnects.
 
 ### Added
+
+- Added repeatable 49K, 57K, and 64K all-model complex-quality comparisons with recorded sampling settings and long-input targets.
 
 - Added selectable 32K, 49K, 57K, and 64K contexts for coding models, including Strata, arc-lab, and no-MTP variants; new combinations are untested unless otherwise recorded.
 - Experimental arc-lab service for Qwen3.8-27B with a patched Vulkan engine and DFlash2.
@@ -21,6 +25,9 @@
 
 ### Changed
 
+- Publish the latest completed complex-model comparison and its best completed result in `content/results.md`.
+
+- Recorded the partial Dirk 57K quality run and consolidated recommendations across local tests.
 - Recorded the latest Signal Terse Coder 57K quality run and its unsupported `high` reasoning requests.
 - Replaced the coding command list with `bun run switch:coding`, which selects the model, approach, and context interactively.
 - Recorded arc-llm-lab speed and manual coding-quality observations, including 54.5K-input tasks, and updated the coding recommendation.

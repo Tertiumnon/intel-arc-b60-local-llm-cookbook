@@ -110,7 +110,7 @@
     "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
     "context": 65536,
     "mtp": false,
-    "tested": false
+    "tested": true
   },
   "qwen38-27b-q4xl:ctx49k": {
     "service": "llama",
@@ -166,14 +166,14 @@
     "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
     "context": 49152,
     "mtp": true,
-    "tested": false
+    "tested": true
   },
   "qwen38-pi-arc-tuned:ctx49k": {
     "service": "llama",
     "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
     "context": 49152,
     "mtp": true,
-    "tested": false
+    "tested": true
   },
   "qwen38-pi-arc-tuned:no-mtp": {
     "service": "llama",
@@ -210,7 +210,7 @@
     "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
     "context": 65536,
     "mtp": false,
-    "tested": false
+    "tested": true
   },
   "tiel-coder-35b": {
     "service": "llama",
@@ -392,7 +392,7 @@
     "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
     "context": 65536,
     "mtp": false,
-    "tested": false
+    "tested": true
   },
   "tiel-coder-35b:ctx32k": {
     "service": "llama",
@@ -455,7 +455,7 @@
     "model": "peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF/Dirk-Qwen3.8-27B-UD-Q4_K_XL.gguf",
     "context": 57344,
     "mtp": true,
-    "tested": false
+    "tested": true
   },
   "dirk:ctx64k": {
     "service": "llama",

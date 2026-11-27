@@ -1,191 +1,161 @@
 #!/usr/bin/env bun
-import { appendFile, mkdir, writeFile } from "node:fs/promises";
+import { randomUUID } from "node:crypto";
+import { appendFile, mkdir, rename, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-// Usage: bun run quality [--efforts=low,medium,high] [--max-tokens=4096]
-// Runs scripts/model--quality/tasks.json against the server in AI_API_URL and
-// writes results to test-results/quality/. Reasoning level is sent per request;
-// sampling and context are whatever the server is configured with.
-
-// group: basic (default), complex, or long. long tasks get planted files plus filler code.
-type Task = { id: string; kind: "code" | "commit"; group?: string; prompt: string; tests?: string; pattern?: string; planted?: string[] };
-type Result = {
-  task: string;
-  effort: string;
-  pass: boolean;
-  finish: string;
-  completionTokens: number | null;
-  reasoningChars: number;
-  seconds: number;
-  loop: boolean;
-  note: string;
-};
+import { ask, countTokens } from "./model--quality.api";
+import { contextHeadroom, sampling } from "./model--quality.constants";
+import { checkSandbox } from "./model--quality.sandbox";
+import type { QualityResult, QualityRun, Task } from "./model--quality.types";
+import { checkCommit, extractCode, hasForbiddenEvaluation, longPrompt, looping, orderTasks, parseOptions } from "./model--quality.utils";
 
 const root = path.resolve(import.meta.dir, "../..");
-const options = process.argv.slice(2);
-const efforts = (options.find((a) => a.startsWith("--efforts="))?.slice(10) ?? "low,medium,high").split(",");
-const maxTokens = Number(options.find((a) => a.startsWith("--max-tokens="))?.slice(13) ?? 4096);
-const group = options.find((a) => a.startsWith("--group="))?.slice(8);
-// Approximate prompt size in tokens for long tasks (about 4 characters per token).
-const contextTokens = Number(options.find((a) => a.startsWith("--context="))?.slice(10) ?? 30000);
-// Where the planted files sit in the context (0 = start, 1 = end), and a label for repeated runs.
-const depth = Number(options.find((a) => a.startsWith("--depth="))?.slice(8) ?? 0.4);
-const rep = options.find((a) => a.startsWith("--rep="))?.slice(6) ?? "1";
-const base = Bun.env.AI_API_URL;
-const key = Bun.env.AI_API_KEY ?? "";
-if (!base) throw new Error("Set AI_API_URL in the root .env");
 
-const tasks = (JSON.parse(await Bun.file(path.join(import.meta.dir, "tasks.json")).text()) as Task[])
-  .filter((task) => !group || (task.group ?? "basic") === group);
-const work = path.join(root, "test-results", "quality", "work");
-await mkdir(work, { recursive: true });
+const required = (name: string): string => {
+  const value = Bun.env[name]?.trim();
+  if (!value) throw new Error(`Missing env ${name} - set it in .env`);
+  return value;
+};
 
-const modelList = await (await fetch(`${base}/models`, { headers: { Authorization: `Bearer ${key}` } })).json() as { data: Array<{ id: string; meta?: { n_ctx?: number } }> };
-const model = modelList.data[0].id;
-const serverContext = modelList.data[0].meta?.n_ctx ?? null;
-const runsFile = path.join(root, "test-results", "runs.jsonl");
+const server = async (): Promise<{ api: QualityRun["api"]; context: number }> => {
+  const base = required("AI_API_URL").replace(/\/+$/, "");
+  const key = required("AI_API_KEY");
+  if (!base.endsWith("/v1")) throw new Error("AI_API_URL must end in /v1 - select a compatible model");
+  const headers = { Authorization: `Bearer ${key}` };
+  const models = await fetch(`${base}/models`, { headers, signal: AbortSignal.timeout(10000) });
+  if (!models.ok) throw new Error(`Model discovery failed (HTTP ${models.status}) - check the AI server`);
+  const data = await models.json() as { data?: Array<{ id?: string; meta?: { n_ctx?: number } }> };
+  const model = data.data?.[0]?.id;
+  const context = data.data?.[0]?.meta?.n_ctx;
+  if (!model || !Number.isInteger(context) || context === undefined || context < 49152) throw new Error("Model metadata must report at least 49152 context tokens - select a supported coding model");
+  const health = await fetch(`${base.slice(0, -3)}/health`, { headers, signal: AbortSignal.timeout(10000) });
+  if (!health.ok) throw new Error(`Server health failed (HTTP ${health.status}) - check the AI server`);
+  const state = await health.json() as { status?: string; loaded?: boolean };
+  if (state.status !== "ok" || ("loaded" in state && !state.loaded)) throw new Error("The AI server is not ready - start the selected model");
+  return { api: { base, key, model, strata: "loaded" in state }, context };
+};
 
-function extractCode(text: string): string {
-  const match = /```[\w-]*\n([\s\S]*?)```/.exec(text);
-  return match ? match[1] : text;
-}
+const promptFor = async (run: QualityRun, task: Task): Promise<string> => {
+  if (task.group !== "long" && !(task.group === "complex" && run.options.padded)) return task.prompt;
+  const cached = run.prompts.get(task.id);
+  if (cached !== undefined) return cached;
+  const agent = await Bun.file(path.join(import.meta.dir, "model--quality.agent.json")).json() as { batch: { files: Record<string, string> }; board: { files: Record<string, string> } };
+  const planted = task.planted?.length ? (await Promise.all(task.planted.map((file) => Bun.file(path.join(import.meta.dir, file)).text()))).join("\n") : Object.entries({ ...agent.batch.files, ...agent.board.files }).map(([name, text]) => `// ${name}\n${text}`).join("\n");
+  const result = await longPrompt({ task, planted, target: run.options.contextTokens, depth: run.options.depth, count: (text) => countTokens(run.api, text) });
+  run.prompts.set(task.id, result.prompt);
+  process.stdout.write(`${task.id}: ${result.tokens} prompt-content tokens before chat-template headroom\n`);
+  return result.prompt;
+};
 
-function looping(text: string): boolean {
-  const counts = new Map<string, number>();
-  for (const line of text.split("\n").map((l) => l.trim()).filter((l) => l.length > 3)) {
-    const n = (counts.get(line) ?? 0) + 1;
-    counts.set(line, n);
-    if (n >= 8) return true;
+const judge = async (run: QualityRun, task: Task, result: QualityResult): Promise<void> => {
+  if (result.finish !== "stop") {
+    result.status = "incomplete";
+    result.note = `Response ended with ${result.finish}; no quality verdict`;
+    return;
   }
-  return false;
-}
-
-// Filler is unrelated utility code, so the planted files are the only relevant part.
-function filler(chars: number): string {
-  let out = "";
-  for (let i = 0; out.length < chars; i++) {
-    out += `// util/helper${i}.js\nexport function scale${i}(x, n) {\n  return (x * ${(i % 97) + 3} + n) % ${(i % 13) + 5};\n}\n\n`;
+  if (result.promptTokens === null || result.promptTokens + run.options.maxTokens > run.context) {
+    result.status = "error";
+    result.note = "Missing prompt token count or prompt plus output cap exceeds the server context";
+    return;
   }
-  return out.slice(0, chars);
-}
+  if (task.kind === "commit") {
+    result.pass = checkCommit(task, result.text);
+    result.status = result.pass ? "pass" : "fail";
+    return;
+  }
+  const code = extractCode(result.text);
+  if (task.id === "complex-expression" && hasForbiddenEvaluation(code)) {
+    result.status = "fail";
+    result.pass = false;
+    result.note = "Expression solution uses forbidden eval or Function";
+    return;
+  }
+  try {
+    const verdict = await checkSandbox({ host: run.host, task, code, fixtures: run.fixtures });
+    result.pass = verdict.pass;
+    result.note = verdict.pass && task.id === "complex-ttl-cache" ? "Functional checks passed; O(1) complexity requires manual review" : verdict.note;
+    result.status = verdict.pass ? "pass" : "fail";
+  } catch {
+    result.status = "error";
+    result.note = "Sandbox failed - check SSH, Docker, and the pinned quality image";
+  }
+};
 
-// Planted files sit at about 40% of the context, with filler before and after.
-async function longPrompt(task: Task): Promise<string> {
-  const planted = (await Promise.all((task.planted ?? []).map((file) => Bun.file(path.join(import.meta.dir, file)).text()))).join("\n");
-  const fillerChars = Math.max(0, contextTokens * 4 - planted.length);
-  const before = filler(Math.floor(fillerChars * depth));
-  const after = filler(fillerChars - before.length);
-  return `Code base:\n\n${before}${planted}\n${after}\n\nTask:\n${task.prompt}`;
-}
-
-async function ask(prompt: string, effort: string) {
-  // Streamed, so bytes keep arriving during long replies (Bun drops idle non-streamed requests after 5 minutes).
+const evaluate = async (run: QualityRun, task: Task, result: QualityResult): Promise<void> => {
   const started = performance.now();
-  const response = await fetch(`${base}/chat/completions`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model,
-      messages: [{ role: "user", content: prompt }],
-      max_tokens: maxTokens,
-      reasoning_effort: effort,
-      stream: true,
-      stream_options: { include_usage: true },
-    }),
-    signal: AbortSignal.timeout(3600000),
-  });
-  if (!response.body) throw new Error(`no body (HTTP ${response.status})`);
-  let text = "";
-  let reasoning = "";
-  let finish = "";
-  let completionTokens: number | null = null;
-  let promptTokens: number | null = null;
-  let buffer = "";
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder();
-  for (let read = await reader.read(); !read.done; read = await reader.read()) {
-    buffer += decoder.decode(read.value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-    for (const line of lines) {
-      if (!line.startsWith("data: ") || line.includes("[DONE]")) continue;
-      const data = JSON.parse(line.slice(6)) as {
-        choices?: Array<{ finish_reason?: string | null; delta?: { content?: string; reasoning_content?: string; reasoning?: string } }>;
-        usage?: { completion_tokens?: number; prompt_tokens?: number };
-      };
-      const choice = data.choices?.[0];
-      if (choice?.delta?.content) text += choice.delta.content;
-      const thought = choice?.delta?.reasoning_content ?? choice?.delta?.reasoning;
-      if (thought) reasoning += thought;
-      if (choice?.finish_reason) finish = choice.finish_reason;
-      if (data.usage) {
-        completionTokens = data.usage.completion_tokens ?? completionTokens;
-        promptTokens = data.usage.prompt_tokens ?? promptTokens;
-      }
+  try {
+    const reply = await ask({ api: run.api, prompt: await promptFor(run, task), effort: result.effort, maxTokens: run.options.maxTokens, temperature: run.options.temperature, seed: run.options.seed });
+    Object.assign(result, reply, { seconds: Math.round(reply.seconds * 10) / 10, repeatedLines: looping(reply.text + reply.reasoning) });
+  } catch (error) {
+    result.status = "error";
+    result.note = error instanceof Error && /^(Model request failed \(HTTP \d+\)|Token counting failed \(HTTP \d+\)|The .+ fixture exceeds \d+ tokens)/.test(error.message) ? error.message : `Request or token counting failed (${error instanceof Error ? error.name : "unknown error"})`;
+    result.seconds = Math.round((performance.now() - started) / 100) / 10;
+    return;
+  }
+  await judge(run, task, result);
+};
+
+const runTasks = async (run: QualityRun, tasks: Task[]): Promise<void> => {
+  const { api, context, options } = run;
+  const stamp = `${new Date().toISOString().replace(/[:.]/g, "-")}-${randomUUID()}`;
+  const directory = path.join(root, "test-results", "quality");
+  const outFile = path.join(directory, `${stamp}.json`);
+  await mkdir(directory, { recursive: true });
+  const results: QualityResult[] = [];
+  const hasher = new Bun.CryptoHasher("sha256");
+  hasher.update(JSON.stringify({ tasks, fixtures: run.fixtures, agent: await Bun.file(path.join(import.meta.dir, "model--quality.agent.json")).text() }));
+  const suiteHash = hasher.digest("hex");
+  const save = async (): Promise<void> => {
+    await writeFile(`${outFile}.tmp`, JSON.stringify({ suiteVersion: 3, suiteHash, sampling: { ...sampling, temperature: options.temperature, seed: options.seed }, runId: stamp, model: api.model, serverContext: context, options, results }, null, 2) + "\n");
+    await rename(`${outFile}.tmp`, outFile);
+  };
+  for (const effort of options.efforts) {
+    for (const task of tasks) {
+      const result: QualityResult = { task: task.id, effort, status: "running", pass: null, finish: "", completionTokens: null, promptTokens: null, seconds: 0, repeatedLines: false, note: "", text: "", reasoning: "" };
+      results.push(result);
+      await save();
+      await evaluate(run, task, result);
+      await save();
+      const { text: _text, reasoning: _reasoning, ...summary } = result;
+      await appendFile(path.join(root, "test-results", "runs.jsonl"), JSON.stringify({ time: new Date().toISOString(), test: "quality", suiteVersion: 3, suiteHash, sampling: { ...sampling, temperature: options.temperature, seed: options.seed }, runId: stamp, model: api.model, serverContext: context, maxTokens: options.maxTokens, temperature: options.temperature, topP: sampling.top_p, topK: sampling.top_k, minP: sampling.min_p, seed: options.seed, group: task.group ?? "basic", contextTokens: task.group === "long" || (task.group === "complex" && options.padded) ? options.contextTokens : null, depth: task.group === "long" ? options.depth : null, rep: options.rep, reasoningEffort: effort, ...summary }) + "\n");
+      process.stdout.write(`${effort.padEnd(6)} ${task.id.padEnd(24)} ${result.status.toUpperCase()} tokens=${result.completionTokens} secs=${result.seconds} finish=${result.finish}${result.repeatedLines ? " repeated-lines" : ""} ${result.note}\n`);
     }
   }
-  return {
-    text,
-    reasoning,
-    finish,
-    completionTokens,
-    promptTokens,
-    seconds: (performance.now() - started) / 1000,
+  for (const effort of options.efforts) {
+    const rows = results.filter((result) => result.effort === effort);
+    process.stdout.write(`${effort}: ${rows.filter((result) => result.status === "pass").length} pass, ${rows.filter((result) => result.status === "fail").length} fail, ${rows.filter((result) => result.status === "incomplete").length} incomplete, ${rows.filter((result) => result.status === "error").length} error\n`);
+  }
+  process.stdout.write(`Saved: ${outFile}\n`);
+  if (results.some((result) => result.status === "error" || result.status === "incomplete")) process.exitCode = 1;
+};
+
+const main = async (): Promise<void> => {
+  const options = parseOptions(process.argv.slice(2));
+  const host = required("AI_SSH_HOST");
+  if (!/^[A-Za-z0-9._-]+$/.test(host)) throw new Error("AI_SSH_HOST must be an SSH config alias");
+  const { api, context } = await server();
+  if (options.maxTokens + contextHeadroom >= context) throw new Error("--max-tokens leaves no prompt space - reduce the output cap");
+  const all = await Bun.file(path.join(import.meta.dir, "tasks.json")).json() as Task[];
+  const selected = orderTasks(all.filter((task) => !options.group || (task.group ?? "basic") === options.group));
+  const tasks = options.group === "complex" ? selected.slice(0, options.limit) : selected;
+  if (!tasks.length) throw new Error("No quality tasks match --group - check tasks.json");
+  if (tasks.some((task) => task.group === "long" || (task.group === "complex" && options.padded)) && options.contextTokens + options.maxTokens + contextHeadroom > context) throw new Error("--context plus --max-tokens and template headroom exceeds the server context - reduce one of them");
+  const fixtures = {
+    "./pricing/rules.js": await Bun.file(path.join(import.meta.dir, "context/pricing-current.js")).text(),
+    "./pricing/rules.legacy.js": await Bun.file(path.join(import.meta.dir, "context/pricing-legacy.js")).text(),
+    "./shipping/table.js": await Bun.file(path.join(import.meta.dir, "context/shipping-current.js")).text(),
+    "./shipping/table.old.js": await Bun.file(path.join(import.meta.dir, "context/shipping-legacy.js")).text(),
   };
-}
-
-async function check(task: Task, text: string, index: number, effort: string): Promise<{ pass: boolean; note: string }> {
-  if (task.kind === "commit") {
-    const subject = text.trim().split("\n").find((l) => l.trim())?.replace(/^`+|`+$/g, "").trim() ?? "";
-    return { pass: new RegExp(task.pattern!).test(subject), note: subject.slice(0, 80) };
+  if (tasks.some((task) => task.kind === "code")) {
+    const sample = all.find((task) => task.id === "sort-unique");
+    if (!sample) throw new Error("Missing sort-unique task - restore tasks.json");
+    const check = await checkSandbox({ host, task: sample, code: "function sortUnique(nums) { return [...new Set(nums)].sort((a, b) => a - b); }", fixtures });
+    if (!check.pass) throw new Error(`Quality sandbox self-check failed: ${check.note}`);
   }
-  const file = path.join(work, `${task.id}-${effort}-${contextTokens}-${depth}-r${rep}-${index}.mjs`);
-  await writeFile(file, `${extractCode(text)}\n${task.tests}\n`);
-  const proc = Bun.spawn(["bun", file], { stdout: "pipe", stderr: "pipe", timeout: 15000 });
-  const code = await proc.exited;
-  const err = (await new Response(proc.stderr).text()).split("\n").find((l) => l.includes("Error")) ?? "";
-  return { pass: code === 0, note: code === 0 ? "" : err.trim().slice(0, 120) };
-}
+  await runTasks({ api, context, host, options, fixtures, prompts: new Map() }, tasks);
+};
 
-const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-const outFile = path.join(root, "test-results", "quality", `${stamp}.json`);
-const results: Result[] = [];
-for (const effort of efforts) {
-  for (const [index, task] of tasks.entries()) {
-    const isLong = (task.group ?? "basic") === "long";
-    const started = performance.now();
-    let requestError = "";
-    // A failed request (for example a client timeout) counts as a failed test; the run continues.
-    const reply = await ask(isLong ? await longPrompt(task) : task.prompt, effort).catch((error: Error) => {
-      requestError = error.name;
-      return { text: "", reasoning: "", finish: "error", completionTokens: null, promptTokens: null, seconds: (performance.now() - started) / 1000 };
-    });
-    const verdict = requestError ? { pass: false, note: requestError } : await check(task, reply.text, index, effort);
-    const result: Result = {
-      task: task.id,
-      effort,
-      pass: verdict.pass,
-      finish: reply.finish,
-      completionTokens: reply.completionTokens,
-      reasoningChars: reply.reasoning.length,
-      seconds: Math.round(reply.seconds * 10) / 10,
-      loop: reply.finish === "length" || looping(reply.text + reply.reasoning),
-      note: verdict.note,
-    };
-    results.push(result);
-    // One line per test, with the parameters needed to reproduce it.
-    await appendFile(runsFile, JSON.stringify({ time: new Date().toISOString(), test: "quality", endpoint: base, model, serverContext, maxTokens, group: task.group ?? "basic", contextTokens: isLong ? contextTokens : null, depth: isLong ? depth : null, rep, promptTokens: reply.promptTokens, reasoningEffort: effort, temperature: "server default", ...result }) + "\n");
-    await writeFile(outFile, JSON.stringify({ model, maxTokens, efforts, results }, null, 2));
-    console.log(`${effort.padEnd(6)} ${task.id.padEnd(14)} ${result.pass ? "PASS" : "FAIL"} tokens=${result.completionTokens} secs=${result.seconds} finish=${result.finish}${result.loop ? " LOOP" : ""} ${result.note}`);
-  }
-}
-
-console.log(`\nSaved: ${outFile}`);
-for (const effort of efforts) {
-  const rows = results.filter((r) => r.effort === effort);
-  const passed = rows.filter((r) => r.pass).length;
-  const loops = rows.filter((r) => r.loop).length;
-  const tokens = rows.reduce((s, r) => s + (r.completionTokens ?? 0), 0);
-  const secs = rows.reduce((s, r) => s + r.seconds, 0);
-  console.log(`${effort}: pass ${passed}/${rows.length}, loops ${loops}, avg tokens ${Math.round(tokens / rows.length)}, avg secs ${(secs / rows.length).toFixed(1)}`);
-}
+await main().catch((error: Error) => {
+  process.stderr.write(`Quality run failed: ${error.message}\n`);
+  process.exitCode = 1;
+});

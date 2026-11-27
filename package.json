@@ -19,7 +19,6 @@
     "image:download:qwen": "bun scripts/image--download/image--download.ts qwen-image-2.1-turbo",
     "image:download:z-image": "bun scripts/image--download/image--download.ts z-image-turbo",
     "pi": "bun scripts/pi--setup/pi--setup.ts",
-
     "delete": "bun scripts/model--delete/model--delete.ts",
     "quality": "bun scripts/model--quality/model--quality.ts",
     "test": "bun scripts/model--test/model--test.ts",
@@ -28,7 +27,10 @@
     "changelog": "npx @tertium/gith changelog",
     "release:patch": "npx @tertium/gith release --patch",
     "release:minor": "npx @tertium/gith release --minor",
-    "release:major": "npx @tertium/gith release --major"
+    "release:major": "npx @tertium/gith release --major",
+    "test:quality:ctx49k:complex:all-models": "bun scripts/model--quality/model--quality.compare.ts --allocation=49152",
+    "test:quality:ctx57k:complex:all-models": "bun scripts/model--quality/model--quality.compare.ts --allocation=57344",
+    "test:quality:ctx64k:complex:all-models": "bun scripts/model--quality/model--quality.compare.ts --allocation=65536"
   },
   "devDependencies": {
     "@types/bun": "latest",

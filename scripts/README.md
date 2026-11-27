@@ -9,7 +9,7 @@ the root `.env` (copy `.env.example`).
 | `switch:coding` | Choose a coding model, approach, and context |
 | `switch --service=strata --model=coder:IQ1_M` | Switch to Strata |
 | `test` | Speed test on the served model |
-| `quality` | Quality tasks at low, medium, high reasoning |
+| `quality` | Quality tasks at low and medium reasoning |
 | `image:download:qwen`, `image:download:z-image` | Download image models to the server |
 | `image:start` | Start ComfyUI for image generation (stops the language model) |
 | `3d:download`, `3d:start` | Download Hunyuan3D 2.1 and start its ComfyUI |
@@ -103,16 +103,77 @@ and a line in `runs.jsonl`. If every run hits the output cap, the reply was cut 
 
 ## quality
 
-Tasks are in [model--quality/tasks.json](./model--quality/tasks.json): JavaScript
-functions with tests, and commit messages with a format check.
+The [quality tasks](./model--quality/tasks.json) check JavaScript and commit messages.
+Code answers run on the AI server in a network-disabled, resource-limited Docker
+container with no host mounts. Install the pinned image on the server before running:
 
 ```bash
-bun run quality                          # low, medium, high
-bun run quality -- --efforts=medium,high
+ssh YOUR_SSH_ALIAS 'docker pull node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a'
+bun run quality                         # low and medium; 8192 output tokens
+bun run quality --group=complex --efforts=low
+bun run quality --group=long --context=30000 --max-tokens=8192
 ```
 
-Each test records pass or fail, finish reason, loop flag, token count, and time.
-The reply text is not saved.
+Use a coding model with at least 49,152 allocated context tokens. `--context` is
+the long prompt content target, measured with the selected backend tokenizer;
+the runner reserves additional chat-template space and checks the output cap.
+Choose only reasoning levels supported by the model's chat template. Pass, fail,
+incomplete and request/sandbox error are reported separately. Responses and
+reasoning are saved in a uniquely named, gitignored `test-results/quality/` file;
+partial runs retain their current task. Avoid sharing these files without review.
+
+Suite version 3 records explicit sampling settings and strengthens the checks and supplies long-task fixtures, so its
+scores are not directly comparable to earlier results. Functional checks cannot
+prove the TTL cache's required O(1) complexity. The tracked
+[agent benchmark fixtures](./model--quality/model--quality.agent.json) contain
+the earlier Pi batch and Kyra board prompts, starting files, and separate hidden
+checks; keep hidden checks outside the agent workspace and execute generated code
+only in an appropriately isolated environment.
+
+## Comparing coding models
+
+Run the same five complex checks across the coding choices (including Strata,
+arc-lab, llama.cpp, and A3B choices):
+
+```bash
+bun run test:quality:ctx49k:complex:all-models
+bun run test:quality:ctx57k:complex:all-models
+bun run test:quality:ctx64k:complex:all-models
+bun run test:quality:ctx64k:complex:all-models --limit=1 --models=arc-lab
+bun run test:quality:ctx64k:complex:all-models --effort=medium --temperature=0.6
+```
+
+The allocation is the whole model window, not the input length. The input-content
+targets are respectively 32,768, 40,960, and 49,152 tokens, leaving room for an
+8,192-token answer and chat-template overhead. A model tokenizer measures each
+prompt, and its actual request input count and a hash of the task fixtures are recorded. The prompt contains
+small project excerpts and synthetic filler around each task: this tests a long
+input, **not** an agent editing a real repository. The five tasks test cache,
+expression parsing, interval merging, dependency ordering, and path lookup.
+
+Each request explicitly asks for low reasoning, temperature 0.5, top-p 0.95,
+top-k 20, min-p 0, repetition penalty 1, presence and frequency penalties 0,
+and seed 42. Use `--effort`, `--temperature`, `--seed`, or `--max-tokens` to investigate a different
+profile, and compare only matching profiles. The server may interpret or ignore
+parameters differently; the saved values are requests, not proof of identical
+samplers. Seed 42 does not guarantee identical output across backends. For
+example, [Qwen3.8-27B recommends temperature 1.0 for thinking mode](https://huggingface.co/unsloth/Qwen3.8-27B),
+while [Qwen3.5 recommends 0.6 for precise coding](https://huggingface.co/Qwen/Qwen3.5-9B).
+Run a separate profile to compare those settings; none is proven best on this hardware.
+
+`--limit=1..5` runs the first tasks, and `--models=text` filters model labels.
+An unfiltered sweep may take many hours and download missing weights. The server
+switches models, leaving the final attempted service active; client settings
+are not updated. Run `bun run switch:coding` afterward to restore your model and
+client settings. Individual answers and the comparison table (JSON and Markdown) are under ignored
+`test-results/quality/`. After all selected models have been attempted, the run
+replaces the latest comparison section in [results.md](../content/results.md),
+including its settings, per-model table, and best completed result. A filtered
+run replaces the same section and identifies its filter. Interrupted runs leave
+the previous published comparison intact. Failed loads, request errors and truncated answers are
+separate from failed quality checks. Historical results use other tasks and
+settings. A single run is a screening result, not evidence of the best model;
+repeat finalists with different seeds and include real multi-file agent work before choosing.
 
 ## delete
 
@@ -135,8 +196,8 @@ Hugging Face cache blob and its symlinks are removed with it.
 | Raw run logs and replies | `test-results/` (`runs.jsonl`, JSON per run, `work/`) | No, ignored |
 | Server secrets and private notes | `.env`, `local-notes.md` | No, ignored |
 
-Scripts log everything to `test-results/`. Copy the numbers you want to keep into
-`content/results.md` by hand, with the settings used.
+Scripts save raw results to `test-results/`. The all-model quality comparison
+updates its section of `content/results.md`; record other results there with their settings.
 
 ## image
 

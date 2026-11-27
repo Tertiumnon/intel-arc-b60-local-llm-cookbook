@@ -30,12 +30,23 @@ Reference: Strata handled a 110K-token prompt in about 2 minutes ([results.md](.
 ## 3. Quality
 
 ```bash
-bun run quality                 # JS/TS and commit-message tasks, low/medium/high reasoning
+bun run quality                 # JavaScript and commit-message tasks, low/medium reasoning
 ```
 
-Tasks are in [scripts/model--quality/tasks.json](../../scripts/model--quality/tasks.json); each has an
-automatic check. Compare with the table in [recommendations.md](../recommendations.md) (Strata
-4/5 on hard tasks, Qwen3.8 UD-Q4_K_M 5/5). One run per task is weak evidence; repeat before deciding.
+Tasks and isolated execution setup are described in the [script README](../../scripts/README.md#quality).
+The revised checks use an 8,192-token output cap and report incomplete answers and
+server errors separately from quality failures. Historical scores used older,
+weaker checks; compare only runs with the same suite version and settings. A
+functional cache pass does not establish O(1) complexity. One run per task is
+weak evidence; repeat before deciding.
+
+### Comparable long-context sweep
+
+Use `bun run test:quality:ctx64k:complex:all-models` to compare the same five
+complex checks at 65,536 allocated context and a 49,152-token prompt-content
+target. The [benchmark instructions](../../scripts/README.md#comparing-coding-models)
+explain sampling, smaller allocations, model filtering, and the synthetic-context
+limitations. Keep scores from different suite versions and parameters separate.
 
 ## 4. Client check
 
@@ -47,5 +58,5 @@ If VS Code says "Sorry, no response was returned", reduce `maxInputTokens`, then
 
 ## Pass criteria
 
-- `bun run quality` passes the tasks listed as passing for this model in [results.md](../results.md).
+- Run `bun run quality` and inspect failures, incomplete answers, and errors; earlier suite scores are not directly comparable.
 - A 30K-token prompt returns in under 2 minutes.

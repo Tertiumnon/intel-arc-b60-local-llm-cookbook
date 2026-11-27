@@ -197,6 +197,7 @@ async function main() {
     }
     return;
   }
+  const benchmark = options.includes("--benchmark");
   const presetName = options.find((arg) => arg.startsWith("--preset="))?.slice(9);
   const contextArg = options.find((arg) => arg.startsWith("--context="))?.slice(10);
   const preset = presetName ? (await loadPresets())[presetName] : undefined;
@@ -215,7 +216,7 @@ async function main() {
   }
   const service = preset?.service ?? options.find((arg) => arg.startsWith("--service="))?.slice(10) ?? "llama";
   const modelArg = preset?.model ?? options.find((arg) => arg.startsWith("--model="))?.slice(8);
-  const allowed = (arg: string) => arg.startsWith("--service=") || arg.startsWith("--model=") || arg.startsWith("--preset=") || arg.startsWith("--context=");
+  const allowed = (arg: string) => arg === "--benchmark" || arg.startsWith("--service=") || arg.startsWith("--model=") || arg.startsWith("--preset=") || arg.startsWith("--context=");
   if (options.some((arg) => !allowed(arg)) || !["llama", "arc-lab", "strata", "openvino"].includes(service) || (modelArg !== undefined && !modelArg) || (service === "arc-lab" && modelArg !== undefined) || (contextArg !== undefined && (!["32768", "49152", "57344", "65536"].includes(contextArg) || service === "openvino"))) {
     throw new Error("Usage: --preset=NAME | --service=llama|arc-lab|strata|openvino [--model=MODEL] [--context=32768|49152|57344|65536] | --list-presets");
   }
@@ -335,6 +336,10 @@ fi
     return;
   }
   await checkModel(url, id, service);
+  if (benchmark) {
+    console.log(`Selected ${service}: ${description}${details}; client settings left unchanged`);
+    return;
+  }
   await updateEnv(id, port, version, extraEnv);
   Bun.env.AI_API_URL = url;
   Bun.env.AI_MODEL_ID = id;

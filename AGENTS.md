@@ -34,6 +34,7 @@ Copy `.env.example` to `.env` first (`AI_SSH_HOST`, `AI_SERVER_HOST`, `AI_API_KE
 |---|---|
 | `bun run switch:coding` / `switch:list` | Choose a coding model and context, or list llama presets |
 | `bun run test`, `list`, `quality` | Speed test, list served model, quality tasks |
+| `bun run test:quality:ctx64k:complex:all-models` | Compare coding models at a 49K input target within a 64K allocation |
 | `bun run delete` | List or remove model files on the server (dry run by default) |
 | `bun run pi` | Point the Pi coding agent at the served model |
 | `bun run image:download:qwen` / `image:download:z-image` | Download image models to the server |
