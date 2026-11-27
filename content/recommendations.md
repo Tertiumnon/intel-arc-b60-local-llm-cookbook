@@ -3,9 +3,13 @@
 A dated history. Add a new entry at the top when a decision changes. Data is in
 [results.md](./results.md); model details are in [models.md](./models.md).
 
+## November 26, 2026
+
+**Keep Strata Flash-Next Coder IQ1_M as the chosen default; try arc-llm-lab Qwen3.8 for a faster long-input alternative when 64K context is enough.** On one identical 30K-token prompt it took 89 s versus 169 s for the existing Qwen SYCL configuration. A 54.5K-input shipping task produced a seemingly correct standalone answer in 211 s, while the pricing answer omitted a required definition. Manual review of five complex answers found the TTL cache failed and a path-parser edge case; these are not automated scores. The full 64K limit, agent workflows, and repeat reliability remain unverified. Use `bun run switch --service=arc-lab`; switch back with an existing `switch:*` command. [Results and test conditions](./results.md#arc-llm-lab-qwen38-dflash2-november-26-2026).
+
 ## November 20, 2026
 
-**Use Strata Flash-Next Coder IQ1_M as the coding default for Kyra and Pi**, per the user's choice. In the small comparison below, Strata, Signal and base Qwen passed both project tasks and the 45K-input rule-retrieval check, with different code-review tradeoffs. This is a single-run comparison, not proof of general superiority. The models share one endpoint, so an image or 3D job can switch the served model. Restore Strata with `bun run switch:coding:strata-qwen38-flash-next-coder-iq1m` and `bun run pi`. Details: [results](./results.md#pi-agent-comparison-november-20-2026).
+**Use Strata Flash-Next Coder IQ1_M as the coding default for Kyra and Pi**, per the user's choice. In the small comparison below, Strata, Signal and base Qwen passed both project tasks and the 45K-input rule-retrieval check, with different code-review tradeoffs. This is a single-run comparison, not proof of general superiority. The models share one endpoint, so an image or 3D job can switch the served model. Restore Strata with `bun run switch --service=strata --model=coder:IQ1_M` and `bun run pi`. Details: [results](./results.md#pi-agent-comparison-november-20-2026).
 
 ## November 18, 2026
 
@@ -28,7 +32,7 @@ Details: [Qwen3.8 Q4_K_XL in results.md](./results.md#qwen38-ud-q4_k_xl-at-64k-a
 
 **Keep Strata IQ1_M as the default. Use Qwen3.8 UD-Q4_K_M for hard algorithmic tasks with short prompts.**
 
-- Qwen3.8 UD-Q4_K_M loads and runs at 131K context on the B60 (`bun run switch:coding:llama-qwen38-27b-unsloth`).
+- Qwen3.8 UD-Q4_K_M loads and runs at 131K context on the B60 (`bun run switch --preset=qwen38-27b-unsloth`).
 - It passed 5/5 hard tasks, including the TTL cache that Strata failed in all 5 runs. Strata passed 4/5.
 - It is about twice as slow on short tasks and about five times slower on a 27K prompt (174–212 s vs about 39 s).
 - Both models failed the long discount task the same way (used a constant without defining it).
@@ -43,11 +47,11 @@ Details: [Hard tasks in results.md](./results.md#hard-tasks-strata-iq1_m-vs-qwen
 
 | Setting | Value |
 |---|---|
-| Model | Strata Qwen3.8-Flash-Next Coder IQ1_M (`bun run switch:coding:strata-qwen38-flash-next-coder-iq1m`) |
+| Model | Strata Qwen3.8-Flash-Next Coder IQ1_M (`bun run switch --service=strata --model=coder:IQ1_M`) |
 | Reasoning | low (server default); medium is fine; avoid high on long prompts |
 | Server context | 131,072 |
 | VS Code limits | 110,000 input, 8,192 output |
-| Backup | Signal Q4_K_M, 49K context (`bun run switch:coding:llama-terse:ctx49k`), for short prompts only |
+| Backup | Signal Q4_K_M, 49K context (`bun run switch --preset=terse:ctx49k`), for short prompts only |
 
 Why:
 - Accuracy did not change from 27K to 110K prompt tokens (10/12 at each size).

@@ -14,12 +14,10 @@ port `8080` on the local network, with one service active at a time.
 
 ```bash
 bun install
-bun run switch:list                 # all llama presets: context, MTP, tested or not
-bun run switch:coding:llama-qwen38-27b-iq3m:ctx64k
-bun run switch:coding:strata-qwen38-flash-next-coder-iq1m               # Strata coder IQ1_M
+bun run switch:coding               # choose model, approach and context
 ```
 
-The `switch:coding:*` commands name the backend and model; llama settings are in
+The menu includes llama.cpp, Strata and arc-lab; llama settings are in
 [scripts/model--switch/presets.json](./scripts/model--switch/presets.json). The
 command downloads a missing model, switches services, checks health and one
 short reply, then updates the VS Code provider for that service.

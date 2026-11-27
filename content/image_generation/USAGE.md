@@ -32,7 +32,7 @@ the ComfyUI template `image_z_image_turbo` in the web UI.
 Image generation stops the language model. Go back with any `switch:*` command:
 
 ```bash
-bun run switch:coding:strata-qwen38-flash-next-coder-iq1m
+bun run switch --service=strata --model=coder:IQ1_M
 ```
 
 Download more models by adding an entry to [scripts/image--download/models.json](../../scripts/image--download/models.json)

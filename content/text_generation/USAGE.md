@@ -4,8 +4,8 @@
 
 | Situation | Use |
 |---|---|
-| Hard reasoning, careful answers | `switch:coding:llama-qwen38-27b-unsloth:ctx49k` (UD-Q4_K_M, about 16-19 GB) |
-| Long documents | `switch:coding:llama-qwen38-27b-iq3m:ctx64k` or `switch:coding:llama-terse` (131K, MTP) |
+| Hard reasoning, careful answers | `switch --preset=qwen38-27b-unsloth:ctx49k` (UD-Q4_K_M, about 16-19 GB) |
+| Long documents | `switch --preset=qwen38-27b-iq3m:ctx64k` or `switch --preset=terse` (131K, MTP) |
 | Quick everyday chat | Qwen3.5 9B (smallest, fastest) |
 | Images in the prompt | Gemma 4 26B-A4B or Qwen3.8-27B with a vision projector |
 
@@ -17,8 +17,8 @@ the repo files before adding it.
 
 ```bash
 bun run switch:list                          # presets: context, MTP, tested or not
-bun run switch:coding:llama-qwen38-27b-iq3m:ctx64k        # run a preset
-bun run switch:coding:strata-qwen38-flash-next-coder-iq1m                        # code model, see ../code_generation
+bun run switch --preset=qwen38-27b-iq3m:ctx64k        # run a preset
+bun run switch --service=strata --model=coder:IQ1_M                        # code model, see ../code_generation
 ```
 
 Each switch stops the other services, downloads a missing file to `/models/gguf`, checks health,

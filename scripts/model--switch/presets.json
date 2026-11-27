@@ -19,7 +19,7 @@
     "model": "mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
     "context": 49152,
     "mtp": true,
-    "tested": false
+    "tested": true
   },
   "terse:no-mtp": {
     "service": "llama",
@@ -218,5 +218,355 @@
     "context": 57344,
     "mtp": true,
     "tested": true
+  },
+  "terse:ctx32k": {
+    "service": "llama",
+    "model": "mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
+    "context": 32768,
+    "mtp": true,
+    "tested": false
+  },
+  "terse:ctx64k": {
+    "service": "llama",
+    "model": "mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
+    "context": 65536,
+    "mtp": true,
+    "tested": false
+  },
+  "terse:no-mtp:ctx32k": {
+    "service": "llama",
+    "model": "mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "terse:no-mtp:ctx49k": {
+    "service": "llama",
+    "model": "mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
+    "context": 49152,
+    "mtp": false,
+    "tested": false
+  },
+  "terse:no-mtp:ctx57k": {
+    "service": "llama",
+    "model": "mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
+    "context": 57344,
+    "mtp": false,
+    "tested": false
+  },
+  "terse:no-mtp:ctx64k": {
+    "service": "llama",
+    "model": "mradermacher/Signal-3.8-27B-Terse-Coder-i1-GGUF/Signal-3.8-27B-Terse-Coder.i1-Q4_K_M.gguf",
+    "context": 65536,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen36-27b-mtp:ctx32k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+    "context": 32768,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen36-27b-mtp:ctx64k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+    "context": 65536,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen36-27b-mtp:no-mtp:ctx32k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen36-27b-mtp:no-mtp:ctx49k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+    "context": 49152,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen36-27b-mtp:no-mtp:ctx57k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+    "context": 57344,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen36-27b-mtp:no-mtp:ctx64k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.6-27B-MTP-GGUF/Qwen3.6-27B-IQ4_XS.gguf",
+    "context": 65536,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-iq3m:ctx32k": {
+    "service": "llama",
+    "model": "pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF/Qwen3.8-27B-IQ3_M.gguf",
+    "context": 32768,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen38-27b-iq3m:ctx57k": {
+    "service": "llama",
+    "model": "pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF/Qwen3.8-27B-IQ3_M.gguf",
+    "context": 57344,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen38-27b-iq3m:no-mtp:ctx32k": {
+    "service": "llama",
+    "model": "pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF/Qwen3.8-27B-IQ3_M.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-iq3m:no-mtp:ctx49k": {
+    "service": "llama",
+    "model": "pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF/Qwen3.8-27B-IQ3_M.gguf",
+    "context": 49152,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-iq3m:no-mtp:ctx57k": {
+    "service": "llama",
+    "model": "pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF/Qwen3.8-27B-IQ3_M.gguf",
+    "context": 57344,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-iq3m:no-mtp:ctx64k": {
+    "service": "llama",
+    "model": "pearsonkyle/Qwen3.8-27B-imatrix-MTP-GGUF/Qwen3.8-27B-IQ3_M.gguf",
+    "context": 65536,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-unsloth:ctx32k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_M.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-unsloth:ctx57k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_M.gguf",
+    "context": 57344,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-unsloth:ctx64k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_M.gguf",
+    "context": 65536,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-unsloth-q4-xl:ctx32k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-unsloth-q4-xl:ctx49k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 49152,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-unsloth-q4-xl:ctx57k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 57344,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-unsloth-q4-xl:ctx64k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 65536,
+    "mtp": false,
+    "tested": false
+  },
+  "tiel-coder-35b:ctx32k": {
+    "service": "llama",
+    "model": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF-MTP/Tiel-Coder-35B-A3B-MTP-UD-Q4_K_XL.gguf",
+    "context": 32768,
+    "mtp": true,
+    "tested": false
+  },
+  "tiel-coder-35b:ctx49k": {
+    "service": "llama",
+    "model": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF-MTP/Tiel-Coder-35B-A3B-MTP-UD-Q4_K_XL.gguf",
+    "context": 49152,
+    "mtp": true,
+    "tested": false
+  },
+  "tiel-coder-35b:ctx57k": {
+    "service": "llama",
+    "model": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF-MTP/Tiel-Coder-35B-A3B-MTP-UD-Q4_K_XL.gguf",
+    "context": 57344,
+    "mtp": true,
+    "tested": true
+  },
+  "tiel-coder-35b:ctx64k": {
+    "service": "llama",
+    "model": "peculiar-ragdoll/Tiel-Coder-35B-A3B-GGUF-MTP/Tiel-Coder-35B-A3B-MTP-UD-Q4_K_XL.gguf",
+    "context": 65536,
+    "mtp": true,
+    "tested": false
+  },
+  "swift-1.5:ctx32k": {
+    "service": "llama",
+    "model": "ukisai/Swift-1.5-Qwen3.8-27B-GGUF/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "swift-1.5:ctx57k": {
+    "service": "llama",
+    "model": "ukisai/Swift-1.5-Qwen3.8-27B-GGUF/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",
+    "context": 57344,
+    "mtp": false,
+    "tested": false
+  },
+  "swift-1.5:ctx64k": {
+    "service": "llama",
+    "model": "ukisai/Swift-1.5-Qwen3.8-27B-GGUF/Swift-1.5-Qwen3.8-27B-Q4_K_M.gguf",
+    "context": 65536,
+    "mtp": false,
+    "tested": false
+  },
+  "dirk:ctx32k": {
+    "service": "llama",
+    "model": "peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF/Dirk-Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 32768,
+    "mtp": true,
+    "tested": false
+  },
+  "dirk:ctx57k": {
+    "service": "llama",
+    "model": "peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF/Dirk-Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 57344,
+    "mtp": true,
+    "tested": false
+  },
+  "dirk:ctx64k": {
+    "service": "llama",
+    "model": "peculiar-ragdoll/Dirk-Qwen3.8-27B-GGUF/Dirk-Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 65536,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen38-pi:ctx32k": {
+    "service": "llama",
+    "model": "bytkim/Qwen3.8-27B-pi-GGUF/Qwen3.8-27B-pi-Q4_K_M.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-pi:ctx57k": {
+    "service": "llama",
+    "model": "bytkim/Qwen3.8-27B-pi-GGUF/Qwen3.8-27B-pi-Q4_K_M.gguf",
+    "context": 57344,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-pi:ctx64k": {
+    "service": "llama",
+    "model": "bytkim/Qwen3.8-27B-pi-GGUF/Qwen3.8-27B-pi-Q4_K_M.gguf",
+    "context": 65536,
+    "mtp": false,
+    "tested": true
+  },
+  "qwen38-pi-arc-tuned:ctx32k": {
+    "service": "llama",
+    "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
+    "context": 32768,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen38-pi-arc-tuned:ctx57k": {
+    "service": "llama",
+    "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
+    "context": 57344,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen38-pi-arc-tuned:ctx64k": {
+    "service": "llama",
+    "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
+    "context": 65536,
+    "mtp": true,
+    "tested": false
+  },
+  "qwen38-pi-arc-tuned:no-mtp:ctx32k": {
+    "service": "llama",
+    "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-pi-arc-tuned:no-mtp:ctx49k": {
+    "service": "llama",
+    "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
+    "context": 49152,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-pi-arc-tuned:no-mtp:ctx57k": {
+    "service": "llama",
+    "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
+    "context": 57344,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-pi-arc-tuned:no-mtp:ctx64k": {
+    "service": "llama",
+    "model": "Greatjedi/Qwen3.8-27B-Intel-Arc-Tuned-GGUF/Qwen3.8-27B-pi-Intel-Arc-Tuned-MTP-Q4_K.gguf",
+    "context": 65536,
+    "mtp": false,
+    "tested": false
+  },
+  "thinkingcap:ctx32k": {
+    "service": "llama",
+    "model": "bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF/ThinkingCap-Qwen3.8-27B-IQ4_XS.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "thinkingcap:ctx57k": {
+    "service": "llama",
+    "model": "bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF/ThinkingCap-Qwen3.8-27B-IQ4_XS.gguf",
+    "context": 57344,
+    "mtp": false,
+    "tested": false
+  },
+  "thinkingcap:ctx64k": {
+    "service": "llama",
+    "model": "bottlecapai/ThinkingCap-Qwen3.8-27B-GGUF/ThinkingCap-Qwen3.8-27B-IQ4_XS.gguf",
+    "context": 65536,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-q4xl:ctx32k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 32768,
+    "mtp": false,
+    "tested": false
+  },
+  "qwen38-27b-q4xl:ctx57k": {
+    "service": "llama",
+    "model": "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_XL.gguf",
+    "context": 57344,
+    "mtp": false,
+    "tested": false
   }
 }

@@ -1,0 +1,16 @@
+[Unit]
+Description=Experimental arc-llm-lab Qwen3.8 DFlash2 server
+After=docker.service network-online.target
+Requires=docker.service
+
+[Service]
+Restart=on-failure
+RestartSec=5
+ExecStartPre=-/usr/bin/docker rm -f arc-llm-lab
+ExecStart=/usr/bin/docker run --rm --name arc-llm-lab --device /dev/dri -e LD_LIBRARY_PATH=/app -e GGML_VK_FORCE_MMVQ=1 -p 8080:8080 -v /models/arc-llm-lab-experiment/build/llama.cpp/build-experiment/bin:/app:ro -v /models/gguf:/models:ro arc-llm-lab-experiment:local /app/llama-server -m /models/unsloth__Qwen3.8-27B-UD-Q4_K_M.gguf -md /models/incoai__Qwen3.8-27B-DFlash2-Q4_K_M.gguf --alias arc-lab-qwen38 --spec-type draft-dflash --spec-draft-n-max 7 -ngl 99 -ngld 99 -c 65536 -ctk f16 -ctv f16 -ctkd q8_0 -ctvd q8_0 -ub 256 -fa on -fit off -np 1 --jinja --no-context-shift --host 0.0.0.0 --port 8080
+ExecStop=/usr/bin/docker stop arc-llm-lab
+TimeoutStartSec=600
+TimeoutStopSec=30
+
+[Install]
+WantedBy=multi-user.target

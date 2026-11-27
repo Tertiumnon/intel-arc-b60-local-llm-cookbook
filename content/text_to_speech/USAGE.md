@@ -36,6 +36,6 @@ Output is `audio/*.wav` (git-ignored). The API is OpenAI-compatible, so other cl
 Speech and language models share the same llama service, so only one is loaded at a time:
 
 ```bash
-bun run switch:coding:strata-qwen38-flash-next-coder-iq1m
-bun run switch:coding:llama-qwen38-27b-unsloth:ctx49k
+bun run switch --service=strata --model=coder:IQ1_M
+bun run switch --preset=qwen38-27b-unsloth:ctx49k
 ```

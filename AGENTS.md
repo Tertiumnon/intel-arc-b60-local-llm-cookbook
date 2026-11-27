@@ -32,7 +32,7 @@ Copy `.env.example` to `.env` first (`AI_SSH_HOST`, `AI_SERVER_HOST`, `AI_API_KE
 
 | Command | What it does |
 |---|---|
-| `bun run switch:coding:<model>` / `switch:list` | Serve a language model or list llama presets |
+| `bun run switch:coding` / `switch:list` | Choose a coding model and context, or list llama presets |
 | `bun run test`, `list`, `quality` | Speed test, list served model, quality tasks |
 | `bun run delete` | List or remove model files on the server (dry run by default) |
 | `bun run pi` | Point the Pi coding agent at the served model |
@@ -54,6 +54,7 @@ Copy `.env.example` to `.env` first (`AI_SSH_HOST`, `AI_SERVER_HOST`, `AI_API_KE
 - Servers are reached only through the SSH alias in `AI_SSH_HOST`. Do not hardcode hosts, keys or
   tokens; the API key in `data/*.json` is a placeholder.
 - Mark anything not run on the real server as untested in the docs.
+- For coding-model evaluations, use the existing `bun run test` and `bun run quality` scripts. Test with at least 49,152 tokens of allocated server context; use 49,152, 57,344, or 65,536 as appropriate, and record the actual input length.
 - Use Conventional Commits. Stay on the checked-out branch; do not push unless asked.
 - Prefer llama.cpp for every model type it supports (text, code, vision, speech); use ComfyUI only where it does not (images, 3D).
 - Update `CHANGELOG.md` (`[Unreleased]`) for user-visible changes.

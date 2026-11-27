@@ -5,7 +5,7 @@ Run after installing or switching a model.
 ## 1. Switch and check
 
 ```bash
-bun run switch:coding:llama-qwen38-27b-unsloth:ctx49k
+bun run switch --preset=qwen38-27b-unsloth:ctx49k
 ```
 
 The switch downloads a missing model, restarts the service, waits for `/health`, and sends one

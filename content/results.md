@@ -5,6 +5,22 @@ published model and community rows use other machines or test methods. Values
 from different prompts, caches, and runtimes are not head-to-head rankings.
 For current commands and saved results, see the [model test README](../scripts/README.md).
 
+## arc-llm-lab Qwen3.8 DFlash2: November 26, 2026
+
+The experimental `switch --service=arc-lab` service ran Qwen3.8-27B UD-Q4_K_M with a DFlash2 Q4_K_M draft, patched Vulkan llama.cpp, f16 KV cache, one slot, and 65,536 allocated context. Short speed measurements use `bun run test --no-reasoning`, three runs after warm-up, 256 output cap and temperature 0.7. The 15 basic and complex answers used the existing quality task prompts, low reasoning and an 8,192-token cap. They were **reviewed manually against the supplied examples; generated code was not executed**, so the review counts are not automated pass rates.
+
+| Check | Result |
+|---|---|
+| Short generation | 26.62 tok/s average (24.23–28.29); average TTFT 0.536 s |
+| Prefill | 365.23 tok/s for 1,331 tokens |
+| Basic 10 | 10/10 appear to satisfy the supplied examples; 749 output tokens and 27.2 s average |
+| Complex 5 | 4/5 appear to satisfy the supplied examples; 2,828 output tokens and 100.2 s average |
+| Long pricing / shipping | 54,488 / 54,538 input tokens; 217.0 / 210.5 s. Shipping appears to satisfy the standalone examples; pricing references an undefined `CURRENT_PRICING` and would fail without a fixture. |
+
+The TTL cache leaves expired entries counted and can evict live entries before expired ones; it took 310.8 s and 7,991 output tokens. The query parser fails on inherited property names such as `toString`, and the path parser mishandles hyphenated keys; those edge cases are outside the supplied examples. Long prompts used the quality runner's planted current and legacy files and repeated filler, but generated code was inspected rather than run. Supplying the current pricing fixture would make the pricing answer usable; the standalone checker does not supply it. The roughly 54.5K inputs were sent directly to the API; the generated VS Code configuration limits input to 53,248 tokens.
+
+Earlier, the same uncached 30,021-token prompt took 89.15 s with the experimental 64K f16 configuration and 168.85 s with the existing Qwen SYCL service at 49K with Q8 KV and no draft. This single comparison measures complete configurations, not the kernel in isolation. Response files are in `test-results/quality/arc-lab-manual.json` and `arc-lab-long-manual.json` (gitignored); the speed run is in `test-results/arc-lab-qwen38/`.
+
 ## Cross-model comparison
 
 Rows pull from the dated sections below. Different contexts, output caps,

@@ -198,6 +198,7 @@ async function main() {
     return;
   }
   const presetName = options.find((arg) => arg.startsWith("--preset="))?.slice(9);
+  const contextArg = options.find((arg) => arg.startsWith("--context="))?.slice(10);
   const preset = presetName ? (await loadPresets())[presetName] : undefined;
   if (presetName && !preset) throw new Error(`Unknown preset ${presetName}; run bun run switch -- --list-presets`);
   if (preset) {
@@ -210,14 +211,15 @@ async function main() {
       Bun.env.HF_MMPROJ_REPO = projector[1];
       Bun.env.HF_MMPROJ_FILE = projector[2];
     }
-    console.log(`Preset ${presetName}: ${preset.service} ${preset.model} ctx=${preset.context} MTP=${preset.mtp ? 1 : 0} (${preset.tested ? "tested" : "untested"})`);
+    console.log(`Preset ${presetName}: ${preset.service} ${preset.model} ctx=${contextArg ?? preset.context} MTP=${preset.mtp ? 1 : 0} (${preset.tested && (!contextArg || Number(contextArg) === preset.context) ? "tested" : "untested"})`);
   }
   const service = preset?.service ?? options.find((arg) => arg.startsWith("--service="))?.slice(10) ?? "llama";
   const modelArg = preset?.model ?? options.find((arg) => arg.startsWith("--model="))?.slice(8);
-  const allowed = (arg: string) => arg.startsWith("--service=") || arg.startsWith("--model=") || arg.startsWith("--preset=");
-  if (options.some((arg) => !allowed(arg)) || !["llama", "strata", "openvino"].includes(service) || (modelArg !== undefined && !modelArg)) {
-    throw new Error("Usage: --preset=NAME | --service=llama|strata|openvino [--model=MODEL] | --list-presets");
+  const allowed = (arg: string) => arg.startsWith("--service=") || arg.startsWith("--model=") || arg.startsWith("--preset=") || arg.startsWith("--context=");
+  if (options.some((arg) => !allowed(arg)) || !["llama", "arc-lab", "strata", "openvino"].includes(service) || (modelArg !== undefined && !modelArg) || (service === "arc-lab" && modelArg !== undefined) || (contextArg !== undefined && (!["32768", "49152", "57344", "65536"].includes(contextArg) || service === "openvino"))) {
+    throw new Error("Usage: --preset=NAME | --service=llama|arc-lab|strata|openvino [--model=MODEL] [--context=32768|49152|57344|65536] | --list-presets");
   }
+  if (contextArg && service === "llama") Bun.env.MODEL_CONTEXT_TOKENS = contextArg;
   const sshHost = required("AI_SSH_HOST");
   if (!/^[A-Za-z0-9._-]+$/.test(sshHost)) throw new Error("AI_SSH_HOST must be an SSH config alias");
   const port = 8080;
@@ -257,6 +259,12 @@ async function main() {
     description = `${model.repo}/${model.file}`;
     vision = Boolean(projector);
     details = `; MTP: ${mtp}; projector: ${projector?.local ?? "none"}`;
+  } else if (service === "arc-lab") {
+    const result = await checked("ssh", ["-o", "BatchMode=yes", sshHost, "sudo", "-n", "/usr/local/sbin/llama-model-switch", "--service", "arc-lab", ...(contextArg ? [contextArg] : [])]);
+    id = result.match(/MODEL_ID=(.+)/)?.[1]?.trim() ?? "";
+    context = Number(result.match(/CONTEXT=(\d+)/)?.[1]);
+    if (!id || !context) throw new Error("arc-lab helper did not report model ID and context");
+    description = "Qwen3.8-27B DFlash2 (experimental)";
   } else if (service === "strata") {
     const selected = modelArg ?? "coder:IQ1_M";
     const match = /^(qwen|swift|coder):(Q2_0|IQ2_XS|IQ3_XXS|IQ3_S|IQ1_M)$/.exec(selected);
@@ -277,9 +285,38 @@ c['reasoning_loop_recovery'] = 'recover'
 p.write_text(json.dumps(c, indent=2))
 PY
 fi
+if [ "$3" != "0" ]; then
+  python3 - "$4" "$3" <<'PY'
+import json, sys
+from pathlib import Path
+tag, context = sys.argv[1:]
+source = Path(f'strata-{tag}.json')
+runner = Path(f'run-{tag}.sh')
+variant = Path(f'strata-{tag}-ctx{context}.json')
+variant_runner = Path(f'run-{tag}-ctx{context}.sh')
+if variant.exists() != variant_runner.exists():
+    raise RuntimeError(f'Incomplete Strata variant for {tag} context {context}; remove the incomplete variant and retry')
+if not variant.exists():
+    settings = json.loads(source.read_text())
+    args = settings['args']
+    args[args.index('--max-context') + 1] = context
+    command = runner.read_text()
+    old = f'/models/Strata/strata-{tag}.json'
+    if command.count(old) != 1:
+        raise ValueError(f'Expected one config path in {runner}')
+    variant.write_text(json.dumps(settings, indent=2))
+    variant_runner.write_text(command.replace(old, f'/models/Strata/{variant.name}'))
+    variant_runner.chmod(0o755)
+else:
+    settings = json.loads(variant.read_text())
+    args = settings['args']
+    if args[args.index('--max-context') + 1] != context:
+        raise ValueError(f'Wrong context in {variant}; correct the file before retrying')
+PY
+fi
 `;
-    await checked("ssh", ["-o", "BatchMode=yes", sshHost, "bash", "-s", "--", match[1], match[2]], setup);
-    const result = await checked("ssh", ["-o", "BatchMode=yes", sshHost, "sudo", "-n", "/usr/local/sbin/llama-model-switch", "--service", "strata", tag]);
+    await checked("ssh", ["-o", "BatchMode=yes", sshHost, "bash", "-s", "--", match[1], match[2], contextArg ?? "0", tag], setup);
+    const result = await checked("ssh", ["-o", "BatchMode=yes", sshHost, "sudo", "-n", "/usr/local/sbin/llama-model-switch", "--service", "strata", contextArg ? `${tag}-ctx${contextArg}` : tag]);
     id = result.match(/MODEL_ID=(.+)/)?.[1]?.trim() ?? "";
     context = Number(result.match(/CONTEXT=(\d+)/)?.[1]);
     if (!id || !context) throw new Error("Strata helper did not report model ID and context");

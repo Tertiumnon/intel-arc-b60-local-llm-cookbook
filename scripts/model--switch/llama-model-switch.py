@@ -15,9 +15,9 @@ from urllib.request import urlopen
 UNIT = Path("/etc/systemd/system/llama-cpp.service")
 MODELS = Path("/models/gguf")
 NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\.gguf\Z")
-SERVICES = {"llama": "llama-cpp.service", "strata": "strata.service", "openvino": "openvino-model-server.service", "comfyui": "comfyui.service", "comfyui3d": "comfyui-3d.service"}
+SERVICES = {"llama": "llama-cpp.service", "arc-lab": "arc-llm-lab.service", "strata": "strata.service", "openvino": "openvino-model-server.service", "comfyui": "comfyui.service", "comfyui3d": "comfyui-3d.service"}
 REPO = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*\Z")
-TAG = re.compile(r"(?:swift-|coder-)?(?:q2_0|iq2_xs|iq3_xxs|iq3_s|iq1_m)\Z")
+TAG = re.compile(r"(?:swift-|coder-)?(?:q2_0|iq2_xs|iq3_xxs|iq3_s|iq1_m)(?:-ctx(?:32768|49152|57344|65536))?\Z")
 
 
 def replace_unit(unit: str, model: str, context: int, mtp: bool, projector: str | None) -> str:
@@ -152,7 +152,7 @@ def wait_comfyui(kind: str, seconds: int) -> str:
 def wait_service(kind: str, model_id: str, seconds: int) -> str:
     if kind in ("comfyui", "comfyui3d"):
         return wait_comfyui(kind, seconds)
-    port, version = 8080, "v1" if kind == "strata" else "v3"
+    port, version = 8080, "v3" if kind == "openvino" else "v1"
     deadline = time.monotonic() + seconds
     while time.monotonic() < deadline:
         if not unit_state("is-active", SERVICES[kind]):
@@ -165,7 +165,7 @@ def wait_service(kind: str, model_id: str, seconds: int) -> str:
                     return model_id
                 with urlopen(f"http://127.0.0.1:{port}/health", timeout=5) as response:
                     health = json.load(response)
-                if health.get("status") == "ok" and health.get("loaded"):
+                if health.get("status") == "ok" and (kind == "arc-lab" or health.get("loaded")):
                     return model_id
         except (OSError, ValueError):
             pass
@@ -175,7 +175,7 @@ def wait_service(kind: str, model_id: str, seconds: int) -> str:
 
 def select(kind: str, args: list[str]) -> None:
     if kind not in SERVICES:
-        raise ValueError("service must be llama, strata, openvino, comfyui, or comfyui3d")
+        raise ValueError("service must be llama, arc-lab, strata, openvino, comfyui, or comfyui3d")
     unit = Path("/etc/systemd/system") / SERVICES[kind]
     before = unit.read_text()
     updated = before
@@ -207,6 +207,17 @@ def select(kind: str, args: list[str]) -> None:
         updated, count = re.subn(r"(?m)^ExecStart=/models/Strata/run-[a-z0-9_-]+\.sh$", f"ExecStart={runner}", before)
         if count != 1:
             raise ValueError("strata.service has no runner ExecStart")
+    elif kind == "arc-lab":
+        if len(args) > 1 or (args and args[0] not in ("32768", "49152", "57344", "65536")):
+            raise ValueError("arc-lab context must be 32768, 49152, 57344, or 65536")
+        for name in ("unsloth__Qwen3.8-27B-UD-Q4_K_M.gguf", "incoai__Qwen3.8-27B-DFlash2-Q4_K_M.gguf"):
+            if not (MODELS / name).is_file():
+                raise FileNotFoundError(MODELS / name)
+        model_id = "arc-lab-qwen38"
+        context = int(args[0]) if args else 65536
+        updated, count = re.subn(r"(?<!\S)-c[ \t]+\d+", f"-c {context}", before)
+        if count != 1:
+            raise ValueError("arc-llm-lab.service must contain one -c context argument")
     elif kind in ("comfyui", "comfyui3d"):
         if args:
             raise ValueError(f"{kind} takes no arguments")

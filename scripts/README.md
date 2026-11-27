@@ -6,8 +6,8 @@ the root `.env` (copy `.env.example`).
 | Command | What it does |
 |---|---|
 | `switch:list` | List llama presets |
-| `switch:coding:<backend>-<model>` | Switch the server to a coding model, e.g. `switch:coding:llama-terse` |
-| `switch:coding:strata-qwen38-flash-next-coder-iq1m` | Switch to Strata |
+| `switch:coding` | Choose a coding model, approach, and context |
+| `switch --service=strata --model=coder:IQ1_M` | Switch to Strata |
 | `test` | Speed test on the served model |
 | `quality` | Quality tasks at low, medium, high reasoning |
 | `image:download:qwen`, `image:download:z-image` | Download image models to the server |

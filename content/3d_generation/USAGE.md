@@ -26,7 +26,7 @@ The 3D service replaces whichever service is running on port `8080`:
 ```bash
 bun run 3d:start            # Hunyuan3D ComfyUI (b8 image)
 bun run image:start         # image ComfyUI (b2 image)
-bun run switch:coding:strata-qwen38-flash-next-coder-iq1m       # a language model again
+bun run switch --service=strata --model=coder:IQ1_M       # a language model again
 ```
 
 ## Tips

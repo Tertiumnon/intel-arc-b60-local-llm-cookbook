@@ -17,7 +17,7 @@ ssh -t ai-b60 'sudo install -m 644 /tmp/strata.service /etc/systemd/system/strat
 ## 2. Install the model
 
 ```bash
-bun run switch:coding:strata-qwen38-flash-next-coder-iq1m
+bun run switch --service=strata --model=coder:IQ1_M
 bun run pi
 ```
 
@@ -43,3 +43,22 @@ A request's own values override these defaults. Avoid `high` on long prompts.
 - **Other:** `AI_API_URL` and `AI_API_KEY` from `.env`.
 
 Next: [TEST.md](./TEST.md), [USAGE.md](./USAGE.md).
+
+## Experimental arc-llm-lab setup
+
+The current server has the experimental engine and service installed. To rebuild it on another server, copy `scripts/arc-llm-lab.Dockerfile` to the server and run the following there as the `ai` user. This uses the pinned [arc-llm-lab](https://github.com/edagher92-coder/arc-llm-lab) patches and llama.cpp b11524; the container includes the Vulkan build and runtime dependencies.
+
+```bash
+mkdir -p /models/arc-llm-lab-experiment/build
+cd /models/arc-llm-lab-experiment
+git clone https://github.com/edagher92-coder/arc-llm-lab.git source
+git -C source checkout --detach 6d26bb1980854b7dfde77817653f0e10b123818a
+git clone --filter=blob:none https://github.com/ggml-org/llama.cpp.git build/llama.cpp
+git -C build/llama.cpp checkout --detach b11524
+(cd source/engine/patches && sha256sum -c SHA256SUMS)
+(cd build/llama.cpp && git -c user.name=arc-llm-lab -c user.email=arc-llm-lab@localhost am --3way ../../source/engine/patches/0*.patch)
+docker build -f /path/to/arc-llm-lab.Dockerfile -t arc-llm-lab-experiment:local .
+docker run --rm -v /models/arc-llm-lab-experiment/build/llama.cpp:/work -w /work arc-llm-lab-experiment:local bash -c 'git config --global --add safe.directory /work && cmake -S . -B build-experiment -G Ninja -DGGML_VULKAN=ON -DLLAMA_CURL=OFF -DLLAMA_BUILD_TESTS=OFF -DLLAMA_BUILD_NUMBER=11524 -DCMAKE_BUILD_TYPE=Release && cmake --build build-experiment -j 4 --target llama-server llama-bench'
+```
+
+Place the [target GGUF](https://huggingface.co/unsloth/Qwen3.8-27B-GGUF/tree/main) and [DFlash2 GGUF](https://huggingface.co/incoai/Qwen3.8-27B-DFlash2-GGUF/tree/main) in `/models/gguf` as `unsloth__Qwen3.8-27B-UD-Q4_K_M.gguf` and `incoai__Qwen3.8-27B-DFlash2-Q4_K_M.gguf`. Install `scripts/arc-llm-lab.service` in `/etc/systemd/system/` and update `/usr/local/sbin/llama-model-switch` from this repository, then run `sudo systemctl daemon-reload`. The regular switcher starts the new service and stops it when switching to another service.

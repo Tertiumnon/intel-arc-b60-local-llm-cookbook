@@ -8,7 +8,9 @@
 
 ### Added
 
-- llama preset `qwen38-pi-arc-tuned` (plus `:ctx49k` and `:no-mtp`) and its `switch:coding:llama-qwen38-pi-arc-tuned*` commands for the Greatjedi Qwen3.8-27B-pi Intel Arc tuned MTP Q4_K GGUF.
+- Added selectable 32K, 49K, 57K, and 64K contexts for coding models, including Strata, arc-lab, and no-MTP variants; new combinations are untested unless otherwise recorded.
+- Experimental arc-lab service for Qwen3.8-27B with a patched Vulkan engine and DFlash2.
+- llama preset `qwen38-pi-arc-tuned` (plus `:ctx49k` and `:no-mtp`) for the Greatjedi Qwen3.8-27B-pi Intel Arc tuned MTP Q4_K GGUF.
 - Added a TRELLIS.2 model download command; its 3D workflow is not yet integrated or tested on the B60.
 - Configured Pi on the AI server for the current local Strata Coder model.
 - Image generation with ComfyUI on Intel XPU: `image:download:*`, `image:start`, `image`, plus `image:test` for timed fantasy prompts (one image tested on the server).
@@ -19,6 +21,8 @@
 
 ### Changed
 
+- Replaced the coding command list with `bun run switch:coding`, which selects the model, approach, and context interactively.
+- Recorded arc-llm-lab speed and manual coding-quality observations, including 54.5K-input tasks, and updated the coding recommendation.
 - The smallest coding-model context is now 49,152 tokens: `:ctx32k` presets became `:ctx49k` (duplicates of existing `:ctx49k` presets were removed).
 - Tested the Greatjedi Qwen3.8-27B-pi Arc-tuned Q4_K quality tasks on the B60 (basic and complex at low and medium; the high pass and long tasks returned empty server responses and need a rerun) and recorded the results.
 - `content/results.md` now opens with cross-model comparison tables (basic 10, complex 5, long context) and the Qwen3.8-27B retest and Strata IQ2_XS sections use tables instead of prose.
@@ -27,7 +31,7 @@
 - Download the Hunyuan3D paint configuration files alongside its weights, and record the current Intel paint-loader failures.
 - Tested Qwen3.8-27B-pi on the B60, renamed its coding command to include `27b`, and recorded its JavaScript and context results.
 - Compared three installed coding models on complex JavaScript and repository-context tasks, and recorded the results and limitations.
-- Renamed coding switch commands to `switch:coding:<backend>-<model>`, added commands for both installed Strata models and the downloaded Qwen Q4_K_XL and Tiel-Coder models, and set larger context defaults based on B60 results where available.
+- Added both installed Strata models and the downloaded Qwen Q4_K_XL and Tiel-Coder models to coding switches, with larger context defaults based on B60 results where available.
 - Tested Strata's Qwen3.8-Flash-Next IQ2_XS on the B60 and recorded the first speed and basic quality results.
 - Documentation moved from `pages/` to `content/`; generated config files are written to `data/`.
 
