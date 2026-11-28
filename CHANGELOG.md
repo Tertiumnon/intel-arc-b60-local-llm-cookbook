@@ -4,11 +4,17 @@
 
 ### Fixed
 
+- Restore root config and runner links when a new Strata model is installed with the updated terminal layout; new installs are untested on the server.
+
 - Corrected and strengthened local-model quality tasks, isolated generated code on the AI server, supplied long-context fixtures, and distinguished truncated responses and server errors from failed answers.
 
 - Stop remote memory-monitor loops after a speed test disconnects.
 
 ### Added
+
+- Started installing fantasy style LoRAs and SDXL alongside FLUX, with ComfyUI switching instructions and base-model compatibility notes; generation is untested.
+
+- Installed Vintage Fantasy Illustration FLUX LoRA and started downloading its FLUX.1-dev FP8 base checkpoint; B60 image generation remains untested.
 
 - Inkling-2-Mini SQ-20 in the coding model selector, with a 57,344-token default for the 24 GB B60 and an installation prerequisite check.
 
@@ -28,6 +34,7 @@
 ### Changed
 
 - Updated the B60 server's Strata checkout to 0.2.23 and built SYCL engine 0.1.70 for `bmg-g21`; documented the runtime path migration and distinguished the old Coder shard's baseline results.
+- Installed Inkling SQ-20 and verified a short coding response at 57K context; downloaded and prepared the updated Coder shard.
 
 - Recorded the partial November 27–28 version 3 quality sweep across 12 configurations and revised coding recommendations with failures, truncations, and latency tradeoffs.
 

@@ -56,6 +56,17 @@ bun run image:download:z-image      # Z-Image Turbo
 
 Files go to `/models/comfyui/models/{diffusion_models,text_encoders,vae}`. Existing files are reused.
 
+Vintage Fantasy Illustration is a FLUX.1-dev LoRA, installed on the server at
+`/models/comfyui/models/loras/vintage-fantasy-illustration.safetensors` from
+[Muapi's model repository](https://huggingface.co/Muapi/vintage-fantasy-illustration)
+(OpenRAIL++). Its trigger is `Vintage Fantasy illustration`. It needs a
+compatible FLUX.1-dev base: the server download of ComfyUI's
+`flux1-dev-fp8.safetensors` checkpoint is recorded in
+`/models/strata-update-logs/flux1-dev-download.log`. That checkpoint includes
+its text encoders and uses the [FLUX.1-dev non-commercial license](https://huggingface.co/Comfy-Org/Flux-1-Dev).
+Load the checkpoint and LoRA in ComfyUI; the existing Qwen and Z-Image scripts
+do not apply this FLUX LoRA. FLUX generation on this B60 is untested.
+
 ## 5. Options after install
 
 - ComfyUI is at `http://<server>:8080` after `bun run image:start`. Its template browser has ready workflows.

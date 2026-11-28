@@ -17,7 +17,7 @@ MODELS = Path("/models/gguf")
 NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\.gguf\Z")
 SERVICES = {"llama": "llama-cpp.service", "arc-lab": "arc-llm-lab.service", "strata": "strata.service", "openvino": "openvino-model-server.service", "comfyui": "comfyui.service", "comfyui3d": "comfyui-3d.service"}
 REPO = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9][A-Za-z0-9._-]*\Z")
-TAG = re.compile(r"(?:swift-|coder-)?(?:q2_0|iq2_xs|iq3_xxs|iq3_s|iq1_m)(?:-ctx(?:32768|49152|57344|65536))?\Z")
+TAG = re.compile(r"(?:(?:swift-|coder-)?(?:q2_0|iq2_xs|iq3_xxs|iq3_s|iq1_m)|inkling-2-mini-sq-20)(?:-ctx(?:32768|49152|57344|65536))?\Z")
 
 
 def replace_unit(unit: str, model: str, context: int, mtp: bool, projector: str | None) -> str:

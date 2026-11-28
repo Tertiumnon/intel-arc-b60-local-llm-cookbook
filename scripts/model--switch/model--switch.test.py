@@ -32,6 +32,7 @@ class ModelSwitchTest(unittest.TestCase):
 
     def test_strata_accepts_context_variant_tag(self):
         self.assertIsNotNone(switch.TAG.fullmatch("coder-iq1_m-ctx57344"))
+        self.assertIsNotNone(switch.TAG.fullmatch("inkling-2-mini-sq-20"))
         self.assertIsNone(switch.TAG.fullmatch("coder-iq1_m-ctx12345"))
 
 

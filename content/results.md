@@ -51,6 +51,18 @@ disconnect is unconfirmed. Raw run:
 (gitignored). This baseline does not validate the updated Coder weights or
 Inkling, and does not establish a quality improvement from the engine update.
 
+Inkling-2-Mini SQ-20 subsequently loaded on the B60 at 57,344 context. A
+single measured short coding response after warm-up, reasoning off, temperature
+0.7 and a 256-token cap, generated 135 tokens at 22.85 tok/s with 471 ms TTFT.
+This smoke test is not a coding-quality evaluation; the NVIDIA download was
+running concurrently. The current Coder replacement shard was verified and
+packed separately; its quality has not yet been evaluated.
+
+The replacement Coder shard then loaded at 57,344 context and answered the
+same short speed-test prompt at 39.37 tok/s and 290 ms TTFT in one measured
+run after warm-up (34 output tokens, reasoning off, cap 256, temperature 0.7).
+One sample is insufficient to establish a speed or quality improvement.
+
 ## Partial 57K complex sweep: November 27–28, 2026
 
 The saved version 3 sweep contains 12 finished configurations (60 requests),

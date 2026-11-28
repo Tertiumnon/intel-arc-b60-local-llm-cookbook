@@ -280,6 +280,9 @@ if [ ! -x "run-${tag}.sh" ]; then
     exit 1
   fi
   ./setup.sh --setup --backend sycl --yes --family "$1" --model "$2" --context 131072 --vision no --data-dir /models/Strata-data --host 0.0.0.0 --no-start
+  for file in "strata-${tag}.json" "run-${tag}.sh"; do
+    if [ ! -e "$file" ] && [ -e "terminal/$file" ]; then ln -s "terminal/$file" "$file"; fi
+  done
   python3 - "strata-${tag}.json" <<'PY'
 import json, sys
 from pathlib import Path
