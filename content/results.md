@@ -13,7 +13,8 @@ Version 3 additionally requests explicit sampling settings and can put each
 complex task in a long synthetic project context. See the
 [comparison protocol](../scripts/README.md#comparing-coding-models). No full
 version 3 model sweep was completed when the historical rows below were written.
-The latest automated comparison appears in the section below.
+The November 27–28 partial sweep is recorded below; the automated section is
+published only after the whole sweep finishes.
 
 <!-- quality-comparison:start -->
 ## Latest automated complex-model comparison
@@ -21,6 +22,86 @@ The latest automated comparison appears in the section below.
 No completed automated comparison has been published yet. Run
 `bun run test:quality:ctx64k:complex:all-models` to update this section.
 <!-- quality-comparison:end -->
+
+## Strata 0.2.23 update validation: November 28, 2026
+
+The Qwen SYCL engine 0.1.70 was built from `4560d0379` for the single B60's
+`bmg-g21` target with zero build errors. The first baseline used the existing
+Coder IQ1_M weights, **before** the replacement first shard was downloaded.
+The old first shard's SHA-256 is
+`e11083ba855e7666b48ea3f2db6a9c3a20c18751a012cc24f948de91b7087fad`;
+the current catalog expects `bfa3644db4adfff072fc946c20994f2909d2cf89879d83f80a4c811d4016c211`.
+The shared second shard matches the current catalog. Earlier Coder results
+therefore do not evaluate the replacement shard.
+
+At 57,344 allocated context, `bun run test qwen3.8-flash-next-coder-iq1_m
+--no-reasoning` measured 34.40 tok/s mean generation and 180 ms mean TTFT
+(three short coding replies, 24–51 output tokens, after warm-up; temperature
+0.7, output cap 256). Downloads were running concurrently. The saved result
+is `test-results/qwen3.8-flash-next-coder-iq1_m/2026-11-28T08-37-20-474Z.json`.
+
+The version 3 five-task quality baseline requested low effort, a 40,960-token
+input target and an 8,192-token output cap: **0 passed, 2 failed, 3 request
+errors**. Topological sorting failed with a non-iterable dependency error;
+path lookup failed the hyphen-key check. The TTL request disconnected after
+about 180 seconds; expression and interval tasks also had request/token-count
+errors. Their missing answers have no quality verdict. The cause of the
+disconnect is unconfirmed. Raw run:
+`test-results/quality/2026-11-28T08-37-22-030Z-c5d17dcc-a59d-4b31-9e8b-568a1481b548.json`
+(gitignored). This baseline does not validate the updated Coder weights or
+Inkling, and does not establish a quality improvement from the engine update.
+
+## Partial 57K complex sweep: November 27–28, 2026
+
+The saved version 3 sweep contains 12 finished configurations (60 requests),
+with Dirk MTP on still marked `running` at the first task. `completedAt` is
+empty: this is a saved snapshot, not evidence that the process is still live.
+Later configurations have no results in this sweep. The source is
+`test-results/quality/comparison-2026-11-27T22-33-14-948Z-9f539067-c1ea-4f27-8561-8eb8caf215dc.json`
+and its individual run files (gitignored).
+
+All 12 runs report 57,344 allocated context and the same suite hash. Each used
+five complex tasks padded with synthetic project context to a 40,960-token
+target, low requested reasoning and an 8,192-token output cap. Requested
+sampling: temperature 0.5, top-p 0.95, top-k 20, min-p 0, repetition penalty 1,
+presence/frequency penalties 0, seed 42. Actual input counts are below.
+These are single samples per task; this sweep does not evaluate basic tasks,
+the pricing/shipping tasks, or real agent projects.
+
+| Model | Approach | Pass | Fail | Incomplete | Actual input tokens | Total seconds |
+|---|---|---:|---:|---:|---:|---:|
+| Flash-Next Coder IQ1_M | Strata | 3 | 2 | 0 | 40,960 | 521.1 |
+| Flash-Next IQ2_XS | Strata | 3 | 2 | 0 | 40,946–40,948 | 497.5 |
+| Qwen3.8 UD-Q4_K_M | arc-lab DFlash2 | 4 | 1 | 0 | 40,999–41,000 | 1,155.8 |
+| Signal Terse i1-Q4_K_M | llama.cpp, MTP on | 3 | 2 | 0 | 40,999–41,000 | 1,368.5 |
+| Signal Terse i1-Q4_K_M | llama.cpp, MTP off | 2 | 3 | 0 | 40,999–41,000 | 1,646.0 |
+| Qwen3.6 IQ4_XS | llama.cpp, MTP on | 4 | 0 | 1 | 40,969–40,970 | 3,656.1 |
+| Qwen3.6 IQ4_XS | llama.cpp, MTP off | 3 | 0 | 2 | 40,969–40,970 | 4,930.6 |
+| Qwen3.8 IQ3_M (pearsonkyle) | llama.cpp, MTP on | **5** | **0** | **0** | 40,999–41,000 | 4,092.0 |
+| Qwen3.8 IQ3_M (pearsonkyle) | llama.cpp, MTP off | 4 | 1 | 0 | 40,999–41,000 | 4,568.8 |
+| Qwen3.8 UD-Q4_K_M | llama.cpp, MTP off | 4 | 1 | 0 | 40,999–41,000 | 2,698.9 |
+| Qwen3.8 UD-Q4_K_XL | llama.cpp, MTP off | 4 | 0 | 1 | 40,999–41,000 | 2,654.0 |
+| Swift 1.5 Q4_K_M | llama.cpp, MTP off | 4 | 1 | 0 | 40,999–41,000 | 1,946.9 |
+
+There were no request errors in those 60 requests. All four incomplete answers
+hit the output cap: Qwen3.6's TTL task with MTP on/off, its expression task with
+MTP off, and Qwen3.8 Q4_K_XL's TTL task. They have no quality verdict.
+Seconds sum the five requests, including truncated answers; they are not
+generation-throughput measurements or full switch-and-test wall times.
+
+Qwen3.8 IQ3_M with MTP was the only 5/5 functional result so far, taking
+68.2 minutes in total. Its TTL answer alone used 8,014 output tokens and took
+1,540.2 seconds; the checker explicitly leaves O(1) complexity for manual
+review. This is a quality-first candidate, not a proven interactive default.
+
+Both Strata models failed TTL LRU behavior and topological sorting with a
+non-iterable dependency error. Signal failed TTL expiry/size and expression
+validation with MTP on/off; without MTP it also failed basic path lookup.
+Arc-lab, Qwen3.8 IQ3_M without MTP, base Q4_K_M, and Swift all failed the TTL
+expired-entry eviction check and passed the other four tasks. Arc-lab was the
+fastest 4/5 configuration (19.3 minutes); Swift was the fastest llama.cpp 4/5
+configuration with all answers complete (32.4 minutes). Single samples do not
+establish a general MTP quality benefit or replace agent-workflow testing.
 
 ## Historical complex sweep coverage
 

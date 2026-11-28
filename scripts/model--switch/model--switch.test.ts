@@ -29,4 +29,8 @@ test("coding choices preserve approaches, model variants, and context", async ()
   expect(codingArgs(strata, 57344)).toEqual(["--service=strata", "--model=coder:IQ1_M", "--context=57344"]);
   expect(codingArgs(strata, 131072)).toEqual(["--service=strata", "--model=coder:IQ1_M"]);
   expect(codingArgs(choices[2], 49152)).toEqual(["--service=arc-lab", "--context=49152"]);
+  const inkling = choices.find((choice) => choice.args.includes("--model=inkling-2-mini:SQ-20"));
+  if (!inkling) throw new Error("Missing Inkling SQ-20 choice");
+  expect(codingArgs(inkling, 57344)).toEqual(["--service=strata", "--model=inkling-2-mini:SQ-20"]);
+  expect(codingArgs(inkling, 65536)).toEqual(["--service=strata", "--model=inkling-2-mini:SQ-20", "--context=65536"]);
 });

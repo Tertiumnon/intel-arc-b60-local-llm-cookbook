@@ -268,12 +268,17 @@ async function main() {
     description = "Qwen3.8-27B DFlash2 (experimental)";
   } else if (service === "strata") {
     const selected = modelArg ?? "coder:IQ1_M";
-    const match = /^(qwen|swift|coder):(Q2_0|IQ2_XS|IQ3_XXS|IQ3_S|IQ1_M)$/.exec(selected);
+    const match = /^(qwen|swift|coder|inkling-2-mini):(Q2_0|IQ2_XS|IQ3_XXS|IQ3_S|IQ1_M|SQ-20)$/.exec(selected);
     if (!match) throw new Error("strata --model must be family:quant, e.g. coder:IQ1_M");
+    if ((match[1] === "inkling-2-mini") !== (match[2] === "SQ-20")) throw new Error("Inkling requires --model=inkling-2-mini:SQ-20; use a Qwen quant for the other families");
     const tag = `${match[1] === "qwen" ? "" : `${match[1]}-`}${match[2].toLowerCase()}`;
     const setup = `set -euo pipefail
 cd /models/Strata
 if [ ! -x "run-${tag}.sh" ]; then
+  if [ "$1" = "inkling-2-mini" ]; then
+    echo 'Inkling SQ-20 is not installed for the service. Install it with Strata and link its config and runner into /models/Strata; see content/setup.md.' >&2
+    exit 1
+  fi
   ./setup.sh --setup --backend sycl --yes --family "$1" --model "$2" --context 131072 --vision no --data-dir /models/Strata-data --host 0.0.0.0 --no-start
   python3 - "strata-${tag}.json" <<'PY'
 import json, sys
@@ -302,7 +307,7 @@ if not variant.exists():
     args = settings['args']
     args[args.index('--max-context') + 1] = context
     command = runner.read_text()
-    old = f'/models/Strata/strata-{tag}.json'
+    old = str(source.resolve())
     if command.count(old) != 1:
         raise ValueError(f'Expected one config path in {runner}')
     variant.write_text(json.dumps(settings, indent=2))

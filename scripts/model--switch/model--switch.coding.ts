@@ -10,6 +10,7 @@ export const codingChoices = (presets: Record<string, Preset | string>): Choice[
     { label: "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-Coder-GGUF (Strata, IQ1_M)", args: ["--service=strata", "--model=coder:IQ1_M"], defaultContext: 131072 },
     { label: "ISTA-DASLab/Qwen3.8-Flash-Next-GSQ-RCO-GGUF (Strata, IQ2_XS)", args: ["--service=strata", "--model=qwen:IQ2_XS"], defaultContext: 131072 },
     { label: "unsloth/Qwen3.8-27B-GGUF/Qwen3.8-27B-UD-Q4_K_M.gguf (arc-lab, DFlash2)", args: ["--service=arc-lab"], defaultContext: 65536 },
+    { label: "strata-engine/Inkling-2-Mini-Strata (Strata, SQ-20)", args: ["--service=strata", "--model=inkling-2-mini:SQ-20"], defaultContext: 57344 },
   ];
   const seen = new Set<string>();
   for (const [name, preset] of Object.entries(presets)) {

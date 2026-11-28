@@ -10,6 +10,8 @@
 
 ### Added
 
+- Inkling-2-Mini SQ-20 in the coding model selector, with a 57,344-token default for the 24 GB B60 and an installation prerequisite check.
+
 - Added repeatable 49K, 57K, and 64K all-model complex-quality comparisons with recorded sampling settings and long-input targets.
 
 - Added selectable 32K, 49K, 57K, and 64K contexts for coding models, including Strata, arc-lab, and no-MTP variants; new combinations are untested unless otherwise recorded.
@@ -24,6 +26,10 @@
 - `bun run pi` writes the Pi coding agent provider for the served model.
 
 ### Changed
+
+- Updated the B60 server's Strata checkout to 0.2.23 and built SYCL engine 0.1.70 for `bmg-g21`; documented the runtime path migration and distinguished the old Coder shard's baseline results.
+
+- Recorded the partial November 27–28 version 3 quality sweep across 12 configurations and revised coding recommendations with failures, truncations, and latency tradeoffs.
 
 - Publish the latest completed complex-model comparison and its best completed result in `content/results.md`.
 

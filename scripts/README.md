@@ -8,6 +8,7 @@ the root `.env` (copy `.env.example`).
 | `switch:list` | List llama presets |
 | `switch:coding` | Choose a coding model, approach, and context |
 | `switch --service=strata --model=coder:IQ1_M` | Switch to Strata |
+| `switch --service=strata --model=inkling-2-mini:SQ-20` | Switch to installed Inkling SQ-20 on Strata (57K default) |
 | `test` | Speed test on the served model |
 | `quality` | Quality tasks at low and medium reasoning |
 | `image:download:qwen`, `image:download:z-image` | Download image models to the server |

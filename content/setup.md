@@ -124,6 +124,38 @@ IQ1_M with an OpenAI-compatible API. Source is in `/models/Strata`, model data i
 Strata's [Intel Arc notes](https://github.com/Niko1221/Strata/blob/main/docs/INTEL_ARC.md)
 cover build details.
 
+### November 28 Strata update on the single B60
+
+The server checkout is now Strata 0.2.23 (`4560d0379`); its SYCL engine
+0.1.70 was built with AOT target `bmg-g21`. This server has **one 24 GB B60
+and 32 GB system RAM**, not the 32 GB B70 used in many upstream measurements.
+Configs and runners from before the update are backed up under
+`/models/Strata-backup-20261128T082035Z`.
+
+Upstream moved Python, configs, and runners into `/models/Strata/terminal`,
+and SYCL code into `/models/Strata/engine/sycl`. Root config/runner symlinks
+preserve the existing service helper. The Docker wrapper at
+`/models/Strata-data/runtime/strata-sycl.sh` mounts `/models` at `/work` and
+runs the new binary from `/work/Strata/engine/build-sycl-aot/strata`.
+Existing expert-profile arguments now point into `terminal/data`.
+
+Inkling SQ-20 is the upstream 24 GB choice (19.4 GB of weights, Apache-2.0).
+Its dedicated, signature-checked SYCL engine 0.1.70 is installed separately
+from the Qwen engine. Initial installation uses the Intel-aware installer:
+
+```bash
+cd /models/Strata
+STRATA_CONTROL_INSTALL=1 ./setup.sh --setup --backend sycl --yes \
+  --family inkling-2-mini --model SQ-20 --context 57344 --vision no \
+  --data-dir /models/Strata-data --host 0.0.0.0 --no-start
+```
+
+After installation, link `terminal/strata-inkling-2-mini-sq-20.json` and
+`terminal/run-inkling-2-mini-sq-20.sh` into `/models/Strata` for the helper.
+Choose it through `bun run switch:coding`, or
+`bun run switch --service=strata --model=inkling-2-mini:SQ-20`.
+Other context sizes remain untested until recorded in [results](./results.md).
+
 ## 7. OpenVINO (archived)
 
 `openvino-model-server.service` and its model files are kept but disabled.
